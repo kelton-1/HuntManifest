@@ -14,6 +14,39 @@ export interface GeolocationResult {
 }
 
 /**
+ * Standard geolocation request to trigger the browser permission prompt.
+ * Returns a promise that resolves with the position if allowed, or rejects/resolves null if not.
+ */
+export function requestLocationPermission(): Promise<GeolocationPosition | null> {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            console.error("Geolocation not supported");
+            resolve(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const coords: GeolocationPosition = {
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude,
+                };
+                resolve(coords);
+            },
+            (err) => {
+                console.error("Geolocation permission error:", err);
+                reject(err);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000,
+            }
+        );
+    });
+}
+
+/**
  * React hook for getting the user's current GPS position
  */
 export function useGeolocation() {

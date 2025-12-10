@@ -1,132 +1,170 @@
 "use client";
 
 import { useState } from "react";
-import { Sprout, Target, Trophy } from "lucide-react";
-import { HunterExperience } from "@/lib/onboarding";
 import { OnboardingScreen } from "./OnboardingScreen";
+import { User, MapPin, Calendar, Compass } from "lucide-react";
+import { HunterExperience } from "@/lib/onboarding";
+
+export interface HunterProfileData {
+    name: string;
+    dob: string;
+    homeLocation: string;
+    huntingStyle: string;
+    experience: HunterExperience;
+}
 
 interface HunterProfileScreenProps {
-    onComplete: (name: string, experience: HunterExperience) => void;
+    onComplete: (data: HunterProfileData) => void;
     onSkip: () => void;
     currentStep: number;
     totalSteps: number;
+    initialName?: string;
 }
-
-const experienceOptions: { value: HunterExperience; label: string; icon: React.ReactNode; description: string }[] = [
-    {
-        value: "first",
-        label: "First Season",
-        icon: <Sprout className="h-5 w-5" />,
-        description: "Just getting started",
-    },
-    {
-        value: "intermediate",
-        label: "2-5 Years",
-        icon: <Target className="h-5 w-5" />,
-        description: "Know the basics",
-    },
-    {
-        value: "veteran",
-        label: "Seasoned Veteran",
-        icon: <Trophy className="h-5 w-5" />,
-        description: "Expert hunter",
-    },
-];
 
 export function HunterProfileScreen({
     onComplete,
-    onSkip,
+    initialName = "",
     currentStep,
     totalSteps,
 }: HunterProfileScreenProps) {
-    const [name, setName] = useState("");
+    const [name, setName] = useState(initialName);
+    const [dob, setDob] = useState("");
+    const [homeLocation, setHomeLocation] = useState("");
+    const [huntingStyle, setHuntingStyle] = useState("");
     const [experience, setExperience] = useState<HunterExperience | null>(null);
 
-    const canContinue = name.trim().length > 0 && experience !== null;
+    // If initialName is provided (e.g. from Google Auth), it might be read-only or pre-filled
+    const isNameLocked = !!initialName && initialName.length > 0;
 
-    const handleContinue = () => {
-        if (canContinue) {
-            onComplete(name.trim(), experience);
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (name && dob && homeLocation && huntingStyle && experience) {
+            onComplete({
+                name,
+                dob,
+                homeLocation,
+                huntingStyle,
+                experience
+            });
         }
     };
+
+    const isFormValid = name && dob && homeLocation && huntingStyle && experience;
 
     return (
         <OnboardingScreen
             currentStep={currentStep}
             totalSteps={totalSteps}
-            onSkip={onSkip}
+            onSkip={() => { }} // Profile is usually mandatory
+            showSkip={false}
         >
-            <div className="flex-1 flex flex-col px-6 pt-16 pb-4">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold mb-2">
-                        What should we call you, hunter?
-                    </h1>
+            <div className="flex-1 flex flex-col px-6 pt-8 pb-4">
+                <div className="text-center mb-6">
+                    <h1 className="text-2xl font-bold mb-2">Build Your Profile</h1>
                     <p className="text-muted-foreground">
-                        Personalize your experience
+                        Tell us a bit about yourself to personalize your experience
                     </p>
                 </div>
 
-                {/* Name Input */}
-                <div className="mb-8">
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        className="w-full px-4 py-4 text-lg bg-secondary rounded-xl border-2 border-transparent focus:border-primary focus:outline-none transition-colors"
-                        autoFocus
-                        maxLength={30}
-                    />
-                </div>
+                <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-4 overflow-y-auto pb-4">
+                    {/* Name Input */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium ml-1">Full Name</label>
+                        <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Your Name"
+                                disabled={isNameLocked}
+                                className={`w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary ${isNameLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            />
+                        </div>
+                    </div>
 
-                {/* Experience Selection */}
-                <div className="mb-8">
-                    <h2 className="text-lg font-semibold mb-4">
-                        How long have you been hunting?
-                    </h2>
-                    <div className="space-y-3">
-                        {experienceOptions.map((option) => (
-                            <button
-                                key={option.value}
-                                onClick={() => setExperience(option.value)}
-                                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${experience === option.value
-                                        ? "border-primary bg-primary/10"
-                                        : "border-border bg-card hover:border-muted-foreground/50"
-                                    }`}
+                    {/* DOB Input */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium ml-1">Date of Birth</label>
+                        <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <input
+                                type="date"
+                                value={dob}
+                                onChange={(e) => setDob(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                                style={{ colorScheme: "dark" }} // Ensures date picker looks good in dark mode
+                            />
+                        </div>
+                    </div>
+
+                    {/* Home Location */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium ml-1">Home Base</label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <input
+                                type="text"
+                                value={homeLocation}
+                                onChange={(e) => setHomeLocation(e.target.value)}
+                                placeholder="City, State"
+                                className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Hunting Style */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium ml-1">Primary Hunting Style</label>
+                        <div className="relative">
+                            <Compass className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <select
+                                value={huntingStyle}
+                                onChange={(e) => setHuntingStyle(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary appearance-none text-foreground"
                             >
-                                <div
-                                    className={`p-2.5 rounded-lg ${experience === option.value
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-secondary text-muted-foreground"
+                                <option value="" disabled>Select Style</option>
+                                <option value="Public Land">Public Land</option>
+                                <option value="Private Land">Private Land</option>
+                                <option value="Club / Lease">Club / Lease</option>
+                                <option value="Guide / Outfitter">Guide / Outfitter</option>
+                                <option value="Mixed">Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Experience Level */}
+                    <div className="space-y-2 pt-2">
+                        <label className="text-sm font-medium ml-1">Experience Level</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {(['first', 'intermediate', 'veteran'] as const).map((level) => (
+                                <button
+                                    key={level}
+                                    type="button"
+                                    onClick={() => setExperience(level)}
+                                    className={`py-3 px-2 rounded-xl border-2 text-sm font-medium transition-all ${experience === level
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-border bg-card hover:border-muted-foreground/50"
                                         }`}
                                 >
-                                    {option.icon}
-                                </div>
-                                <div className="text-left">
-                                    <p className="font-semibold">{option.label}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {option.description}
-                                    </p>
-                                </div>
-                            </button>
-                        ))}
+                                    {level === 'first' && 'Rookie'}
+                                    {level === 'intermediate' && 'Seasoned'}
+                                    {level === 'veteran' && 'Veteran'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* Continue Button */}
-                <div className="mt-auto">
-                    <button
-                        onClick={handleContinue}
-                        disabled={!canContinue}
-                        className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${canContinue
-                                ? "bg-gradient-to-r from-mallard-green to-mallard-green-light text-white shadow-lg hover:shadow-xl"
-                                : "bg-secondary text-muted-foreground"
-                            }`}
-                    >
-                        Continue
-                    </button>
-                </div>
+                    <div className="pt-4 pb-safe mt-auto">
+                        <button
+                            type="submit"
+                            disabled={!isFormValid}
+                            className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                        >
+                            Continue
+                        </button>
+                    </div>
+                </form>
             </div>
         </OnboardingScreen>
     );

@@ -2,7 +2,7 @@
 
 import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useInventory, useHuntLogs } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 
@@ -26,16 +26,13 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 const PREFERENCES_KEY = "talkin_timber_preferences";
 
 function usePreferences() {
-    const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
-    const [loaded, setLoaded] = useState(false);
-
-    useEffect(() => {
+    const [preferences, setPreferences] = useState<UserPreferences>(() => {
+        if (typeof window === "undefined") return DEFAULT_PREFERENCES;
         const saved = localStorage.getItem(PREFERENCES_KEY);
-        if (saved) {
-            setPreferences({ ...DEFAULT_PREFERENCES, ...JSON.parse(saved) });
-        }
-        setLoaded(true);
-    }, []);
+        return saved ? { ...DEFAULT_PREFERENCES, ...JSON.parse(saved) } : DEFAULT_PREFERENCES;
+    });
+    // loaded is true if we're on the client
+    const loaded = typeof window !== "undefined";
 
     const updatePreferences = (updates: Partial<UserPreferences>) => {
         const newPrefs = { ...preferences, ...updates };
@@ -48,7 +45,6 @@ function usePreferences() {
 
 export default function ProfilePage() {
     const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
     const { preferences, updatePreferences, loaded } = usePreferences();
     const { inventory, clearInventory } = useInventory();
     const { logs, clearLogs } = useHuntLogs();
@@ -59,9 +55,8 @@ export default function ProfilePage() {
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [tempLocation, setTempLocation] = useState("");
 
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    // Check if we're on the client
+    const mounted = loaded;
 
     const handleExportData = () => {
         const data = {

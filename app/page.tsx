@@ -32,7 +32,7 @@ export default function Home() {
           if (parsed.hunterName) {
             setHunterName(parsed.hunterName);
           }
-        } catch (e) {
+        } catch {
           // Ignore parse errors
         }
       }

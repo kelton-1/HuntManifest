@@ -14,7 +14,7 @@ import {
     serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { InventoryItem, HuntLog, AuditLogEntry, AuditAction } from "./types";
+import { InventoryItem, HuntLog } from "./types";
 
 // ============================================
 // USER PROFILE
@@ -22,8 +22,11 @@ import { InventoryItem, HuntLog, AuditLogEntry, AuditAction } from "./types";
 
 export interface UserProfile {
     hunterName: string;
-    experience: "first" | "intermediate" | "veteran" | null;
+    dob?: string;
     homeLocation: string;
+    huntingStyle?: string;
+    experience: "first" | "intermediate" | "veteran" | null;
+    brandAffinities?: Record<string, string[]>; // Category -> Brand[]
     temperatureUnit: "F" | "C";
     windSpeedUnit: "mph" | "kph";
     notificationsEnabled: boolean;
@@ -34,8 +37,11 @@ export interface UserProfile {
 
 const DEFAULT_PROFILE: Omit<UserProfile, "createdAt"> = {
     hunterName: "Hunter",
-    experience: null,
+    dob: "",
     homeLocation: "",
+    huntingStyle: "",
+    experience: null,
+    brandAffinities: {},
     temperatureUnit: "F",
     windSpeedUnit: "mph",
     notificationsEnabled: true,

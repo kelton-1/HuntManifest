@@ -74,7 +74,9 @@ export function useInventory() {
     const addItem = useCallback(async (item: InventoryItem) => {
         if (user) {
             try {
-                const { id, ...itemData } = item;
+                // Omit the existing id since Firestore will generate a new one
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id: _, ...itemData } = item;
                 const newId = await firestoreService.addInventoryItem(user.uid, itemData);
                 setInventory((prev) => [...prev, { ...itemData, id: newId }]);
             } catch (error) {
@@ -211,7 +213,9 @@ export function useHuntLogs() {
     const addLog = useCallback(async (log: HuntLog) => {
         if (user) {
             try {
-                const { id, ...logData } = log;
+                // Omit the existing id since Firestore will generate a new one
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id: _, ...logData } = log;
                 const newId = await firestoreService.addHuntLog(user.uid, logData);
                 setLogs((prev) => [{ ...logData, id: newId }, ...prev]);
             } catch (error) {

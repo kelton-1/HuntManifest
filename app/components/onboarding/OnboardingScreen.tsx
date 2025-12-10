@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface OnboardingScreenProps {
@@ -59,10 +59,10 @@ export function ProgressDots({ current, total }: ProgressDotsProps) {
                 <div
                     key={i}
                     className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${i < current
-                            ? "bg-mallard-green dark:bg-mallard-yellow scale-100"
-                            : i === current
-                                ? "bg-mallard-green dark:bg-mallard-yellow scale-125"
-                                : "bg-border scale-100"
+                        ? "bg-mallard-green dark:bg-mallard-yellow scale-100"
+                        : i === current
+                            ? "bg-mallard-green dark:bg-mallard-yellow scale-125"
+                            : "bg-border scale-100"
                         }`}
                 />
             ))}

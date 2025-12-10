@@ -11,6 +11,10 @@ export interface OnboardingState {
     completed: boolean;
     completedAt: string | null;
     hunterName: string;
+    hunterDob?: string;
+    hunterHomeLocation?: string;
+    hunterStyle?: string;
+    hunterBrandAffinities?: Record<string, string[]>;
     hunterExperience: HunterExperience | null;
     setupChecklist: {
         profile: boolean;
@@ -25,6 +29,10 @@ const DEFAULT_ONBOARDING_STATE: OnboardingState = {
     completed: false,
     completedAt: null,
     hunterName: "",
+    hunterDob: "",
+    hunterHomeLocation: "",
+    hunterStyle: "",
+    hunterBrandAffinities: {},
     hunterExperience: null,
     setupChecklist: {
         profile: false,
@@ -56,6 +64,10 @@ export function useOnboarding() {
                             completed: profile.onboardingCompleted,
                             completedAt: profile.onboardingCompletedAt?.toDate?.()?.toISOString() || null,
                             hunterName: profile.hunterName,
+                            hunterDob: profile.dob,
+                            hunterHomeLocation: profile.homeLocation,
+                            hunterStyle: profile.huntingStyle,
+                            hunterBrandAffinities: profile.brandAffinities || {},
                             hunterExperience: profile.experience,
                             setupChecklist: {
                                 profile: profile.onboardingCompleted,
@@ -74,7 +86,11 @@ export function useOnboarding() {
                             // Migrate to Firestore
                             await firestoreService.createUserProfile(user.uid, {
                                 hunterName: localState.hunterName || "Hunter",
+                                dob: localState.hunterDob,
+                                homeLocation: localState.hunterHomeLocation,
+                                huntingStyle: localState.hunterStyle,
                                 experience: localState.hunterExperience,
+                                brandAffinities: localState.hunterBrandAffinities,
                                 onboardingCompleted: localState.completed,
                             });
                         } else {
@@ -117,7 +133,11 @@ export function useOnboarding() {
             try {
                 await firestoreService.updateUserProfile(user.uid, {
                     hunterName: newState.hunterName,
+                    dob: newState.hunterDob,
+                    homeLocation: newState.hunterHomeLocation,
+                    huntingStyle: newState.hunterStyle,
                     experience: newState.hunterExperience,
+                    brandAffinities: newState.hunterBrandAffinities,
                     onboardingCompleted: newState.completed,
                     ...(newState.completedAt && {
                         onboardingCompletedAt: new Date(newState.completedAt) as unknown as import("firebase/firestore").Timestamp,
@@ -143,10 +163,20 @@ export function useOnboarding() {
     };
 
     // Update hunter profile
-    const setHunterProfile = (name: string, experience: HunterExperience) => {
+    const setHunterProfile = (data: { name: string; dob: string; homeLocation: string; huntingStyle: string; experience: HunterExperience }) => {
         updateState({
-            hunterName: name,
-            hunterExperience: experience,
+            hunterName: data.name,
+            hunterDob: data.dob,
+            hunterHomeLocation: data.homeLocation,
+            hunterStyle: data.huntingStyle,
+            hunterExperience: data.experience,
+        });
+    };
+
+    // Set Affinities
+    const setBrandAffinities = (affinities: Record<string, string[]>) => {
+        updateState({
+            hunterBrandAffinities: affinities
         });
     };
 
@@ -198,6 +228,7 @@ export function useOnboarding() {
         isLoaded,
         completeOnboarding,
         setHunterProfile,
+        setBrandAffinities,
         markChecklistItem,
         markTooltipShown,
         wasTooltipShown,

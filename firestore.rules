@@ -77,6 +77,14 @@ service cloud.firestore {
       // INVENTORY COLLECTION
       // ============================================
       
+      // ============================================
+      // INVENTORY COLLECTION
+      // ============================================
+      
+      // ============================================
+      // INVENTORY COLLECTION
+      // ============================================
+      
       match /inventory/{itemId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && validateInventoryItem();
@@ -85,22 +93,54 @@ service cloud.firestore {
         
         function validateInventoryItem() {
           let data = request.resource.data;
-          let validCategories = ['Firearm', 'Ammo', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
+          let validCategories = ['Firearm', 'Ammo', 'Waders', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
+          let validConditions = ['New', 'Excellent', 'Good', 'Fair', 'Poor'];
+          let validStatuses = ['Active', 'Archived', 'Needs Repair', 'Lost'];
           
           return hasRequiredFields(['name', 'category', 'quantity', 'createdAt'])
             && isValidString(data.name, 1, 200)
             && data.category in validCategories
             && isValidNumber(data.quantity, 0, 10000)
-            && data.createdAt is timestamp;
+            && data.createdAt is timestamp
+            // Optional fields validation
+            && (!('brand' in data) || isValidString(data.brand, 0, 100))
+            && (!('model' in data) || isValidString(data.model, 0, 100))
+            && (!('notes' in data) || isValidString(data.notes, 0, 1000))
+            && (!('species' in data) || isValidString(data.species, 0, 100))
+            && (!('decoyType' in data) || isValidString(data.decoyType, 0, 100))
+            && (!('condition' in data) || data.condition in validConditions)
+            && (!('status' in data) || data.status in validStatuses)
+            && (!('serialNumber' in data) || isValidString(data.serialNumber, 0, 100))
+            && (!('purchaseDate' in data) || data.purchaseDate is string || data.purchaseDate is timestamp)
+            && (!('purchasePrice' in data) || isValidNumber(data.purchasePrice, 0, 1000000))
+            && (!('warranty' in data) || isValidString(data.warranty, 0, 200))
+            && (!('tags' in data) || data.tags is list)
+            && (!('isChecked' in data) || data.isChecked is bool);
         }
         
         function validateInventoryUpdate() {
           let data = request.resource.data;
-          let validCategories = ['Firearm', 'Ammo', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
+          let validCategories = ['Firearm', 'Ammo', 'Waders', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
+          let validConditions = ['New', 'Excellent', 'Good', 'Fair', 'Poor'];
+          let validStatuses = ['Active', 'Archived', 'Needs Repair', 'Lost'];
           
           return isValidString(data.name, 1, 200)
             && data.category in validCategories
-            && isValidNumber(data.quantity, 0, 10000);
+            && isValidNumber(data.quantity, 0, 10000)
+            // Optional fields validation
+            && (!('brand' in data) || isValidString(data.brand, 0, 100))
+            && (!('model' in data) || isValidString(data.model, 0, 100))
+            && (!('notes' in data) || isValidString(data.notes, 0, 1000))
+            && (!('species' in data) || isValidString(data.species, 0, 100))
+            && (!('decoyType' in data) || isValidString(data.decoyType, 0, 100))
+            && (!('condition' in data) || data.condition in validConditions)
+            && (!('status' in data) || data.status in validStatuses)
+            && (!('serialNumber' in data) || isValidString(data.serialNumber, 0, 100))
+            && (!('purchaseDate' in data) || data.purchaseDate is string || data.purchaseDate is timestamp)
+            && (!('purchasePrice' in data) || isValidNumber(data.purchasePrice, 0, 1000000))
+            && (!('warranty' in data) || isValidString(data.warranty, 0, 200))
+            && (!('tags' in data) || data.tags is list)
+            && (!('isChecked' in data) || data.isChecked is bool);
         }
       }
       
@@ -117,6 +157,8 @@ service cloud.firestore {
         function validateHuntLog() {
           let data = request.resource.data;
           let validSkyConditions = ['Clear', 'Partly Cloudy', 'Overcast', 'Rain', 'Snow', 'Fog'];
+          let validHuntTypes = ['Waterfowl', 'Upland', 'Turkey', 'Deer', 'Other'];
+          let validResults = ['Successful', 'Unsuccessful', 'Partial'];
           
           return hasRequiredFields(['date', 'location', 'weather', 'harvests', 'createdAt'])
             && (data.date is string || data.date is timestamp)
@@ -127,12 +169,29 @@ service cloud.firestore {
             && isValidNumber(data.weather.windSpeed, 0, 200)
             && data.weather.skyCondition in validSkyConditions
             && data.harvests is list
-            && data.createdAt is timestamp;
+            && data.createdAt is timestamp
+            // Optional fields validation
+            && (!('huntType' in data) || data.huntType in validHuntTypes)
+            && (!('notes' in data) || isValidString(data.notes, 0, 5000))
+            && (!('photos' in data) || data.photos is list)
+            && (!('result' in data) || data.result in validResults)
+            && (!('startTime' in data) || isValidString(data.startTime, 0, 50))
+            && (!('endTime' in data) || isValidString(data.endTime, 0, 50))
+            && (!('duration' in data) || isValidNumber(data.duration, 0, 1440))
+            && (!('participants' in data) || data.participants is list)
+            && (!('blindType' in data) || isValidString(data.blindType, 0, 100))
+            && (!('decoySpread' in data) || isValidString(data.decoySpread, 0, 1000))
+            && (!('callingStrategy' in data) || isValidString(data.callingStrategy, 0, 1000))
+            && (!('lessonsLearned' in data) || isValidString(data.lessonsLearned, 0, 2000))
+            && (!('rating' in data) || isValidNumber(data.rating, 1, 5))
+            && (!('tags' in data) || data.tags is list);
         }
         
         function validateHuntLogUpdate() {
           let data = request.resource.data;
           let validSkyConditions = ['Clear', 'Partly Cloudy', 'Overcast', 'Rain', 'Snow', 'Fog'];
+          let validHuntTypes = ['Waterfowl', 'Upland', 'Turkey', 'Deer', 'Other'];
+          let validResults = ['Successful', 'Unsuccessful', 'Partial'];
           
           return (data.date is string || data.date is timestamp)
             && data.location.keys().hasAll(['name'])
@@ -141,7 +200,22 @@ service cloud.firestore {
             && isValidNumber(data.weather.temperature, -100, 150)
             && isValidNumber(data.weather.windSpeed, 0, 200)
             && data.weather.skyCondition in validSkyConditions
-            && data.harvests is list;
+            && data.harvests is list
+            // Optional fields validation
+            && (!('huntType' in data) || data.huntType in validHuntTypes)
+            && (!('notes' in data) || isValidString(data.notes, 0, 5000))
+            && (!('photos' in data) || data.photos is list)
+            && (!('result' in data) || data.result in validResults)
+            && (!('startTime' in data) || isValidString(data.startTime, 0, 50))
+            && (!('endTime' in data) || isValidString(data.endTime, 0, 50))
+            && (!('duration' in data) || isValidNumber(data.duration, 0, 1440))
+            && (!('participants' in data) || data.participants is list)
+            && (!('blindType' in data) || isValidString(data.blindType, 0, 100))
+            && (!('decoySpread' in data) || isValidString(data.decoySpread, 0, 1000))
+            && (!('callingStrategy' in data) || isValidString(data.callingStrategy, 0, 1000))
+            && (!('lessonsLearned' in data) || isValidString(data.lessonsLearned, 0, 2000))
+            && (!('rating' in data) || isValidNumber(data.rating, 1, 5))
+            && (!('tags' in data) || data.tags is list);
         }
       }
       

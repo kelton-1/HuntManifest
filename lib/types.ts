@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 // INVENTORY TYPES
 // ============================================
 
-export type InventoryCategory = 'Firearm' | 'Ammo' | 'Decoy' | 'Call' | 'Clothing' | 'Blind' | 'Safety' | 'Dog' | 'Vehicle' | 'Other';
+export type InventoryCategory = 'Firearm' | 'Ammo' | 'Waders' | 'Decoy' | 'Call' | 'Clothing' | 'Blind' | 'Safety' | 'Dog' | 'Vehicle' | 'Other';
 
 export type ItemCondition = 'New' | 'Excellent' | 'Good' | 'Fair' | 'Poor';
 
@@ -163,7 +163,7 @@ export const WATERFOWL_SPECIES = [
 ];
 
 export const INVENTORY_CATEGORIES: InventoryCategory[] = [
-    'Firearm', 'Ammo', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'
+    'Firearm', 'Ammo', 'Waders', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'
 ];
 
 export const INITIAL_INVENTORY_SEEDS: InventoryItem[] = [
