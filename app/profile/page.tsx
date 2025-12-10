@@ -1,8 +1,9 @@
 "use client";
 
-import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail } from "lucide-react";
+import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail, LogIn } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import Link from "next/link";
 import { useInventory, useHuntLogs } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 
@@ -89,7 +90,7 @@ export default function ProfilePage() {
     const handleSignOut = async () => {
         if (confirm("Are you sure you want to sign out?")) {
             await signOut();
-            window.location.reload();
+            // No reload needed cleanup happens via auth state change
         }
     };
 
@@ -172,6 +173,20 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground">Total Bag</p>
                 </div>
             </div>
+
+            {/* Account CTA (Signed Out State) */}
+            {!user && (
+                <div className="mb-6 p-1 rounded-2xl bg-gradient-to-r from-mallard-green to-mallard-green-light shadow-lg">
+                    <div className="bg-card rounded-xl p-4 text-center">
+                        <h3 className="font-bold text-lg mb-1">Backup Your Data</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Sign in to sync your gear and hunts to the cloud.</p>
+                        <Link href="/login" className="block w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                            <LogIn className="h-5 w-5" />
+                            Sign In / Create Account
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             {/* Settings Sections */}
             <div className="space-y-6">
@@ -398,4 +413,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-

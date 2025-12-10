@@ -81,6 +81,10 @@ export async function updateUserProfile(userId: string, data: Partial<UserProfil
 // INVENTORY
 // ============================================
 
+// ============================================
+// INVENTORY
+// ============================================
+
 export async function getInventory(userId: string): Promise<InventoryItem[]> {
     const colRef = collection(db, "users", userId, "inventory");
     const q = query(colRef, orderBy("createdAt", "desc"));
@@ -96,7 +100,8 @@ export async function addInventoryItem(userId: string, item: Omit<InventoryItem,
     const docRef = doc(colRef);
     await setDoc(docRef, {
         ...item,
-        status: item.status || 'Active',
+        status: item.status || 'READY',
+        specs: item.specs || {},
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
     });
@@ -119,8 +124,47 @@ export async function deleteInventoryItem(userId: string, itemId: string): Promi
 export async function clearInventoryItems(userId: string): Promise<void> {
     const colRef = collection(db, "users", userId, "inventory");
     const snapshot = await getDocs(colRef);
-    const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+}
+
+import { writeBatch, where } from "firebase/firestore";
+import { MASTER_INVENTORY_LIST } from "./inventory-data";
+
+export async function seedMasterInventory(userId: string): Promise<void> {
+    const batch = writeBatch(db);
+    const colRef = collection(db, "users", userId, "inventory");
+
+    MASTER_INVENTORY_LIST.forEach((item) => {
+        const docRef = doc(colRef);
+        batch.set(docRef, {
+            ...item,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+    });
+
+    await batch.commit();
+}
+
+export async function resetPostHunt(userId: string): Promise<void> {
+    const colRef = collection(db, "users", userId, "inventory");
+    // Find all items that are PACKED
+    const q = query(colRef, where("status", "==", "PACKED"));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) return;
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
+            status: "READY",
+            updatedAt: serverTimestamp()
+        });
+    });
+
+    await batch.commit();
 }
 
 // ============================================

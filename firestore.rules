@@ -95,52 +95,44 @@ service cloud.firestore {
           let data = request.resource.data;
           let validCategories = ['Firearm', 'Ammo', 'Waders', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
           let validConditions = ['New', 'Excellent', 'Good', 'Fair', 'Poor'];
-          let validStatuses = ['Active', 'Archived', 'Needs Repair', 'Lost'];
+          let validStatuses = ['READY', 'PACKED', 'MISSING'];
           
-          return hasRequiredFields(['name', 'category', 'quantity', 'createdAt'])
+          return hasRequiredFields(['name', 'category', 'quantity', 'status', 'createdAt'])
             && isValidString(data.name, 1, 200)
             && data.category in validCategories
             && isValidNumber(data.quantity, 0, 10000)
+            && data.status in validStatuses
             && data.createdAt is timestamp
-            // Optional fields validation
-            && (!('brand' in data) || isValidString(data.brand, 0, 100))
-            && (!('model' in data) || isValidString(data.model, 0, 100))
+            // Specs and Enterprise fields
+            && (!('specs' in data) || data.specs is map)
             && (!('notes' in data) || isValidString(data.notes, 0, 1000))
-            && (!('species' in data) || isValidString(data.species, 0, 100))
-            && (!('decoyType' in data) || isValidString(data.decoyType, 0, 100))
             && (!('condition' in data) || data.condition in validConditions)
-            && (!('status' in data) || data.status in validStatuses)
             && (!('serialNumber' in data) || isValidString(data.serialNumber, 0, 100))
             && (!('purchaseDate' in data) || data.purchaseDate is string || data.purchaseDate is timestamp)
             && (!('purchasePrice' in data) || isValidNumber(data.purchasePrice, 0, 1000000))
             && (!('warranty' in data) || isValidString(data.warranty, 0, 200))
-            && (!('tags' in data) || data.tags is list)
-            && (!('isChecked' in data) || data.isChecked is bool);
+            && (!('tags' in data) || data.tags is list);
         }
         
         function validateInventoryUpdate() {
           let data = request.resource.data;
           let validCategories = ['Firearm', 'Ammo', 'Waders', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
           let validConditions = ['New', 'Excellent', 'Good', 'Fair', 'Poor'];
-          let validStatuses = ['Active', 'Archived', 'Needs Repair', 'Lost'];
+          let validStatuses = ['READY', 'PACKED', 'MISSING'];
           
           return isValidString(data.name, 1, 200)
             && data.category in validCategories
             && isValidNumber(data.quantity, 0, 10000)
             // Optional fields validation
-            && (!('brand' in data) || isValidString(data.brand, 0, 100))
-            && (!('model' in data) || isValidString(data.model, 0, 100))
-            && (!('notes' in data) || isValidString(data.notes, 0, 1000))
-            && (!('species' in data) || isValidString(data.species, 0, 100))
-            && (!('decoyType' in data) || isValidString(data.decoyType, 0, 100))
-            && (!('condition' in data) || data.condition in validConditions)
             && (!('status' in data) || data.status in validStatuses)
+            && (!('specs' in data) || data.specs is map)
+            && (!('notes' in data) || isValidString(data.notes, 0, 1000))
+            && (!('condition' in data) || data.condition in validConditions)
             && (!('serialNumber' in data) || isValidString(data.serialNumber, 0, 100))
             && (!('purchaseDate' in data) || data.purchaseDate is string || data.purchaseDate is timestamp)
             && (!('purchasePrice' in data) || isValidNumber(data.purchasePrice, 0, 1000000))
             && (!('warranty' in data) || isValidString(data.warranty, 0, 200))
-            && (!('tags' in data) || data.tags is list)
-            && (!('isChecked' in data) || data.isChecked is bool);
+            && (!('tags' in data) || data.tags is list);
         }
       }
       

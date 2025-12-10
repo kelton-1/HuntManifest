@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { InventoryItem, HuntLog, INITIAL_INVENTORY_SEEDS } from "./types";
+import { InventoryItem, HuntLog, ItemStatus } from "./types";
 import { useAuth } from "./auth";
 import * as firestoreService from "./firestore";
+import { MASTER_INVENTORY_LIST } from "./inventory-data";
 
 // ============================================
 // GENERIC LOCALSTORAGE HOOK (fallback)
@@ -47,9 +48,20 @@ export function useInventory() {
     const { user } = useAuth();
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Generate IDs for local master list to ensure keys work
+    const initialLocalState = MASTER_INVENTORY_LIST.map((item, idx) => ({
+        ...item,
+        id: `local-${idx}`,
+        // ensure default fields
+        status: (item.status || 'READY') as ItemStatus,
+        specs: item.specs || {},
+        createdAt: new Date(),
+    })) as InventoryItem[];
+
     const [localInventory, setLocalInventory] = useLocalStorage<InventoryItem[]>(
-        "timber_inventory",
-        INITIAL_INVENTORY_SEEDS
+        "timber_inventory_v2", // New key to avoid conflict with old schema
+        initialLocalState
     );
 
     // Load inventory based on auth state
@@ -78,13 +90,14 @@ export function useInventory() {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { id: _, ...itemData } = item;
                 const newId = await firestoreService.addInventoryItem(user.uid, itemData);
-                setInventory((prev) => [...prev, { ...itemData, id: newId }]);
+                setInventory((prev) => [{ ...itemData, id: newId, specs: itemData.specs || {} }, ...prev]);
             } catch (error) {
                 console.error("Error adding item to Firestore:", error);
             }
         } else {
-            setLocalInventory((prev) => [...prev, item]);
-            setInventory((prev) => [...prev, item]);
+            const newItem = { ...item, id: `local-${Date.now()}` };
+            setLocalInventory((prev) => [newItem, ...prev]);
+            setInventory((prev) => [newItem, ...prev]);
         }
     }, [user, setLocalInventory]);
 
@@ -123,46 +136,84 @@ export function useInventory() {
         }
     }, [user, setLocalInventory]);
 
-    const toggleChecked = useCallback(async (id: string) => {
-        const item = inventory.find((i) => i.id === id);
+    const toggleStatus = useCallback(async (id: string, currentStatus: InventoryItem['status']) => {
+        // Ready <-> Packed logic
+        const newStatus = (currentStatus === 'PACKED' ? 'READY' : 'PACKED') as ItemStatus;
+        const item = inventory.find(i => i.id === id);
         if (!item) return;
 
-        const updated = { ...item, isChecked: !item.isChecked };
+        const updated = { ...item, status: newStatus };
+
         if (user) {
             try {
-                await firestoreService.updateInventoryItem(user.uid, id, { isChecked: updated.isChecked });
-                setInventory((prev) =>
-                    prev.map((i) => (i.id === id ? updated : i))
-                );
+                await firestoreService.updateInventoryItem(user.uid, id, { status: newStatus });
+                setInventory((prev) => prev.map((i) => (i.id === id ? updated : i)));
             } catch (error) {
-                console.error("Error toggling checked in Firestore:", error);
+                console.error("Error updating status in Firestore:", error);
             }
         } else {
-            setLocalInventory((prev) =>
-                prev.map((i) => (i.id === id ? updated : i))
-            );
-            setInventory((prev) =>
-                prev.map((i) => (i.id === id ? updated : i))
-            );
+            setLocalInventory((prev) => prev.map((i) => (i.id === id ? updated : i)));
+            setInventory((prev) => prev.map((i) => (i.id === id ? updated : i)));
         }
     }, [user, inventory, setLocalInventory]);
 
-    const resetChecks = useCallback(async () => {
+    const setItemStatus = useCallback(async (id: string, status: InventoryItem['status']) => {
+        const item = inventory.find(i => i.id === id);
+        if (!item) return;
+        const updated = { ...item, status };
+
         if (user) {
             try {
-                const updatePromises = inventory.map((item) =>
-                    firestoreService.updateInventoryItem(user.uid, item.id, { isChecked: false })
-                );
-                await Promise.all(updatePromises);
-                setInventory((prev) => prev.map((item) => ({ ...item, isChecked: false })));
+                await firestoreService.updateInventoryItem(user.uid, id, { status });
+                setInventory((prev) => prev.map((i) => (i.id === id ? updated : i)));
             } catch (error) {
-                console.error("Error resetting checks in Firestore:", error);
+                console.error("Error setting status in Firestore:", error);
             }
         } else {
-            setLocalInventory((prev) => prev.map((item) => ({ ...item, isChecked: false })));
-            setInventory((prev) => prev.map((item) => ({ ...item, isChecked: false })));
+            setLocalInventory((prev) => prev.map((i) => (i.id === id ? updated : i)));
+            setInventory((prev) => prev.map((i) => (i.id === id ? updated : i)));
         }
     }, [user, inventory, setLocalInventory]);
+
+
+    const resetPostHunt = useCallback(async () => {
+        if (user) {
+            try {
+                await firestoreService.resetPostHunt(user.uid);
+                // Optimistic update
+                setInventory((prev) => prev.map((item) =>
+                    // Only reset PACKED to READY. Leave MISSING as is.
+                    item.status === 'PACKED' ? { ...item, status: 'READY' } : item
+                ));
+            } catch (error) {
+                console.error("Error resetting post-hunt in Firestore:", error);
+            }
+        } else {
+            const resetFn = (items: InventoryItem[]) => items.map(item =>
+                item.status === 'PACKED' ? { ...item, status: 'READY' as ItemStatus } : item
+            );
+            setLocalInventory(prev => resetFn(prev));
+            setInventory(prev => resetFn(prev));
+        }
+    }, [user, setLocalInventory]);
+
+    const seedInventory = useCallback(async () => {
+        if (user) {
+            try {
+                await firestoreService.seedMasterInventory(user.uid);
+                // Reload inventory
+                const items = await firestoreService.getInventory(user.uid);
+                setInventory(items);
+            } catch (error) {
+                console.error("Error seeding inventory in Firestore:", error);
+            }
+        } else {
+            // Re-initialize local
+            setLocalInventory(initialLocalState);
+            setInventory(initialLocalState);
+        }
+    }, [user, setLocalInventory, initialLocalState]);
+
 
     const clearInventory = useCallback(async () => {
         if (user) {
@@ -178,7 +229,18 @@ export function useInventory() {
         }
     }, [user, setLocalInventory]);
 
-    return { inventory, loading, addItem, updateItem, deleteItem, toggleChecked, resetChecks, clearInventory };
+    return {
+        inventory,
+        loading,
+        addItem,
+        updateItem,
+        deleteItem,
+        toggleStatus,
+        setItemStatus,
+        resetPostHunt,
+        seedInventory,
+        clearInventory
+    };
 }
 
 // ============================================

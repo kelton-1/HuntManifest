@@ -8,23 +8,46 @@ export type InventoryCategory = 'Firearm' | 'Ammo' | 'Waders' | 'Decoy' | 'Call'
 
 export type ItemCondition = 'New' | 'Excellent' | 'Good' | 'Fair' | 'Poor';
 
-export type ItemStatus = 'Active' | 'Archived' | 'Needs Repair' | 'Lost';
+export type ItemStatus = 'READY' | 'PACKED' | 'MISSING';
+
+export interface InventorySpecs {
+    [key: string]: string | number | boolean | undefined;
+    // Common specs
+    brand?: string;
+    model?: string;
+    // Firearm
+    action?: string;
+    gauge?: string;
+    chamber?: string;
+    choke?: string;
+    // Ammo
+    shotSize?: string;
+    shellLength?: string;
+    shotMaterial?: string;
+    speed?: number;
+    // Decoy
+    species?: string;
+    decoyType?: string; // Floater, Field
+    motionType?: string;
+    // Clothing
+    size?: string;
+    pattern?: string;
+    material?: string;
+    // General
+    color?: string;
+    weight?: string;
+}
 
 export interface InventoryItem {
     id: string;
     name: string;
     category: InventoryCategory;
-    brand?: string;
-    model?: string;
     quantity: number;
+    status: ItemStatus;
+    specs: InventorySpecs;
     notes?: string;
-    // Category-specific fields
-    species?: string; // For Decoys and Calls
-    decoyType?: string; // For Decoys (Floater, Field, etc.)
-    isChecked?: boolean; // For "Gear Check" mode
     // Enterprise fields
     condition?: ItemCondition;
-    status?: ItemStatus;
     serialNumber?: string;
     purchaseDate?: string;
     purchasePrice?: number;
@@ -166,11 +189,4 @@ export const INVENTORY_CATEGORIES: InventoryCategory[] = [
     'Firearm', 'Ammo', 'Waders', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'
 ];
 
-export const INITIAL_INVENTORY_SEEDS: InventoryItem[] = [
-    { id: '1', name: 'Shotgun', category: 'Firearm', quantity: 1, isChecked: false, status: 'Active' },
-    { id: '2', name: 'Shells (Box)', category: 'Ammo', quantity: 2, isChecked: false, status: 'Active' },
-    { id: '3', name: 'Waders', category: 'Clothing', quantity: 1, isChecked: false, status: 'Active' },
-    { id: '4', name: 'Headlamp', category: 'Safety', quantity: 1, isChecked: false, status: 'Active' },
-    { id: '5', name: 'Duck Calls', category: 'Call', quantity: 1, isChecked: false, status: 'Active' },
-    { id: '6', name: 'License/Stamps', category: 'Other', quantity: 1, isChecked: false, status: 'Active' },
-];
+// End of types
