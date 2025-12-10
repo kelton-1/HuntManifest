@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { WelcomeScreen } from "./WelcomeScreen";
+import { AuthScreen } from "./AuthScreen";
 import { HunterProfileScreen } from "./HunterProfileScreen";
 import { GearSetupScreen } from "./GearSetupScreen";
-import { AhaMomentScreen } from "./AhaMomentScreen";
 import { useOnboarding, HunterExperience } from "@/lib/onboarding";
 import { useInventory } from "@/lib/storage";
 import { InventoryItem, InventoryCategory } from "@/lib/types";
 
-type OnboardingStep = "welcome" | "profile" | "gear" | "aha";
+type OnboardingStep = "welcome" | "auth" | "profile" | "gear";
 
 interface SelectedGear {
     id: string;
     name: string;
     category: InventoryCategory;
+    quantity: number;
 }
 
 export function OnboardingFlow() {
@@ -24,7 +25,6 @@ export function OnboardingFlow() {
     const { inventory, addItem } = useInventory();
     const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
     const [selectedGear, setSelectedGear] = useState<SelectedGear[]>([]);
-    const [addedItems, setAddedItems] = useState<InventoryItem[]>([]);
 
     // If not loaded yet, show nothing
     if (!isLoaded) {
@@ -37,11 +37,25 @@ export function OnboardingFlow() {
     }
 
     const handleWelcomeComplete = () => {
+        setCurrentStep("auth");
+    };
+
+    const handleAuthComplete = () => {
         setCurrentStep("profile");
     };
 
     const handleProfileComplete = (name: string, experience: HunterExperience) => {
         setHunterProfile(name, experience);
+
+        // Also sync name to preferences so it shows in profile page
+        if (typeof window !== "undefined") {
+            const prefsKey = "talkin_timber_preferences";
+            const existing = localStorage.getItem(prefsKey);
+            const prefs = existing ? JSON.parse(existing) : {};
+            prefs.hunterName = name;
+            localStorage.setItem(prefsKey, JSON.stringify(prefs));
+        }
+
         setCurrentStep("gear");
     };
 
@@ -53,18 +67,14 @@ export function OnboardingFlow() {
             id: `onboard_${g.id}_${Date.now()}`,
             name: g.name,
             category: g.category,
-            quantity: 1,
+            quantity: g.quantity || 1,
             isChecked: false,
         }));
 
-        // Clear existing seed data and add new items
+        // Add items to inventory
         newItems.forEach((item) => addItem(item));
-        setAddedItems(newItems);
 
-        setCurrentStep("aha");
-    };
-
-    const handleAhaComplete = () => {
+        // Complete onboarding
         completeOnboarding();
         router.push("/");
     };
@@ -79,9 +89,9 @@ export function OnboardingFlow() {
     const getStepNumber = (step: OnboardingStep): number => {
         switch (step) {
             case "welcome": return 0;
-            case "profile": return 1;
-            case "gear": return 2;
-            case "aha": return 3;
+            case "auth": return 1;
+            case "profile": return 2;
+            case "gear": return 3;
             default: return 0;
         }
     };
@@ -90,6 +100,14 @@ export function OnboardingFlow() {
         <>
             {currentStep === "welcome" && (
                 <WelcomeScreen onComplete={handleWelcomeComplete} />
+            )}
+            {currentStep === "auth" && (
+                <AuthScreen
+                    onComplete={handleAuthComplete}
+                    onSkip={handleSkip}
+                    currentStep={getStepNumber("auth")}
+                    totalSteps={TOTAL_STEPS}
+                />
             )}
             {currentStep === "profile" && (
                 <HunterProfileScreen
@@ -104,14 +122,6 @@ export function OnboardingFlow() {
                     onComplete={handleGearComplete}
                     onSkip={handleSkip}
                     currentStep={getStepNumber("gear")}
-                    totalSteps={TOTAL_STEPS}
-                />
-            )}
-            {currentStep === "aha" && (
-                <AhaMomentScreen
-                    gearItems={addedItems.length > 0 ? addedItems : inventory}
-                    onComplete={handleAhaComplete}
-                    currentStep={getStepNumber("aha")}
                     totalSteps={TOTAL_STEPS}
                 />
             )}

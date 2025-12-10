@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
+import { AuthProvider } from "@/lib/auth";
 import { BottomNav } from "./components/BottomNav";
 import { TopNav } from "./components/TopNav";
 import { AppWrapper } from "./components/AppWrapper";
@@ -56,15 +57,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppWrapper>
-            <div className="min-h-screen flex flex-col">
-              <TopNav />
-              <main className="flex-1 pb-24 pt-4 px-4 max-w-md mx-auto w-full">
-                {children}
-              </main>
-              <BottomNav />
-            </div>
-          </AppWrapper>
+          <AuthProvider>
+            <AppWrapper>
+              <div className="min-h-screen flex flex-col">
+                <TopNav />
+                <main className="flex-1 pb-24 pt-4 px-4 max-w-md mx-auto w-full">
+                  {children}
+                </main>
+                <BottomNav />
+              </div>
+            </AppWrapper>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

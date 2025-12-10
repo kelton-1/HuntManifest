@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "./auth";
+import * as firestoreService from "./firestore";
 
 // Onboarding state types
 export type HunterExperience = "first" | "intermediate" | "veteran";
@@ -36,33 +38,95 @@ const DEFAULT_ONBOARDING_STATE: OnboardingState = {
 const ONBOARDING_KEY = "timber_onboarding";
 
 export function useOnboarding() {
+    const { user } = useAuth();
     const [state, setState] = useState<OnboardingState>(DEFAULT_ONBOARDING_STATE);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from localStorage on mount
+    // Load from Firestore or localStorage on mount
     useEffect(() => {
-        if (typeof window === "undefined") return;
+        const loadOnboarding = async () => {
+            if (typeof window === "undefined") return;
 
-        try {
-            const saved = localStorage.getItem(ONBOARDING_KEY);
-            if (saved) {
-                setState({ ...DEFAULT_ONBOARDING_STATE, ...JSON.parse(saved) });
+            if (user) {
+                // Try to load from Firestore
+                try {
+                    const profile = await firestoreService.getUserProfile(user.uid);
+                    if (profile) {
+                        setState({
+                            completed: profile.onboardingCompleted,
+                            completedAt: profile.onboardingCompletedAt?.toDate?.()?.toISOString() || null,
+                            hunterName: profile.hunterName,
+                            hunterExperience: profile.experience,
+                            setupChecklist: {
+                                profile: profile.onboardingCompleted,
+                                gear: profile.onboardingCompleted,
+                                firstHunt: false,
+                                firstCheck: false,
+                            },
+                            tooltipsShown: [],
+                        });
+                    } else {
+                        // New user, check localStorage for migration
+                        const saved = localStorage.getItem(ONBOARDING_KEY);
+                        if (saved) {
+                            const localState = { ...DEFAULT_ONBOARDING_STATE, ...JSON.parse(saved) };
+                            setState(localState);
+                            // Migrate to Firestore
+                            await firestoreService.createUserProfile(user.uid, {
+                                hunterName: localState.hunterName || "Hunter",
+                                experience: localState.hunterExperience,
+                                onboardingCompleted: localState.completed,
+                            });
+                        } else {
+                            setState(DEFAULT_ONBOARDING_STATE);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error loading onboarding from Firestore:", error);
+                    // Fallback to localStorage
+                    const saved = localStorage.getItem(ONBOARDING_KEY);
+                    if (saved) {
+                        setState({ ...DEFAULT_ONBOARDING_STATE, ...JSON.parse(saved) });
+                    }
+                }
+            } else {
+                // No user, use localStorage
+                const saved = localStorage.getItem(ONBOARDING_KEY);
+                if (saved) {
+                    setState({ ...DEFAULT_ONBOARDING_STATE, ...JSON.parse(saved) });
+                }
             }
-        } catch (error) {
-            console.warn("Error reading onboarding state:", error);
+            setIsLoaded(true);
+        };
+
+        loadOnboarding();
+    }, [user]);
+
+    // Persist to localStorage and Firestore
+    const updateState = async (updates: Partial<OnboardingState>) => {
+        const newState = { ...state, ...updates };
+        setState(newState);
+
+        // Always save to localStorage as backup
+        if (typeof window !== "undefined") {
+            localStorage.setItem(ONBOARDING_KEY, JSON.stringify(newState));
         }
-        setIsLoaded(true);
-    }, []);
 
-    // Persist to localStorage
-    const updateState = (updates: Partial<OnboardingState>) => {
-        setState((prev) => {
-            const newState = { ...prev, ...updates };
-            if (typeof window !== "undefined") {
-                localStorage.setItem(ONBOARDING_KEY, JSON.stringify(newState));
+        // Sync to Firestore if logged in
+        if (user) {
+            try {
+                await firestoreService.updateUserProfile(user.uid, {
+                    hunterName: newState.hunterName,
+                    experience: newState.hunterExperience,
+                    onboardingCompleted: newState.completed,
+                    ...(newState.completedAt && {
+                        onboardingCompletedAt: new Date(newState.completedAt) as unknown as import("firebase/firestore").Timestamp,
+                    }),
+                });
+            } catch (error) {
+                console.error("Error syncing onboarding to Firestore:", error);
             }
-            return newState;
-        });
+        }
     };
 
     // Complete onboarding

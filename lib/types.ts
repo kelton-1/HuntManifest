@@ -1,4 +1,14 @@
+import { Timestamp } from 'firebase/firestore';
+
+// ============================================
+// INVENTORY TYPES
+// ============================================
+
 export type InventoryCategory = 'Firearm' | 'Ammo' | 'Decoy' | 'Call' | 'Clothing' | 'Blind' | 'Safety' | 'Dog' | 'Vehicle' | 'Other';
+
+export type ItemCondition = 'New' | 'Excellent' | 'Good' | 'Fair' | 'Poor';
+
+export type ItemStatus = 'Active' | 'Archived' | 'Needs Repair' | 'Lost';
 
 export interface InventoryItem {
     id: string;
@@ -12,35 +22,127 @@ export interface InventoryItem {
     species?: string; // For Decoys and Calls
     decoyType?: string; // For Decoys (Floater, Field, etc.)
     isChecked?: boolean; // For "Gear Check" mode
+    // Enterprise fields
+    condition?: ItemCondition;
+    status?: ItemStatus;
+    serialNumber?: string;
+    purchaseDate?: string;
+    purchasePrice?: number;
+    warranty?: string;
+    tags?: string[];
+    // Metadata
+    createdAt?: Timestamp | Date;
+    updatedAt?: Timestamp | Date;
 }
+
+// ============================================
+// WEATHER TYPES
+// ============================================
+
+export type SkyCondition = 'Clear' | 'Partly Cloudy' | 'Overcast' | 'Rain' | 'Snow' | 'Fog';
+
+export type WindDirection = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
+export type MoonPhase = 'New' | 'Waxing Crescent' | 'First Quarter' | 'Waxing Gibbous' | 'Full' | 'Waning Gibbous' | 'Last Quarter' | 'Waning Crescent';
 
 export interface WeatherConditions {
     temperature: number; // Fahrenheit
     windSpeed: number; // mph
     windDirection: string; // N, NE, etc.
-    skyCondition: 'Clear' | 'Partly Cloudy' | 'Overcast' | 'Rain' | 'Snow' | 'Fog';
+    skyCondition: SkyCondition;
+    humidity?: number; // Percentage
+    barometricPressure?: number; // inHg
+    moonPhase?: MoonPhase;
+    sunrise?: string;
+    sunset?: string;
     notes?: string;
 }
+
+// ============================================
+// HARVEST TYPES
+// ============================================
+
+export type HarvestSex = 'Drake' | 'Hen' | 'Unknown';
 
 export interface Harvest {
     species: string;
     count: number;
-    sex?: 'Drake' | 'Hen';
+    sex?: HarvestSex;
+    bandNumber?: string; // For banded birds
+    weight?: number; // In pounds
+}
+
+// ============================================
+// HUNT LOG TYPES
+// ============================================
+
+export type HuntType = 'Waterfowl' | 'Upland' | 'Turkey' | 'Deer' | 'Other';
+
+export type HuntResult = 'Successful' | 'Unsuccessful' | 'Partial';
+
+export interface GeoLocation {
+    name: string;
+    latitude?: number;
+    longitude?: number;
+    county?: string;
+    state?: string;
+    publicLand?: boolean;
+    huntingZone?: string;
+}
+
+export interface HuntParticipant {
+    name: string;
+    harvestCount?: number;
 }
 
 export interface HuntLog {
     id: string;
     date: string; // ISO date string
-    location: {
-        name: string;
-        latitude?: number;
-        longitude?: number;
-    };
+    huntType?: HuntType;
+    location: GeoLocation;
     weather: WeatherConditions;
     harvests: Harvest[];
     notes: string;
-    photos?: string[]; // URLs or base64 (initially mock/placeholder)
+    photos?: string[];
+    // Enterprise fields
+    result?: HuntResult;
+    startTime?: string;
+    endTime?: string;
+    duration?: number; // In minutes
+    participants?: HuntParticipant[];
+    blindType?: string;
+    decoySpread?: string;
+    callingStrategy?: string;
+    lessonsLearned?: string;
+    rating?: number; // 1-5 stars
+    tags?: string[];
+    // Metadata
+    createdAt?: Timestamp | Date;
+    updatedAt?: Timestamp | Date;
 }
+
+// ============================================
+// AUDIT LOG TYPES (Future)
+// ============================================
+
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
+
+export interface AuditLogEntry {
+    id: string;
+    action: AuditAction;
+    collection: string;
+    documentId: string;
+    userId: string;
+    timestamp: Timestamp | Date;
+    previousData?: Record<string, unknown>;
+    newData?: Record<string, unknown>;
+    ipAddress?: string;
+    userAgent?: string;
+}
+
+// ============================================
+// CONSTANTS
+// ============================================
 
 export const WATERFOWL_SPECIES = [
     'Mallard',
@@ -60,11 +162,15 @@ export const WATERFOWL_SPECIES = [
     'Other'
 ];
 
+export const INVENTORY_CATEGORIES: InventoryCategory[] = [
+    'Firearm', 'Ammo', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'
+];
+
 export const INITIAL_INVENTORY_SEEDS: InventoryItem[] = [
-    { id: '1', name: 'Shotgun', category: 'Firearm', quantity: 1, isChecked: false },
-    { id: '2', name: 'Shells (Box)', category: 'Ammo', quantity: 2, isChecked: false },
-    { id: '3', name: 'Waders', category: 'Clothing', quantity: 1, isChecked: false },
-    { id: '4', name: 'Headlamp', category: 'Safety', quantity: 1, isChecked: false },
-    { id: '5', name: 'Duck Calls', category: 'Call', quantity: 1, isChecked: false },
-    { id: '6', name: 'License/Stamps', category: 'Other', quantity: 1, isChecked: false },
+    { id: '1', name: 'Shotgun', category: 'Firearm', quantity: 1, isChecked: false, status: 'Active' },
+    { id: '2', name: 'Shells (Box)', category: 'Ammo', quantity: 2, isChecked: false, status: 'Active' },
+    { id: '3', name: 'Waders', category: 'Clothing', quantity: 1, isChecked: false, status: 'Active' },
+    { id: '4', name: 'Headlamp', category: 'Safety', quantity: 1, isChecked: false, status: 'Active' },
+    { id: '5', name: 'Duck Calls', category: 'Call', quantity: 1, isChecked: false, status: 'Active' },
+    { id: '6', name: 'License/Stamps', category: 'Other', quantity: 1, isChecked: false, status: 'Active' },
 ];

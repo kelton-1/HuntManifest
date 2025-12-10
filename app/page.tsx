@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Plus, Package, CloudSun, Wind, Thermometer, MapPin, Bird, Trophy, Loader2, Cloud } from "lucide-react";
 import { useInventory, useHuntLogs } from "@/lib/storage";
-import { GettingStartedChecklist } from "./components/GettingStartedChecklist";
+
 import { fetchWeather } from "@/lib/weatherApi";
 import { useGeolocation } from "@/lib/geolocation";
 import { WeatherConditions } from "@/lib/types";
@@ -18,6 +18,26 @@ export default function Home() {
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
   const { getCurrentPosition } = useGeolocation();
+
+  // Hunter name from preferences
+  const [hunterName, setHunterName] = useState<string>("Hunter");
+
+  // Load hunter name from preferences
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const prefs = localStorage.getItem("talkin_timber_preferences");
+      if (prefs) {
+        try {
+          const parsed = JSON.parse(prefs);
+          if (parsed.hunterName) {
+            setHunterName(parsed.hunterName);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, []);
 
   // Fetch weather on mount
   useEffect(() => {
@@ -51,8 +71,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-5 pb-4 animate-fade-in">
-      {/* Getting Started Checklist - shows after onboarding until dismissed */}
-      <GettingStartedChecklist />
 
       {/* Hero Welcome Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-mallard-green via-mallard-green to-mallard-green-light rounded-2xl p-6 text-white shadow-lg">
@@ -68,7 +86,7 @@ export default function Home() {
 
         <div className="relative">
           <h1 className="text-2xl font-bold tracking-tight mb-1">
-            Welcome back, Hunter
+            Welcome back, {hunterName}
           </h1>
           <p className="text-white/80 text-sm">
             {logs.length > 0

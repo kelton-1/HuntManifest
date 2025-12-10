@@ -1,9 +1,10 @@
 "use client";
 
-import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X } from "lucide-react";
+import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useInventory, useHuntLogs } from "@/lib/storage";
+import { useAuth } from "@/lib/auth";
 
 // User preferences stored in localStorage
 interface UserPreferences {
@@ -51,6 +52,7 @@ export default function ProfilePage() {
     const { preferences, updatePreferences, loaded } = usePreferences();
     const { inventory, clearInventory } = useInventory();
     const { logs, clearLogs } = useHuntLogs();
+    const { user, signOut } = useAuth();
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState("");
@@ -86,6 +88,13 @@ export default function ProfilePage() {
                 localStorage.removeItem(PREFERENCES_KEY);
                 window.location.reload();
             }
+        }
+    };
+
+    const handleSignOut = async () => {
+        if (confirm("Are you sure you want to sign out?")) {
+            await signOut();
+            window.location.reload();
         }
     };
 
@@ -342,6 +351,41 @@ export default function ProfilePage() {
                         </div>
                     </div>
                 </section>
+
+                {/* Account Section */}
+                {user && (
+                    <section>
+                        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Account
+                        </h2>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-secondary rounded-lg">
+                                        <Mail className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                        <span className="font-medium">Email</span>
+                                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleSignOut}
+                                className="w-full flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-secondary/50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-secondary rounded-lg">
+                                        <LogOut className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <span className="font-medium">Sign Out</span>
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                        </div>
+                    </section>
+                )}
             </div>
 
             {/* Footer */}

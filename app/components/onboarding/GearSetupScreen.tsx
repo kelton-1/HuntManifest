@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, ChevronRight } from "lucide-react";
+import { Check, Minus, Plus, ChevronRight } from "lucide-react";
 import { OnboardingScreen } from "./OnboardingScreen";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
 import { InventoryCategory } from "@/lib/types";
@@ -10,9 +10,10 @@ interface GearItem {
     id: string;
     name: string;
     category: InventoryCategory;
+    quantity: number;
 }
 
-const ESSENTIAL_GEAR: GearItem[] = [
+const ESSENTIAL_GEAR: Omit<GearItem, "quantity">[] = [
     { id: "1", name: "Shotgun", category: "Firearm" },
     { id: "2", name: "Waders", category: "Clothing" },
     { id: "3", name: "Decoys", category: "Decoy" },
@@ -34,166 +35,146 @@ export function GearSetupScreen({
     currentStep,
     totalSteps,
 }: GearSetupScreenProps) {
-    const [currentCardIndex, setCurrentCardIndex] = useState(0);
-    const [selectedGear, setSelectedGear] = useState<GearItem[]>([]);
-    const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
+    // Track quantities for each gear item (0 = don't own)
+    const [quantities, setQuantities] = useState<Record<string, number>>(() => {
+        const initial: Record<string, number> = {};
+        ESSENTIAL_GEAR.forEach((g) => (initial[g.id] = 0));
+        return initial;
+    });
 
-    const currentCard = ESSENTIAL_GEAR[currentCardIndex];
-    const isLastCard = currentCardIndex >= ESSENTIAL_GEAR.length;
-    const progress = (currentCardIndex / ESSENTIAL_GEAR.length) * 100;
-
-    const handleSwipe = (selected: boolean) => {
-        setSwipeDirection(selected ? "right" : "left");
-
-        if (selected && currentCard) {
-            setSelectedGear((prev) => [...prev, currentCard]);
-        }
-
-        setTimeout(() => {
-            setSwipeDirection(null);
-            setCurrentCardIndex((prev) => prev + 1);
-        }, 200);
+    const updateQuantity = (id: string, delta: number) => {
+        setQuantities((prev) => ({
+            ...prev,
+            [id]: Math.max(0, Math.min(99, (prev[id] || 0) + delta)),
+        }));
     };
+
+    const toggleItem = (id: string) => {
+        setQuantities((prev) => ({
+            ...prev,
+            [id]: prev[id] > 0 ? 0 : 1,
+        }));
+    };
+
+    const selectedCount = Object.values(quantities).filter((q) => q > 0).length;
 
     const handleFinish = () => {
+        const selectedGear: GearItem[] = ESSENTIAL_GEAR
+            .filter((g) => quantities[g.id] > 0)
+            .map((g) => ({
+                ...g,
+                quantity: quantities[g.id],
+            }));
         onComplete(selectedGear);
     };
-
-    if (isLastCard) {
-        // Summary screen
-        return (
-            <OnboardingScreen
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                showSkip={false}
-            >
-                <div className="flex-1 flex flex-col px-6 pt-16 pb-4">
-                    <div className="flex-1 flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-mallard-green to-mallard-green-light flex items-center justify-center mb-6">
-                            <Check className="h-10 w-10 text-white" />
-                        </div>
-                        <h1 className="text-2xl font-bold mb-2">
-                            Perfect!
-                        </h1>
-                        <p className="text-muted-foreground mb-6">
-                            {selectedGear.length === 0
-                                ? "You can add gear later in your locker"
-                                : `${selectedGear.length} item${selectedGear.length !== 1 ? "s" : ""} added to your locker`}
-                        </p>
-
-                        {selectedGear.length > 0 && (
-                            <div className="flex flex-wrap justify-center gap-2 mb-6">
-                                {selectedGear.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-lg text-sm"
-                                    >
-                                        <CategoryIcon category={item.category} className="h-4 w-4" />
-                                        <span>{item.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={handleFinish}
-                        className="w-full py-4 rounded-xl font-bold text-lg bg-gradient-to-r from-mallard-green to-mallard-green-light text-white shadow-lg hover:shadow-xl transition-all"
-                    >
-                        Continue
-                    </button>
-                </div>
-            </OnboardingScreen>
-        );
-    }
 
     return (
         <OnboardingScreen
             currentStep={currentStep}
             totalSteps={totalSteps}
-            onSkip={() => onComplete(selectedGear)}
+            onSkip={() => onComplete([])}
         >
             <div className="flex-1 flex flex-col px-6 pt-12 pb-4">
                 {/* Header */}
                 <div className="text-center mb-6">
                     <h1 className="text-xl font-bold mb-1">
-                        Building your locker...
+                        Build Your Locker
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Quick! Which essentials do you own?
+                        Select gear you own and adjust quantities
                     </p>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="mb-8">
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-gradient-to-r from-mallard-green to-mallard-green-light transition-all duration-300 ease-out"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center mt-2">
-                        {currentCardIndex + 1} of {ESSENTIAL_GEAR.length}
+                {/* Progress indicator */}
+                <div className="mb-4">
+                    <p className="text-xs text-muted-foreground text-center">
+                        {selectedCount} item{selectedCount !== 1 ? "s" : ""} selected
                     </p>
                 </div>
 
-                {/* Card */}
-                <div className="flex-1 flex items-center justify-center mb-8">
-                    <div
-                        className={`relative w-full max-w-sm transition-all duration-200 ${swipeDirection === "left"
-                                ? "-translate-x-full opacity-0 rotate-[-10deg]"
-                                : swipeDirection === "right"
-                                    ? "translate-x-full opacity-0 rotate-[10deg]"
-                                    : ""
-                            }`}
-                    >
-                        <div className="bg-card rounded-3xl border-2 border-border shadow-xl p-8">
-                            {/* Icon */}
-                            <div className="flex justify-center mb-6">
-                                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-mallard-green/10 to-mallard-green/20 flex items-center justify-center">
-                                    <CategoryIcon
-                                        category={currentCard.category}
-                                        className="h-12 w-12 text-mallard-green"
-                                    />
+                {/* Gear List */}
+                <div className="flex-1 overflow-y-auto -mx-2 px-2">
+                    <div className="space-y-2">
+                        {ESSENTIAL_GEAR.map((item) => {
+                            const qty = quantities[item.id] || 0;
+                            const isSelected = qty > 0;
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${isSelected
+                                            ? "border-primary bg-primary/5"
+                                            : "border-border bg-card hover:border-muted-foreground/50"
+                                        }`}
+                                >
+                                    {/* Checkbox/Icon */}
+                                    <button
+                                        onClick={() => toggleItem(item.id)}
+                                        className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected
+                                                ? "bg-primary text-primary-foreground"
+                                                : "bg-secondary text-muted-foreground"
+                                            }`}
+                                    >
+                                        {isSelected ? (
+                                            <Check className="h-5 w-5" />
+                                        ) : (
+                                            <CategoryIcon
+                                                category={item.category}
+                                                className="h-5 w-5"
+                                            />
+                                        )}
+                                    </button>
+
+                                    {/* Name */}
+                                    <div className="flex-1" onClick={() => toggleItem(item.id)}>
+                                        <p className="font-semibold">{item.name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {item.category}
+                                        </p>
+                                    </div>
+
+                                    {/* Quantity Controls */}
+                                    {isSelected && (
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => updateQuantity(item.id, -1)}
+                                                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                                            >
+                                                <Minus className="h-4 w-4" />
+                                            </button>
+                                            <span className="w-8 text-center font-bold text-lg">
+                                                {qty}
+                                            </span>
+                                            <button
+                                                onClick={() => updateQuantity(item.id, 1)}
+                                                className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-
-                            {/* Name */}
-                            <h2 className="text-2xl font-bold text-center mb-2">
-                                {currentCard.name}
-                            </h2>
-                            <p className="text-center text-muted-foreground mb-8">
-                                Do you own one?
-                            </p>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => handleSwipe(false)}
-                                    className="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors"
-                                >
-                                    <X className="h-6 w-6 text-muted-foreground" />
-                                    <span className="text-sm font-medium">No</span>
-                                </button>
-                                <button
-                                    onClick={() => handleSwipe(true)}
-                                    className="flex-1 flex flex-col items-center gap-2 py-4 rounded-xl bg-mallard-green text-white hover:bg-mallard-green/90 transition-colors"
-                                >
-                                    <Check className="h-6 w-6" />
-                                    <span className="text-sm font-medium">Yes</span>
-                                </button>
-                            </div>
-                        </div>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* Next Item Preview */}
-                {currentCardIndex < ESSENTIAL_GEAR.length - 1 && (
-                    <div className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1">
-                        Next: {ESSENTIAL_GEAR[currentCardIndex + 1].name}
-                        <ChevronRight className="h-4 w-4" />
-                    </div>
-                )}
+                {/* Continue Button */}
+                <div className="mt-4 pt-4 border-t border-border">
+                    <button
+                        onClick={handleFinish}
+                        className="w-full py-4 rounded-xl font-bold text-lg bg-gradient-to-r from-mallard-green to-mallard-green-light text-white shadow-lg hover:shadow-xl transition-all"
+                    >
+                        {selectedCount > 0 ? (
+                            <>Continue with {selectedCount} Item{selectedCount !== 1 ? "s" : ""}</>
+                        ) : (
+                            <>Skip for Now</>
+                        )}
+                    </button>
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                        You can always add more gear later
+                    </p>
+                </div>
             </div>
         </OnboardingScreen>
     );
