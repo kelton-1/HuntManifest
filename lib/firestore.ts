@@ -14,7 +14,7 @@ import {
     serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { InventoryItem, HuntLog } from "./types";
+import { InventoryItem, HuntLog, HuntPlan } from "./types";
 
 // ============================================
 // USER PROFILE
@@ -202,4 +202,42 @@ export async function clearHuntLogs(userId: string): Promise<void> {
     const snapshot = await getDocs(colRef);
     const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
+}
+
+// ============================================
+// HUNT PLANS
+// ============================================
+
+export async function getHuntPlans(userId: string): Promise<HuntPlan[]> {
+    const colRef = collection(db, "users", userId, "huntPlans");
+    const q = query(colRef, orderBy("date", "asc")); // Plans sort by date ascending (upcoming)
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+    })) as HuntPlan[];
+}
+
+export async function addHuntPlan(userId: string, plan: Omit<HuntPlan, "id">): Promise<string> {
+    const colRef = collection(db, "users", userId, "huntPlans");
+    const docRef = doc(colRef);
+    await setDoc(docRef, {
+        ...plan,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
+
+export async function updateHuntPlan(userId: string, planId: string, data: Partial<HuntPlan>): Promise<void> {
+    const docRef = doc(db, "users", userId, "huntPlans", planId);
+    await updateDoc(docRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+    });
+}
+
+export async function deleteHuntPlan(userId: string, planId: string): Promise<void> {
+    const docRef = doc(db, "users", userId, "huntPlans", planId);
+    await deleteDoc(docRef);
 }

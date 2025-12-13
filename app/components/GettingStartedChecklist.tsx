@@ -56,6 +56,7 @@ export function GettingStartedChecklist() {
         if (daysSinceShown > 7 || allComplete) {
             // Clean up
             if (typeof window !== "undefined" && allComplete) {
+                // eslint-disable-next-line react-hooks/exhaustive-deps
                 localStorage.removeItem("timber_checklist_shown_at");
             }
             if (allComplete) return null;
@@ -98,8 +99,8 @@ export function GettingStartedChecklist() {
                             key={task.id}
                             href={task.done ? "#" : task.link}
                             className={`flex items-center gap-3 px-4 py-3 transition-colors ${task.done
-                                    ? "opacity-60 cursor-default"
-                                    : "hover:bg-secondary/50"
+                                ? "opacity-60 cursor-default"
+                                : "hover:bg-secondary/50"
                                 }`}
                             onClick={(e) => task.done && e.preventDefault()}
                         >

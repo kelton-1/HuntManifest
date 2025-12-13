@@ -253,6 +253,85 @@ h6 {
   }
 }
 
+/* Weather Animations */
+@keyframes rain {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+}
+
+@keyframes snow {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(80px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes fog {
+  0%, 100% {
+    transform: translateX(-5%);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translateX(5%);
+    opacity: 0.2;
+  }
+}
+
+@keyframes cloud-drift {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(400%);
+    opacity: 0;
+  }
+}
+
+.animate-rain {
+  animation: rain 1s linear infinite;
+}
+
+.animate-snow {
+  animation: snow 3s ease-in-out infinite;
+}
+
+.animate-fog {
+  animation: fog 8s ease-in-out infinite;
+}
+
+.animate-cloud-drift {
+  animation: cloud-drift 12s linear infinite;
+}
+
 /* Component Styles */
 @layer components {
   .btn-primary {

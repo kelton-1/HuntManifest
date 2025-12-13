@@ -319,3 +319,84 @@ export function useHuntLogs() {
 
     return { logs, loading, addLog, deleteLog, clearLogs };
 }
+
+// ============================================
+// HUNT PLANS HOOK (Firestore + localStorage fallback)
+// ============================================
+
+import { HuntPlan } from "./types";
+
+export function useHuntPlans() {
+    const { user } = useAuth();
+    const [plans, setPlans] = useState<HuntPlan[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [localPlans, setLocalPlans] = useLocalStorage<HuntPlan[]>("timber_hunt_plans", []);
+
+    // Load plans based on auth state
+    useEffect(() => {
+        const loadPlans = async () => {
+            if (user) {
+                try {
+                    const items = await firestoreService.getHuntPlans(user.uid);
+                    setPlans(items);
+                } catch (error) {
+                    console.error("Error loading hunt plans from Firestore:", error);
+                    setPlans(localPlans);
+                }
+            } else {
+                setPlans(localPlans);
+            }
+            setLoading(false);
+        };
+        loadPlans();
+    }, [user, localPlans]);
+
+    const addPlan = useCallback(async (plan: HuntPlan) => {
+        if (user) {
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { id: _, ...planData } = plan;
+                const newId = await firestoreService.addHuntPlan(user.uid, planData);
+                setPlans((prev) => [{ ...planData, id: newId }, ...prev].sort((a, b) => a.date.localeCompare(b.date)));
+            } catch (error) {
+                console.error("Error adding hunt plan to Firestore:", error);
+            }
+        } else {
+            setLocalPlans((prev) => [plan, ...prev].sort((a, b) => a.date.localeCompare(b.date)));
+            setPlans((prev) => [plan, ...prev].sort((a, b) => a.date.localeCompare(b.date)));
+        }
+    }, [user, setLocalPlans]);
+
+    const updatePlan = useCallback(async (updatedPlan: HuntPlan) => {
+        if (user) {
+            try {
+                const { id, ...data } = updatedPlan;
+                await firestoreService.updateHuntPlan(user.uid, id, data);
+                setPlans((prev) =>
+                    prev.map((p) => (p.id === updatedPlan.id ? updatedPlan : p))
+                );
+            } catch (error) {
+                console.error("Error updating hunt plan in Firestore:", error);
+            }
+        } else {
+            setLocalPlans((prev) => prev.map((p) => (p.id === updatedPlan.id ? updatedPlan : p)));
+            setPlans((prev) => prev.map((p) => (p.id === updatedPlan.id ? updatedPlan : p)));
+        }
+    }, [user, setLocalPlans]);
+
+    const deletePlan = useCallback(async (id: string) => {
+        if (user) {
+            try {
+                await firestoreService.deleteHuntPlan(user.uid, id);
+                setPlans((prev) => prev.filter((p) => p.id !== id));
+            } catch (error) {
+                console.error("Error deleting hunt plan from Firestore:", error);
+            }
+        } else {
+            setLocalPlans((prev) => prev.filter((p) => p.id !== id));
+            setPlans((prev) => prev.filter((p) => p.id !== id));
+        }
+    }, [user, setLocalPlans]);
+
+    return { plans, loading, addPlan, updatePlan, deletePlan };
+}

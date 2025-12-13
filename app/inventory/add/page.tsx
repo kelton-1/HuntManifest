@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Save, ChevronDown, Flame } from "lucide-react";
 import { useInventory } from "@/lib/storage";
 import { InventoryCategory, INVENTORY_CATEGORIES } from "@/lib/types";
@@ -15,7 +15,11 @@ import {
 
 export default function AddInventoryItemPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { addItem } = useInventory();
+
+    // Pre-select category from URL params (e.g., /inventory/add?category=Decoy)
+    const preSelectedCategory = searchParams.get('category') as InventoryCategory | null;
 
     // Form state
     const [category, setCategory] = useState<InventoryCategory | null>(null);
@@ -27,6 +31,23 @@ export default function AddInventoryItemPage() {
 
     // Autocomplete state
     const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const handleCategorySelect = (cat: InventoryCategory) => {
+        setCategory(cat);
+        setSpecs({}); // Reset specs on category change
+        if (cat === "Decoy") setQuantity(12);
+        else setQuantity(1);
+    };
+
+    // Auto-select category from URL param on mount
+    useEffect(() => {
+        if (preSelectedCategory && INVENTORY_CATEGORIES.includes(preSelectedCategory)) {
+            // It's safe to call this now as it's defined before usage in this scope rendering
+            // However, effects run after render so declaration order in function body matters for hoisting rules in some linters
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            handleCategorySelect(preSelectedCategory);
+        }
+    }, [preSelectedCategory]);
 
     // Get suggestions for current category
     const suggestions = useMemo(() => {
@@ -41,13 +62,6 @@ export default function AddInventoryItemPage() {
     // Handle Spec Change
     const handleSpecChange = (key: string, value: string) => {
         setSpecs(prev => ({ ...prev, [key]: value }));
-    };
-
-    const handleCategorySelect = (cat: InventoryCategory) => {
-        setCategory(cat);
-        setSpecs({}); // Reset specs on category change
-        if (cat === "Decoy") setQuantity(12);
-        else setQuantity(1);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -135,7 +149,7 @@ export default function AddInventoryItemPage() {
                     <ArrowLeft className="h-5 w-5" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Add New Gear</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Add Item</h1>
                     <p className="text-xs text-muted-foreground font-medium">
                         {!category ? "First, select a category" : `Adding to ${category}`}
                     </p>
@@ -309,7 +323,7 @@ export default function AddInventoryItemPage() {
                             className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center gap-2"
                         >
                             <Save className="h-5 w-5" />
-                            Save to Inventory
+                            Save Item
                         </button>
                     </div>
                 )}

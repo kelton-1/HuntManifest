@@ -56,6 +56,7 @@ export interface InventoryItem {
     // Metadata
     createdAt?: Timestamp | Date;
     updatedAt?: Timestamp | Date;
+    isChecked?: boolean; // UI state for checklist
 }
 
 // ============================================
@@ -125,6 +126,7 @@ export interface HuntLog {
     location: GeoLocation;
     weather: WeatherConditions;
     harvests: Harvest[];
+    gear?: { id: string; name: string }[]; // Gear used in this hunt
     notes: string;
     photos?: string[];
     // Enterprise fields
@@ -139,6 +141,8 @@ export interface HuntLog {
     lessonsLearned?: string;
     rating?: number; // 1-5 stars
     tags?: string[];
+    // Linkage
+    planId?: string; // ID of the HuntPlan this log fulfilled
     // Metadata
     createdAt?: Timestamp | Date;
     updatedAt?: Timestamp | Date;
@@ -161,6 +165,37 @@ export interface AuditLogEntry {
     newData?: Record<string, unknown>;
     ipAddress?: string;
     userAgent?: string;
+}
+
+// ============================================
+// HUNT PLAN TYPES
+// ============================================
+
+export interface PlanGearItem {
+    id: string; // Reference to InventoryItem.id
+    name: string;
+    category: InventoryCategory;
+    quantity: number;
+    checked: boolean; // Packing status
+}
+
+export type PlanStatus = 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+
+export interface HuntPlan {
+    id: string;
+    userId: string;
+    title: string;
+    date: string; // ISO date string
+    location: GeoLocation;
+    weather?: WeatherConditions; // Expected
+    gear: PlanGearItem[];
+    status: PlanStatus;
+    notes?: string;
+    // Linkage
+    resultLogId?: string; // ID of the HuntLog created from this plan
+    // Metadata
+    createdAt?: Timestamp | Date;
+    updatedAt?: Timestamp | Date;
 }
 
 // ============================================

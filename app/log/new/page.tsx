@@ -1,19 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, MapPin, CloudSun, ChevronDown, ChevronUp, Bird, Thermometer, Wind, Cloud, Loader2, Navigation } from "lucide-react";
-import { useHuntLogs } from "@/lib/storage";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Save, MapPin, Loader2, Navigation, Package, Check, History } from "lucide-react";
+import { useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { Harvest, WATERFOWL_SPECIES, WeatherConditions } from "@/lib/types";
 import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
 import { fetchWeather } from "@/lib/weatherApi";
+import { Thermometer, Wind, Cloud, Bird, ChevronDown, ChevronUp } from "lucide-react";
+import { useUserProfile } from "@/lib/useUserProfile";
 
-export default function NewHuntLogPage() {
+function NewHuntLogContent() {
     const router = useRouter();
-    const { addLog } = useHuntLogs();
-    const { getCurrentPosition } = useGeolocation();
+    const searchParams = useSearchParams();
+    const planId = searchParams.get("planId");
 
-    // State
+    const { addLog } = useHuntLogs();
+    const { plans, updatePlan } = useHuntPlans();
+    const { getCurrentPosition } = useGeolocation();
+    const { profile, addSavedLocation } = useUserProfile();
+
+    // Location suggestions visibility
+    const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [locationName, setLocationName] = useState("");
     const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -31,6 +40,43 @@ export default function NewHuntLogPage() {
     // Harvest State
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [selectedSpecies, setSelectedSpecies] = useState(WATERFOWL_SPECIES[0]);
+
+    // Gear State
+    const [gearUsed, setGearUsed] = useState<{ id: string; name: string }[]>([]);
+
+    // Pre-fill from Plan
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (planId && plans.length > 0) {
+            const plan = plans.find(p => p.id === planId);
+            if (plan) {
+                // Batch updates to avoid multiple renders/cascading updates
+                if (plan.date) setDate(prev => prev === new Date().toISOString().split("T")[0] ? new Date(plan.date).toISOString().split("T")[0] : prev);
+                if (plan.location?.name) setLocationName(prev => !prev ? plan.location.name : prev);
+
+                // For weather, we need to be careful not to create a loop or impure render
+                // Just set it once if we have plan weather data
+                if (plan.weather) {
+                    setWeather(prev => ({
+                        ...prev,
+                        ...plan.weather!
+                    }));
+                }
+
+                if (plan.gear) {
+                    setGearUsed(prev => prev.length === 0 ? plan.gear.map(g => ({ id: g.id, name: g.name })) : prev);
+                }
+
+                // Append note
+                if (plan.title) {
+                    setNotes(prev => {
+                        if (prev.includes(`Plan: ${plan.title}`)) return prev;
+                        return prev ? `${prev}\n\nPlan: ${plan.title}` : `Executed Plan: ${plan.title}`;
+                    });
+                }
+            }
+        }
+    }, [planId, plans]);
 
     // Real Auto-Fill with GPS + Weather
     const handleAutoFill = async () => {
@@ -78,23 +124,45 @@ export default function NewHuntLogPage() {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!locationName) {
             alert("Please enter a location");
             return;
         }
 
-        addLog({
-            id: crypto.randomUUID(),
+        const newLogId = crypto.randomUUID();
+
+        // 1. Create the Log
+        await addLog({
+            id: newLogId,
             date,
             location: { name: locationName },
             weather,
             harvests,
-            notes
+            gear: gearUsed,
+            notes,
+            planId: planId || undefined
         });
 
-        router.back();
+        // 2. If imported from a Plan, update that Plan
+        if (planId) {
+            const plan = plans.find(p => p.id === planId);
+            if (plan) {
+                await updatePlan({
+                    ...plan,
+                    status: 'COMPLETED',
+                    resultLogId: newLogId
+                });
+            }
+        }
+
+        router.replace("/log"); // Go to log list
+
+        // 3. Save location to user profile for future quick access
+        if (locationName) {
+            await addSavedLocation(locationName);
+        }
     };
 
     const totalBirds = harvests.reduce((sum, h) => sum + h.count, 0);
@@ -111,7 +179,9 @@ export default function NewHuntLogPage() {
                 </button>
                 <div>
                     <h1 className="text-xl font-bold">New Hunt Log</h1>
-                    <p className="text-xs text-muted-foreground">Record your hunt details</p>
+                    <p className="text-xs text-muted-foreground">
+                        {planId ? "Imported from Plan" : "Record your hunt details"}
+                    </p>
                 </div>
             </header>
 
@@ -156,8 +226,33 @@ export default function NewHuntLogPage() {
                                 placeholder="Location Name (or use Auto-Fill)"
                                 value={locationName}
                                 onChange={e => setLocationName(e.target.value)}
+                                onFocus={() => setShowLocationSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                                 className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm pl-11 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                             />
+                            {/* Saved Location Suggestions */}
+                            {showLocationSuggestions && profile.savedLocations.length > 0 && (
+                                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                                    <div className="px-3 py-2 text-xs text-muted-foreground font-medium flex items-center gap-1.5 border-b border-border">
+                                        <History className="h-3 w-3" />
+                                        Recent Locations
+                                    </div>
+                                    {profile.savedLocations.slice(0, 5).map((loc, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => {
+                                                setLocationName(loc);
+                                                setShowLocationSuggestions(false);
+                                            }}
+                                            className="w-full px-4 py-2.5 text-sm text-left hover:bg-secondary flex items-center gap-2 transition-colors"
+                                        >
+                                            <MapPin className="h-3.5 w-3.5 text-primary" />
+                                            {loc}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         {locationCoords && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -226,10 +321,40 @@ export default function NewHuntLogPage() {
                     </div>
                 </section>
 
-                {/* Harvest Section */}
+                {/* Gear Section */}
                 <section className="space-y-4">
                     <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">3</span>
+                        Gear Used
+                        <span className="ml-auto px-2 py-0.5 bg-secondary text-muted-foreground rounded-full text-xs font-bold">
+                            {gearUsed.length} items
+                        </span>
+                    </h3>
+
+                    {gearUsed.length > 0 ? (
+                        <div className="bg-card border border-border rounded-xl p-4 max-h-48 overflow-y-auto space-y-2">
+                            {gearUsed.map((g, i) => (
+                                <div key={i} className="flex items-center gap-2 text-sm">
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span>{g.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground italic px-4">
+                            No gear selected.
+                            {planId ? " (This plan had no gear)" : ""}
+                        </p>
+                    )}
+                    <p className="text-xs text-muted-foreground px-1">
+                        * Gear editing in logs coming soon. For now, use Plans to track gear usage properly.
+                    </p>
+                </section>
+
+                {/* Harvest Section */}
+                <section className="space-y-4">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">4</span>
                         Harvest
                         {totalBirds > 0 && (
                             <span className="ml-auto px-2 py-0.5 bg-mallard-yellow/20 text-mallard-yellow rounded-full text-xs font-bold">
@@ -298,7 +423,7 @@ export default function NewHuntLogPage() {
                 {/* Notes Section */}
                 <section className="space-y-4">
                     <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">4</span>
+                        <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">5</span>
                         Notes
                     </h3>
                     <textarea
@@ -320,5 +445,13 @@ export default function NewHuntLogPage() {
                 </button>
             </form>
         </div >
+    );
+}
+
+export default function NewHuntLogPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center pt-20"><Loader2 className="animate-spin" /></div>}>
+            <NewHuntLogContent />
+        </Suspense>
     );
 }

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, MapPin, Calendar, Bird, ChevronRight, CloudSun, Wind, Trash2 } from "lucide-react";
+import { Plus, MapPin, Calendar, Bird, ChevronRight, CloudSun, Wind } from "lucide-react";
 import { useHuntLogs } from "@/lib/storage";
+import { useUserProfile } from "@/lib/useUserProfile";
+import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 
 export default function HuntLogPage() {
-    const { logs, deleteLog } = useHuntLogs();
+    const { logs } = useHuntLogs();
+    const { profile } = useUserProfile();
 
     const totalBirds = logs.reduce((acc, log) =>
         acc + log.harvests.reduce((sum, h) => sum + h.count, 0), 0
@@ -21,7 +24,7 @@ export default function HuntLogPage() {
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {logs.length} {logs.length === 1 ? 'hunt' : 'hunts'} logged
-                        {totalBirds > 0 && ` • ${totalBirds} birds`}
+                        {totalBirds > 0 && ` • ${totalBirds} harvested`}
                     </p>
                 </div>
                 <Link
@@ -29,7 +32,7 @@ export default function HuntLogPage() {
                     className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-mallard-green to-mallard-green-light text-white shadow-lg transition-all hover:scale-105 active:scale-95 hover:shadow-xl"
                 >
                     <Plus className="h-6 w-6" />
-                    <span className="sr-only">Log Hunt</span>
+                    <span className="sr-only">Record Hunt</span>
                 </Link>
             </header>
 
@@ -49,7 +52,7 @@ export default function HuntLogPage() {
                             className="inline-flex items-center gap-2 mt-6 px-5 py-3 bg-gradient-to-br from-mallard-green to-mallard-green-light text-white rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
                         >
                             <Plus className="h-4 w-4" />
-                            Log Your First Hunt
+                            Record Your First Hunt
                         </Link>
                     </div>
                 ) : (
@@ -58,9 +61,10 @@ export default function HuntLogPage() {
                         const speciesList = log.harvests.map(h => h.species).join(', ');
 
                         return (
-                            <div
+                            <Link
+                                href={`/log/${log.id}`}
                                 key={log.id}
-                                className="group bg-card rounded-2xl border border-border shadow-sm overflow-hidden card-hover animate-slide-up"
+                                className="block group bg-card rounded-2xl border border-border shadow-sm overflow-hidden card-hover animate-slide-up"
                                 style={{ animationDelay: `${index * 75}ms` }}
                             >
                                 {/* Main Content */}
@@ -78,14 +82,6 @@ export default function HuntLogPage() {
                                                 })}
                                             </time>
                                         </div>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm("Delete this hunt log?")) deleteLog(log.id);
-                                            }}
-                                            className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
                                     </div>
 
                                     {/* Location */}
@@ -100,11 +96,11 @@ export default function HuntLogPage() {
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
                                             <CloudSun className="h-3 w-3" />
-                                            {log.weather.temperature}°F
+                                            {formatTemperature(log.weather.temperature, profile.temperatureUnit)}
                                         </div>
                                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
                                             <Wind className="h-3 w-3" />
-                                            {log.weather.windDirection} {log.weather.windSpeed}mph
+                                            {log.weather.windDirection} {formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}
                                         </div>
                                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
                                             {log.weather.skyCondition}
@@ -127,12 +123,12 @@ export default function HuntLogPage() {
                                             {bagCount}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
-                                            {bagCount === 1 ? 'bird' : 'birds'}
+                                            {bagCount === 1 ? 'harvested' : 'harvested'}
                                         </span>
                                     </div>
                                     <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                                 </div>
-                            </div>
+                            </Link>
                         );
                     })
                 )}

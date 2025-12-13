@@ -6,47 +6,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useInventory, useHuntLogs } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
-
-// User preferences stored in localStorage
-interface UserPreferences {
-    hunterName: string;
-    homeLocation: string;
-    temperatureUnit: 'F' | 'C';
-    windSpeedUnit: 'mph' | 'kph';
-    notificationsEnabled: boolean;
-}
-
-const DEFAULT_PREFERENCES: UserPreferences = {
-    hunterName: "Hunter",
-    homeLocation: "",
-    temperatureUnit: 'F',
-    windSpeedUnit: 'mph',
-    notificationsEnabled: true,
-};
-
-const PREFERENCES_KEY = "talkin_timber_preferences";
-
-function usePreferences() {
-    const [preferences, setPreferences] = useState<UserPreferences>(() => {
-        if (typeof window === "undefined") return DEFAULT_PREFERENCES;
-        const saved = localStorage.getItem(PREFERENCES_KEY);
-        return saved ? { ...DEFAULT_PREFERENCES, ...JSON.parse(saved) } : DEFAULT_PREFERENCES;
-    });
-    // loaded is true if we're on the client
-    const loaded = typeof window !== "undefined";
-
-    const updatePreferences = (updates: Partial<UserPreferences>) => {
-        const newPrefs = { ...preferences, ...updates };
-        setPreferences(newPrefs);
-        localStorage.setItem(PREFERENCES_KEY, JSON.stringify(newPrefs));
-    };
-
-    return { preferences, updatePreferences, loaded };
-}
+import { useUserProfile } from "@/lib/useUserProfile";
 
 export default function ProfilePage() {
     const { theme, setTheme } = useTheme();
-    const { preferences, updatePreferences, loaded } = usePreferences();
+    const { profile, updateProfile, loading: profileLoading, initialized } = useUserProfile();
     const { inventory, clearInventory } = useInventory();
     const { logs, clearLogs } = useHuntLogs();
     const { user, signOut } = useAuth();
@@ -57,13 +21,13 @@ export default function ProfilePage() {
     const [tempLocation, setTempLocation] = useState("");
 
     // Check if we're on the client
-    const mounted = loaded;
+    const mounted = typeof window !== "undefined";
 
     const handleExportData = () => {
         const data = {
             exportDate: new Date().toISOString(),
             appVersion: "1.0.0",
-            preferences,
+            preferences: profile,
             inventory,
             huntLogs: logs,
         };
@@ -81,7 +45,7 @@ export default function ProfilePage() {
             if (confirm("Final confirmation: Delete everything?")) {
                 clearInventory();
                 clearLogs();
-                localStorage.removeItem(PREFERENCES_KEY);
+                localStorage.removeItem("timber_user_profile");
                 window.location.reload();
             }
         }
@@ -94,7 +58,7 @@ export default function ProfilePage() {
         }
     };
 
-    if (!mounted || !loaded) return null;
+    if (!mounted || !initialized) return null;
 
     return (
         <div className="pb-8 animate-fade-in">
@@ -115,7 +79,7 @@ export default function ProfilePage() {
                             autoFocus
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                    updatePreferences({ hunterName: tempName || "Hunter" });
+                                    updateProfile({ hunterName: tempName || "Hunter" });
                                     setIsEditingName(false);
                                 }
                                 if (e.key === 'Escape') {
@@ -125,7 +89,7 @@ export default function ProfilePage() {
                         />
                         <button
                             onClick={() => {
-                                updatePreferences({ hunterName: tempName || "Hunter" });
+                                updateProfile({ hunterName: tempName || "Hunter" });
                                 setIsEditingName(false);
                             }}
                             className="p-1 text-green-600 hover:bg-green-100 rounded"
@@ -142,16 +106,16 @@ export default function ProfilePage() {
                 ) : (
                     <button
                         onClick={() => {
-                            setTempName(preferences.hunterName);
+                            setTempName(profile.hunterName);
                             setIsEditingName(true);
                         }}
                         className="group flex items-center justify-center gap-2 mx-auto"
                     >
-                        <h1 className="text-2xl font-bold">{preferences.hunterName}</h1>
+                        <h1 className="text-2xl font-bold">{profile.hunterName}</h1>
                         <Edit2 className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                 )}
-                <p className="text-sm text-muted-foreground">Season Member</p>
+                <p className="text-sm text-muted-foreground">2025 Season Active</p>
             </header>
 
             {/* Stats Bar */}
@@ -163,14 +127,14 @@ export default function ProfilePage() {
                 <div className="w-px bg-border" />
                 <div className="text-center">
                     <p className="text-2xl font-bold text-primary">{logs.length}</p>
-                    <p className="text-xs text-muted-foreground">Hunts Logged</p>
+                    <p className="text-xs text-muted-foreground">Hunts Recorded</p>
                 </div>
                 <div className="w-px bg-border" />
                 <div className="text-center">
                     <p className="text-2xl font-bold text-mallard-yellow">
                         {logs.reduce((acc, log) => acc + log.harvests.reduce((sum, h) => sum + h.count, 0), 0)}
                     </p>
-                    <p className="text-xs text-muted-foreground">Total Bag</p>
+                    <p className="text-xs text-muted-foreground">Total Harvest</p>
                 </div>
             </div>
 
@@ -219,26 +183,26 @@ export default function ProfilePage() {
                                         autoFocus
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
-                                                updatePreferences({ homeLocation: tempLocation });
+                                                updateProfile({ homeLocation: tempLocation });
                                                 setIsEditingLocation(false);
                                             }
                                             if (e.key === 'Escape') setIsEditingLocation(false);
                                         }}
                                     />
                                     <button onClick={() => {
-                                        updatePreferences({ homeLocation: tempLocation });
+                                        updateProfile({ homeLocation: tempLocation });
                                         setIsEditingLocation(false);
                                     }} className="text-green-600"><Check className="h-4 w-4" /></button>
                                 </div>
                             ) : (
                                 <button
                                     onClick={() => {
-                                        setTempLocation(preferences.homeLocation);
+                                        setTempLocation(profile.homeLocation);
                                         setIsEditingLocation(true);
                                     }}
                                     className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
                                 >
-                                    {preferences.homeLocation || "Set location"}
+                                    {profile.homeLocation || "Set location"}
                                     <ChevronRight className="h-4 w-4" />
                                 </button>
                             )}
@@ -254,14 +218,14 @@ export default function ProfilePage() {
                             </div>
                             <div className="flex bg-secondary rounded-lg p-0.5">
                                 <button
-                                    onClick={() => updatePreferences({ temperatureUnit: 'F' })}
-                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${preferences.temperatureUnit === 'F' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                                    onClick={() => updateProfile({ temperatureUnit: 'F' })}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${profile.temperatureUnit === 'F' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
                                 >
                                     °F
                                 </button>
                                 <button
-                                    onClick={() => updatePreferences({ temperatureUnit: 'C' })}
-                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${preferences.temperatureUnit === 'C' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                                    onClick={() => updateProfile({ temperatureUnit: 'C' })}
+                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${profile.temperatureUnit === 'C' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
                                 >
                                     °C
                                 </button>
@@ -277,10 +241,10 @@ export default function ProfilePage() {
                                 <span className="font-medium">Notifications</span>
                             </div>
                             <button
-                                onClick={() => updatePreferences({ notificationsEnabled: !preferences.notificationsEnabled })}
-                                className={`relative w-12 h-7 rounded-full transition-colors ${preferences.notificationsEnabled ? "bg-primary" : "bg-secondary"}`}
+                                onClick={() => updateProfile({ notificationsEnabled: !profile.notificationsEnabled })}
+                                className={`relative w-12 h-7 rounded-full transition-colors ${profile.notificationsEnabled ? "bg-primary" : "bg-secondary"}`}
                             >
-                                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${preferences.notificationsEnabled ? "translate-x-6" : "translate-x-1"}`} />
+                                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${profile.notificationsEnabled ? "translate-x-6" : "translate-x-1"}`} />
                             </button>
                         </div>
 

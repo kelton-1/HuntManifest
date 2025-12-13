@@ -98,7 +98,7 @@ export function BrandSelectionScreen({
                 <div className="text-center mb-6">
                     <h1 className="text-2xl font-bold mb-2">Build Your Locker</h1>
                     <p className="text-muted-foreground">
-                        Tap the brands you own. We'll prioritize them when you add gear later.
+                        Tap the brands you own. We&apos;ll prioritize them when you add gear later.
                     </p>
                 </div>
 

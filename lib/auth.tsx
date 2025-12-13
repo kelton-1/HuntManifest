@@ -9,6 +9,7 @@ import {
     signOut as firebaseSignOut,
     onAuthStateChanged,
     GoogleAuthProvider,
+    sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "./firebase";
 
@@ -19,6 +20,7 @@ interface AuthContextType {
     signInWithEmail: (email: string, password: string) => Promise<void>;
     signUpWithEmail: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
+    sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await createUserWithEmailAndPassword(auth, email, password);
     };
 
+    const sendPasswordReset = async (email: string) => {
+        await sendPasswordResetEmail(auth, email);
+    };
+
     const signOut = async () => {
         await firebaseSignOut(auth);
     };
@@ -63,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 signInWithEmail,
                 signUpWithEmail,
                 signOut,
+                sendPasswordReset,
             }}
         >
             {children}
