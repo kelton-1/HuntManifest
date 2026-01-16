@@ -158,7 +158,12 @@ export default function Home() {
                       setQuickTip(tips.split('\n')[0] || tips.substring(0, 150));
                     } catch (err) {
                       console.error("AI error:", err);
-                      setQuickTip("Tap for conditions-based tips");
+                      const error = err as Error;
+                      if (error.message === 'RATE_LIMIT') {
+                        setQuickTip("Rate limit reached. Try again in a minute.");
+                      } else {
+                        setQuickTip("Unable to get tip. Try again later.");
+                      }
                     }
                     setTipLoading(false);
                   }}

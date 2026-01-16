@@ -8,8 +8,16 @@ const ai = getAI(app, { backend: new GoogleAIBackend() });
 export const geminiModel = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 
 export async function generateText(prompt: string): Promise<string> {
-    const result = await geminiModel.generateContent(prompt);
-    return result.response.text();
+    try {
+        const result = await geminiModel.generateContent(prompt);
+        return result.response.text();
+    } catch (error: unknown) {
+        const err = error as { code?: string; customErrorData?: { status?: number } };
+        if (err?.code === 'fetch-error' && err?.customErrorData?.status === 429) {
+            throw new Error('RATE_LIMIT');
+        }
+        throw error;
+    }
 }
 
 export async function generateHuntingTips(

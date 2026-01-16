@@ -117,7 +117,12 @@ export default function ConditionsPage() {
                                     setAiTips(tips);
                                 } catch (e) {
                                     console.error("AI error:", e);
-                                    setAiTips("Unable to generate tips. Please try again.");
+                                    const error = e as Error;
+                                    if (error.message === 'RATE_LIMIT') {
+                                        setAiTips("Rate limit reached. The free tier has limited requests per minute. Please wait a moment and try again.");
+                                    } else {
+                                        setAiTips("Unable to generate tips. Please try again.");
+                                    }
                                 }
                                 setAiLoading(false);
                             }}

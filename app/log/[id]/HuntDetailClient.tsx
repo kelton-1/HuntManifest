@@ -177,7 +177,12 @@ export default function HuntDetailClient() {
                                         setAiAnalysis(analysis);
                                     } catch (e) {
                                         console.error("AI error:", e);
-                                        setAiAnalysis("Unable to analyze. Please try again.");
+                                        const error = e as Error;
+                                        if (error.message === 'RATE_LIMIT') {
+                                            setAiAnalysis("Rate limit reached. Please wait a moment and try again.");
+                                        } else {
+                                            setAiAnalysis("Unable to analyze. Please try again.");
+                                        }
                                     }
                                     setAiLoading(false);
                                 }}
