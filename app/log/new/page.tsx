@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Navigation, Check } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus } from "lucide-react";
 import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
-import { useHuntLogs, useHuntPlans } from "@/lib/storage";
+import { useHuntLogs, useHuntPlans, useInventory } from "@/lib/storage";
 import { Harvest, WATERFOWL_SPECIES, WeatherConditions } from "@/lib/types";
 import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
 import { fetchWeather } from "@/lib/weatherApi";
 import { Thermometer, Wind, Cloud, Bird, ChevronDown, ChevronUp } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
+import { SmartInput } from "@/app/components/inventory/SmartInput";
+import { ParsedProduct } from "@/lib/services/ProductIntelligenceEngine";
 
 function NewHuntLogContent() {
     const router = useRouter();
@@ -18,6 +20,7 @@ function NewHuntLogContent() {
 
     const { addLog } = useHuntLogs();
     const { plans, updatePlan } = useHuntPlans();
+    const { inventory, addItem } = useInventory();
     const { getCurrentPosition } = useGeolocation();
     const { profile, addSavedLocation } = useUserProfile();
 
@@ -42,6 +45,36 @@ function NewHuntLogContent() {
 
     // Gear State
     const [gearUsed, setGearUsed] = useState<{ id: string; name: string }[]>([]);
+    const [showGearAdd, setShowGearAdd] = useState(false);
+
+    // Remove gear from list
+    const removeGear = (id: string) => {
+        setGearUsed(prev => prev.filter(g => g.id !== id));
+    };
+
+    // Add gear from SmartInput
+    const handleGearAddResult = useCallback((result: ParsedProduct) => {
+        const newItem = {
+            id: crypto.randomUUID(),
+            name: result.name,
+            category: result.category,
+            quantity: 1,
+            status: 'READY' as const,
+            specs: {
+                brand: result.brand,
+                model: result.model,
+                ...(result.attributes as Record<string, string>),
+            },
+            createdAt: new Date(),
+        };
+
+        // Add to inventory
+        addItem(newItem);
+
+        // Add to gear used list
+        setGearUsed(prev => [...prev, { id: newItem.id, name: newItem.name }]);
+        setShowGearAdd(false);
+    }, [addItem]);
 
     // Pre-fill from Plan
     useEffect(() => {
@@ -311,24 +344,55 @@ function NewHuntLogContent() {
                         </span>
                     </h3>
 
-                    {gearUsed.length > 0 ? (
-                        <div className="bg-card border border-border rounded-xl p-4 max-h-48 overflow-y-auto space-y-2">
-                            {gearUsed.map((g, i) => (
-                                <div key={i} className="flex items-center gap-2 text-sm">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{g.name}</span>
+                    {gearUsed.length > 0 && (
+                        <div className="bg-card border border-border rounded-xl p-3 space-y-2">
+                            {gearUsed.map((g) => (
+                                <div key={g.id} className="flex items-center justify-between gap-2 text-sm py-1">
+                                    <div className="flex items-center gap-2">
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <span>{g.name}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeGear(g.id)}
+                                        className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-destructive transition-colors"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground italic px-4">
-                            No gear selected.
-                            {planId ? " (This plan had no gear)" : ""}
-                        </p>
                     )}
-                    <p className="text-xs text-muted-foreground px-1">
-                        * Gear editing in logs coming soon. For now, use Plans to track gear usage properly.
-                    </p>
+
+                    {/* Inline Add */}
+                    {showGearAdd ? (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">Add gear</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowGearAdd(false)}
+                                    className="text-xs text-muted-foreground hover:text-primary"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                            <SmartInput
+                                onResult={handleGearAddResult}
+                                compact={true}
+                                placeholder="Scan, paste, or type..."
+                            />
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setShowGearAdd(true)}
+                            className="w-full py-2 border border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add gear
+                        </button>
+                    )}
                 </section>
 
                 {/* Harvest Section */}

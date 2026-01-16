@@ -1,16 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Wind, Cloud, Thermometer, Droplets, Sun, Calendar, Sparkles, RefreshCw } from "lucide-react";
+import { ArrowLeft, Wind, Cloud, Droplets, Calendar, Sparkles, RefreshCw, Sun, CloudRain, Snowflake, CloudFog } from "lucide-react";
 import { useGeolocation } from "@/lib/geolocation";
 import { useEffect, useState } from "react";
-import { fetchWeather } from "@/lib/weatherApi";
-import { WeatherConditions } from "@/lib/types";
+import { fetchWeather, fetchHourlyForecast, HourlyForecast } from "@/lib/weatherApi";
+import { WeatherConditions, SkyCondition } from "@/lib/types";
 import { generateHuntingTips } from "@/lib/gemini";
+
+// Map sky condition to icon
+function getWeatherIcon(condition: SkyCondition) {
+    switch (condition) {
+        case 'Clear': return Sun;
+        case 'Partly Cloudy': return Cloud;
+        case 'Overcast': return Cloud;
+        case 'Rain': return CloudRain;
+        case 'Snow': return Snowflake;
+        case 'Fog': return CloudFog;
+        default: return Cloud;
+    }
+}
 
 export default function ConditionsPage() {
     const { getCurrentPosition } = useGeolocation();
     const [weather, setWeather] = useState<WeatherConditions | null>(null);
+    const [hourlyForecast, setHourlyForecast] = useState<HourlyForecast[]>([]);
     const [loading, setLoading] = useState(true);
     const [aiTips, setAiTips] = useState<string | null>(null);
     const [aiLoading, setAiLoading] = useState(false);
@@ -19,22 +33,19 @@ export default function ConditionsPage() {
         async function load() {
             const pos = await getCurrentPosition();
             if (pos) {
-                const res = await fetchWeather(pos.latitude, pos.longitude);
-                if (res.success) setWeather(res.data);
+                // Fetch current weather and hourly forecast in parallel
+                const [weatherRes, hourlyRes] = await Promise.all([
+                    fetchWeather(pos.latitude, pos.longitude),
+                    fetchHourlyForecast(pos.latitude, pos.longitude, 6)
+                ]);
+
+                if (weatherRes.success) setWeather(weatherRes.data);
+                if (hourlyRes.success) setHourlyForecast(hourlyRes.data);
             }
             setLoading(false);
         }
         load();
     }, []);
-
-    // Mock hourly forecast for UI demo (since API might not provide it yet)
-    const hourly = [
-        { time: "Now", temp: weather?.temperature || "--", icon: Cloud, wind: weather?.windSpeed || "10" },
-        { time: "1h", temp: (weather?.temperature || 0) + 1, icon: Sun, wind: "12" },
-        { time: "2h", temp: (weather?.temperature || 0) + 2, icon: Sun, wind: "14" },
-        { time: "3h", temp: (weather?.temperature || 0) + 1, icon: Cloud, wind: "11" },
-        { time: "4h", temp: (weather?.temperature || 0) - 1, icon: Wind, wind: "15" },
-    ];
 
     return (
         <div className="pb-20 animate-fade-in relative min-h-screen bg-background">
@@ -84,16 +95,35 @@ export default function ConditionsPage() {
                 {/* Hourly Forecast */}
                 <section>
                     <h3 className="font-bold text-lg mb-4">Hourly Forecast</h3>
-                    <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-                        {hourly.map((h, i) => (
-                            <div key={i} className="flex-shrink-0 w-20 flex flex-col items-center p-3 rounded-2xl bg-card border border-border">
-                                <span className="text-xs text-muted-foreground mb-2">{h.time}</span>
-                                <h.icon className="h-6 w-6 mb-2 text-primary" />
-                                <span className="font-bold">{h.temp}°</span>
-                                <span className="text-[10px] text-muted-foreground mt-1">{h.wind} mph</span>
-                            </div>
-                        ))}
-                    </div>
+                    {loading ? (
+                        <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="flex-shrink-0 w-20 flex flex-col items-center p-3 rounded-2xl bg-card border border-border animate-pulse">
+                                    <div className="h-3 w-8 bg-muted rounded mb-2" />
+                                    <div className="h-6 w-6 bg-muted rounded-full mb-2" />
+                                    <div className="h-4 w-10 bg-muted rounded" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : hourlyForecast.length > 0 ? (
+                        <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                            {hourlyForecast.map((h, i) => {
+                                const Icon = getWeatherIcon(h.skyCondition);
+                                return (
+                                    <div key={i} className="flex-shrink-0 w-20 flex flex-col items-center p-3 rounded-2xl bg-card border border-border">
+                                        <span className="text-xs text-muted-foreground mb-2">{h.time}</span>
+                                        <Icon className="h-6 w-6 mb-2 text-primary" />
+                                        <span className="font-bold">{h.temperature}°</span>
+                                        <span className="text-[10px] text-muted-foreground mt-1">{h.windSpeed} mph</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Unable to load hourly forecast. Please allow location access.
+                        </p>
+                    )}
                 </section>
 
                 {/* AI Hunting Tips */}
@@ -158,3 +188,4 @@ export default function ConditionsPage() {
         </div>
     );
 }
+

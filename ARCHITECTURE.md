@@ -75,8 +75,10 @@ This document captures important architectural decisions to prevent accidental r
 **localStorage Keys:**
 | Key | Purpose | Location |
 |-----|---------|----------|
-| `timber_inventory` | Gear/inventory items | `lib/storage.ts` |
+| `timber_inventory_v2` | Gear/inventory items | `lib/storage.ts` |
 | `timber_hunt_logs` | Hunt log entries | `lib/storage.ts` |
-| `talkin_timber_preferences` | User preferences | `profile/page.tsx` |
+| `timber_hunt_plans` | Hunt plan entries | `lib/storage.ts` |
+| `timber_user_profile` | User preferences (unified) | `lib/useUserProfile.ts` |
+| `talkin_timber_preferences` | Legacy (migrated) | `lib/useUserProfile.ts` |
 
 **Do NOT create new storage keys without documenting here.**

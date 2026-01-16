@@ -3,8 +3,10 @@
 import { useInventory } from "@/lib/storage";
 import { InventoryCategory, INVENTORY_CATEGORIES, PlanGearItem, InventoryItem } from "@/lib/types";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
-import { useState } from "react";
-import { Check, Search } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Check, Search, Plus } from "lucide-react";
+import { SmartInput } from "@/app/components/inventory/SmartInput";
+import { ParsedProduct } from "@/lib/services/ProductIntelligenceEngine";
 
 interface Step2Props {
     selectedGear: PlanGearItem[];
@@ -13,9 +15,10 @@ interface Step2Props {
 }
 
 export function Step2Gear({ selectedGear, setSelectedGear, onNext }: Step2Props) {
-    const { inventory } = useInventory();
+    const { inventory, addItem } = useInventory();
     const [selectedCategory, setSelectedCategory] = useState<InventoryCategory | 'All'>('All');
     const [search, setSearch] = useState("");
+    const [showInlineAdd, setShowInlineAdd] = useState(false);
 
     const toggleItem = (item: InventoryItem) => {
         const exists = selectedGear.find(g => g.id === item.id);
@@ -32,6 +35,38 @@ export function Step2Gear({ selectedGear, setSelectedGear, onNext }: Step2Props)
         }
     };
 
+    // Handle inline add result - add to inventory AND select for plan
+    const handleInlineAddResult = useCallback((result: ParsedProduct) => {
+        const newItem: InventoryItem = {
+            id: crypto.randomUUID(),
+            name: result.name,
+            category: result.category,
+            quantity: 1,
+            status: 'READY',
+            specs: {
+                brand: result.brand,
+                model: result.model,
+                ...(result.attributes as Record<string, string>),
+            },
+            createdAt: new Date(),
+        };
+
+        // Add to inventory
+        addItem(newItem);
+
+        // Also select for this plan
+        setSelectedGear([...selectedGear, {
+            id: newItem.id,
+            name: newItem.name,
+            category: newItem.category,
+            quantity: newItem.quantity,
+            checked: false
+        }]);
+
+        // Close inline add
+        setShowInlineAdd(false);
+    }, [addItem, selectedGear, setSelectedGear]);
+
     const filteredInventory = inventory.filter(item => {
         const matchCat = selectedCategory === 'All' || item.category === selectedCategory;
         const matchSearch = item.name.toLowerCase().includes(search.toLowerCase());
@@ -47,7 +82,7 @@ export function Step2Gear({ selectedGear, setSelectedGear, onNext }: Step2Props)
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search specific gear..."
+                        placeholder="Search gear..."
                         className="input w-full pl-10 py-2.5 text-sm"
                     />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -73,7 +108,7 @@ export function Step2Gear({ selectedGear, setSelectedGear, onNext }: Step2Props)
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto space-y-2 min-h-[300px]">
+            <div className="flex-1 overflow-y-auto space-y-2 min-h-[250px]">
                 {filteredInventory.map(item => {
                     const isSelected = selectedGear.some(g => g.id === item.id);
                     return (
@@ -92,8 +127,44 @@ export function Step2Gear({ selectedGear, setSelectedGear, onNext }: Step2Props)
                         </div>
                     );
                 })}
+
+                {/* Empty state */}
+                {filteredInventory.length === 0 && !showInlineAdd && (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p className="text-sm">No gear found</p>
+                    </div>
+                )}
             </div>
 
+            {/* Inline Add Section */}
+            {showInlineAdd ? (
+                <div className="border-t border-border pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Add new gear</span>
+                        <button
+                            onClick={() => setShowInlineAdd(false)}
+                            className="text-xs text-muted-foreground hover:text-primary"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                    <SmartInput
+                        onResult={handleInlineAddResult}
+                        compact={true}
+                        placeholder="Scan, paste, or type..."
+                    />
+                </div>
+            ) : (
+                <button
+                    onClick={() => setShowInlineAdd(true)}
+                    className="w-full py-3 border-2 border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                >
+                    <Plus className="h-4 w-4" />
+                    Add gear not in inventory
+                </button>
+            )}
+
+            {/* Footer */}
             <div className="pt-4 border-t border-border">
                 <div className="flex justify-between items-center mb-4">
                     <span className="text-sm font-medium text-muted-foreground">

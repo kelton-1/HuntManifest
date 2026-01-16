@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, ChevronDown, Trash2, Edit2, Package, Filter } from "lucide-react";
+import { Plus, Search, ChevronDown, Trash2, Edit2, Package, Filter, Bot } from "lucide-react";
 import { useInventory } from "@/lib/storage";
 import { InventoryItem, InventoryCategory, INVENTORY_CATEGORIES } from "@/lib/types";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
+import { AIAssistant } from "@/app/components/inventory/AIAssistant";
 
 // Sample items to show when user wants to see what a full inventory looks like
 const SAMPLE_ITEMS: Partial<InventoryItem>[] = [
@@ -46,6 +47,7 @@ export default function InventoryPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [showSamplePreview, setShowSamplePreview] = useState(false);
+    const [showAIAssistant, setShowAIAssistant] = useState(false);
 
     // Filter inventory
     const filteredInventory = inventory.filter(item => {
@@ -104,14 +106,26 @@ export default function InventoryPage() {
                         </p>
                     </div>
 
-                    {/* Add Button */}
-                    <Link
-                        href="/inventory/add"
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all shadow-sm"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add Item
-                    </Link>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                        {/* AI Assistant Button */}
+                        <button
+                            onClick={() => setShowAIAssistant(true)}
+                            className="p-2.5 rounded-full bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-all"
+                            title="AI Assistant"
+                        >
+                            <Bot className="h-5 w-5" />
+                        </button>
+
+                        {/* Add Button */}
+                        <Link
+                            href="/inventory/add"
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-all shadow-sm"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Search Bar */}
@@ -280,6 +294,9 @@ export default function InventoryPage() {
                     </Link>
                 </div>
             )}
+
+            {/* AI Assistant */}
+            <AIAssistant isOpen={showAIAssistant} onClose={() => setShowAIAssistant(false)} />
         </div>
     );
 }

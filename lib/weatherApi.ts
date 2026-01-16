@@ -180,3 +180,77 @@ export function useWeather() {
     return { weather, loading, error, getWeather };
 }
 
+// ============================================
+// HOURLY FORECAST
+// ============================================
+
+export interface HourlyForecast {
+    time: string; // Display time like "Now", "1h", etc.
+    temperature: number;
+    windSpeed: number;
+    weatherCode: number;
+    skyCondition: WeatherConditions['skyCondition'];
+}
+
+interface OpenMeteoHourlyResponse {
+    hourly: {
+        time: string[];
+        temperature_2m: number[];
+        wind_speed_10m: number[];
+        weather_code: number[];
+    };
+}
+
+export type HourlyForecastResult =
+    | { success: true; data: HourlyForecast[] }
+    | { success: false; error: string };
+
+/**
+ * Fetch hourly weather forecast from Open-Meteo API
+ * @param latitude - Location latitude
+ * @param longitude - Location longitude
+ * @param hours - Number of hours to fetch (default 6)
+ * @returns Array of hourly forecasts or error
+ */
+export async function fetchHourlyForecast(
+    latitude: number,
+    longitude: number,
+    hours: number = 6
+): Promise<HourlyForecastResult> {
+    try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,wind_speed_10m,weather_code&temperature_unit=celsius&wind_speed_unit=ms&forecast_hours=${hours}`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            return { success: false, error: `Weather API error: ${response.status}` };
+        }
+
+        const data: OpenMeteoHourlyResponse = await response.json();
+
+        const hourlyData: HourlyForecast[] = data.hourly.time.slice(0, hours).map((time, index) => {
+            const hour = new Date(time).getHours();
+            const now = new Date().getHours();
+            let displayTime: string;
+
+            if (index === 0) {
+                displayTime = "Now";
+            } else {
+                displayTime = `${index}h`;
+            }
+
+            return {
+                time: displayTime,
+                temperature: celsiusToFahrenheit(data.hourly.temperature_2m[index]),
+                windSpeed: msToMph(data.hourly.wind_speed_10m[index]),
+                weatherCode: data.hourly.weather_code[index],
+                skyCondition: weatherCodeToSkyCondition(data.hourly.weather_code[index]),
+            };
+        });
+
+        return { success: true, data: hourlyData };
+    } catch (error) {
+        console.error('Hourly forecast fetch error:', error);
+        return { success: false, error: 'Failed to fetch hourly forecast' };
+    }
+}
