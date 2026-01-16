@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, MapPin, Loader2, Navigation, Package, Check, History } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Navigation, Check } from "lucide-react";
+import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { Harvest, WATERFOWL_SPECIES, WeatherConditions } from "@/lib/types";
 import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
@@ -20,8 +21,6 @@ function NewHuntLogContent() {
     const { getCurrentPosition } = useGeolocation();
     const { profile, addSavedLocation } = useUserProfile();
 
-    // Location suggestions visibility
-    const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
 
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [locationName, setLocationName] = useState("");
@@ -219,41 +218,22 @@ function NewHuntLogContent() {
                             onChange={e => setDate(e.target.value)}
                             className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         />
-                        <div className="relative">
-                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <input
-                                type="text"
-                                placeholder="Location Name (or use Auto-Fill)"
-                                value={locationName}
-                                onChange={e => setLocationName(e.target.value)}
-                                onFocus={() => setShowLocationSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                                className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm pl-11 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                            />
-                            {/* Saved Location Suggestions */}
-                            {showLocationSuggestions && profile.savedLocations.length > 0 && (
-                                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
-                                    <div className="px-3 py-2 text-xs text-muted-foreground font-medium flex items-center gap-1.5 border-b border-border">
-                                        <History className="h-3 w-3" />
-                                        Recent Locations
-                                    </div>
-                                    {profile.savedLocations.slice(0, 5).map((loc, i) => (
-                                        <button
-                                            key={i}
-                                            type="button"
-                                            onClick={() => {
-                                                setLocationName(loc);
-                                                setShowLocationSuggestions(false);
-                                            }}
-                                            className="w-full px-4 py-2.5 text-sm text-left hover:bg-secondary flex items-center gap-2 transition-colors"
-                                        >
-                                            <MapPin className="h-3.5 w-3.5 text-primary" />
-                                            {loc}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <LocationAutocomplete
+                            value={locationName}
+                            onChange={setLocationName}
+                            onPlaceSelect={async (place) => {
+                                setLocationName(place.name);
+                                if (place.lat && place.lng) {
+                                    setLocationCoords({ lat: place.lat, lng: place.lng });
+                                    const weatherResult = await fetchWeather(place.lat, place.lng);
+                                    if (weatherResult.success) {
+                                        setWeather(weatherResult.data);
+                                    }
+                                }
+                            }}
+                            placeholder="Search for a location..."
+                            savedLocations={profile.savedLocations}
+                        />
                         {locationCoords && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <Navigation className="h-3 w-3" />

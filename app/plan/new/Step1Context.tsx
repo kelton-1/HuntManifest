@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, Cloud, History } from "lucide-react";
+import { Calendar, MapPin, Cloud } from "lucide-react";
 import { useGeolocation } from "@/lib/geolocation";
 import { fetchWeather } from "@/lib/weatherApi";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { WeatherConditions } from "@/lib/types";
+import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
 
 // Context data type for plan creation flow
 export interface PlanContextData {
@@ -25,7 +26,6 @@ export function Step1Context({ data, setData, onNext }: Step1Props) {
     const { getCurrentPosition } = useGeolocation();
     const { profile } = useUserProfile();
     const [loadingLocation, setLoadingLocation] = useState(false);
-    const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
 
     // Initialize date if empty
     useEffect(() => {
@@ -77,40 +77,22 @@ export function Step1Context({ data, setData, onNext }: Step1Props) {
                 <div className="space-y-2">
                     <label className="text-sm font-bold ml-1">Location</label>
                     <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <input
-                                type="text"
+                        <div className="flex-1">
+                            <LocationAutocomplete
                                 value={data.locationName}
-                                onChange={(e) => setData({ locationName: e.target.value })}
-                                onFocus={() => setShowLocationSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                                placeholder="Enter location..."
-                                className="input w-full pl-10"
+                                onChange={(value) => setData({ locationName: value })}
+                                onPlaceSelect={async (place) => {
+                                    setData({ locationName: place.name });
+                                    if (place.lat && place.lng) {
+                                        const weatherRes = await fetchWeather(place.lat, place.lng);
+                                        if (weatherRes.success) {
+                                            setData({ weather: weatherRes.data });
+                                        }
+                                    }
+                                }}
+                                placeholder="Search for a location..."
+                                savedLocations={profile.savedLocations}
                             />
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            {/* Saved Location Suggestions */}
-                            {showLocationSuggestions && profile.savedLocations.length > 0 && (
-                                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
-                                    <div className="px-3 py-2 text-xs text-muted-foreground font-medium flex items-center gap-1.5 border-b border-border">
-                                        <History className="h-3 w-3" />
-                                        Recent Locations
-                                    </div>
-                                    {profile.savedLocations.slice(0, 5).map((loc, i) => (
-                                        <button
-                                            key={i}
-                                            type="button"
-                                            onClick={() => {
-                                                setData({ locationName: loc });
-                                                setShowLocationSuggestions(false);
-                                            }}
-                                            className="w-full px-4 py-2.5 text-sm text-left hover:bg-secondary flex items-center gap-2 transition-colors"
-                                        >
-                                            <MapPin className="h-3.5 w-3.5 text-primary" />
-                                            {loc}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                         <button
                             onClick={handleUseCurrentLocation}
