@@ -5,7 +5,7 @@ import app from "./firebase";
 
 const ai = getAI(app, { backend: new GoogleAIBackend() });
 
-export const geminiModel = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+export const geminiModel = getGenerativeModel(ai, { model: "gemini-2.5-flash-lite" });
 
 export async function generateText(prompt: string): Promise<string> {
     try {
