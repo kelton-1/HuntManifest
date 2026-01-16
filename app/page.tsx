@@ -7,7 +7,8 @@ import {
   Map,
   BookOpen,
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from "lucide-react";
 import { useInventory, useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { fetchWeather } from "@/lib/weatherApi";
@@ -15,6 +16,7 @@ import { useGeolocation } from "@/lib/geolocation";
 import { WeatherConditions } from "@/lib/types";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
+import { generateHuntingTips } from "@/lib/gemini";
 
 // Premium Components
 import { SeasonGoalsRing } from "./components/home/SeasonGoalsRing";
@@ -33,6 +35,10 @@ export default function Home() {
   const [weather, setWeather] = useState<WeatherConditions | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const { getCurrentPosition } = useGeolocation();
+
+  // AI Quick Tip state
+  const [quickTip, setQuickTip] = useState<string | null>(null);
+  const [tipLoading, setTipLoading] = useState(false);
 
   // Hunter name from unified profile
   const hunterName = profile.hunterName;
@@ -121,6 +127,50 @@ export default function Home() {
         windSpeedUnit={profile.windSpeedUnit}
         onClick={() => router.push('/conditions')}
       />
+
+      {/* AI Quick Tip */}
+      {weather && (
+        <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-3 border border-primary/20">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {tipLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
+                  <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  Getting AI tip...
+                </div>
+              ) : quickTip ? (
+                <p className="text-sm leading-relaxed">{quickTip}</p>
+              ) : (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setTipLoading(true);
+                    try {
+                      const tips = await generateHuntingTips({
+                        temperature: weather.temperature,
+                        windSpeed: weather.windSpeed,
+                        windDirection: weather.windDirection,
+                        skyCondition: weather.skyCondition
+                      });
+                      setQuickTip(tips.split('\n')[0] || tips.substring(0, 150));
+                    } catch (err) {
+                      console.error("AI error:", err);
+                      setQuickTip("Tap for conditions-based tips");
+                    }
+                    setTipLoading(false);
+                  }}
+                  className="text-sm text-primary font-medium hover:underline"
+                >
+                  Get AI hunting tip for today
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Inventory Dashboard with Category Toggles */}
       <InventoryDashboard inventory={inventory} />

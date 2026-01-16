@@ -2,9 +2,11 @@
 
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
+import { analyzeHuntLog } from "@/lib/gemini";
+import { useState } from "react";
 
 export default function HuntDetailClient() {
     const params = useParams();
@@ -15,6 +17,10 @@ export default function HuntDetailClient() {
 
     const id = params.id as string;
     const log = logs.find(l => l.id === id);
+
+    // AI Analysis state
+    const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
 
     // Find linked plan if any
     const linkedPlan = log?.planId ? plans.find(p => p.id === log.planId) : null;
@@ -136,6 +142,53 @@ export default function HuntDetailClient() {
                         </div>
                     </div>
                 )}
+
+                {/* AI Hunt Analysis */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            AI Analysis
+                        </h2>
+                    </div>
+                    <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4">
+                        {aiLoading ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                Analyzing your hunt...
+                            </div>
+                        ) : aiAnalysis ? (
+                            <p className="text-sm leading-relaxed">{aiAnalysis}</p>
+                        ) : (
+                            <button
+                                onClick={async () => {
+                                    setAiLoading(true);
+                                    try {
+                                        const analysis = await analyzeHuntLog(
+                                            log.location?.name || "Unknown",
+                                            {
+                                                temperature: log.weather.temperature,
+                                                windSpeed: log.weather.windSpeed,
+                                                skyCondition: log.weather.skyCondition
+                                            },
+                                            log.harvests,
+                                            log.notes
+                                        );
+                                        setAiAnalysis(analysis);
+                                    } catch (e) {
+                                        console.error("AI error:", e);
+                                        setAiAnalysis("Unable to analyze. Please try again.");
+                                    }
+                                    setAiLoading(false);
+                                }}
+                                className="w-full py-3 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Sparkles className="h-4 w-4" />
+                                Analyze This Hunt
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Actions Footer */}

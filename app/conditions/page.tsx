@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Wind, Cloud, Thermometer, Droplets, Sun, Calendar } from "lucide-react";
+import { ArrowLeft, Wind, Cloud, Thermometer, Droplets, Sun, Calendar, Sparkles, RefreshCw } from "lucide-react";
 import { useGeolocation } from "@/lib/geolocation";
 import { useEffect, useState } from "react";
 import { fetchWeather } from "@/lib/weatherApi";
 import { WeatherConditions } from "@/lib/types";
+import { generateHuntingTips } from "@/lib/gemini";
 
 export default function ConditionsPage() {
     const { getCurrentPosition } = useGeolocation();
     const [weather, setWeather] = useState<WeatherConditions | null>(null);
     const [loading, setLoading] = useState(true);
+    const [aiTips, setAiTips] = useState<string | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
 
     useEffect(() => {
         async function load() {
@@ -93,16 +96,49 @@ export default function ConditionsPage() {
                     </div>
                 </section>
 
-                {/* Hunt Quality Indicator (Placeholder for future AI) */}
-                <section className="bg-secondary/30 rounded-2xl p-5 border border-secondary">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        <h3 className="font-semibold text-sm uppercase tracking-wide">Outlook</h3>
+                {/* AI Hunting Tips */}
+                <section className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl p-5 border border-primary/20">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            <h3 className="font-semibold text-sm uppercase tracking-wide">AI Hunting Tips</h3>
+                        </div>
+                        <button
+                            onClick={async () => {
+                                if (!weather) return;
+                                setAiLoading(true);
+                                try {
+                                    const tips = await generateHuntingTips({
+                                        temperature: weather.temperature,
+                                        windSpeed: weather.windSpeed,
+                                        windDirection: weather.windDirection,
+                                        skyCondition: weather.skyCondition
+                                    });
+                                    setAiTips(tips);
+                                } catch (e) {
+                                    console.error("AI error:", e);
+                                    setAiTips("Unable to generate tips. Please try again.");
+                                }
+                                setAiLoading(false);
+                            }}
+                            disabled={aiLoading || !weather}
+                            className="p-2 hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                            <RefreshCw className={`h-4 w-4 text-primary ${aiLoading ? 'animate-spin' : ''}`} />
+                        </button>
                     </div>
-                    <p className="font-bold text-lg">Fair Conditions</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Wind is favorable for localized movement. Standard decoy spread recommended.
-                    </p>
+                    {aiLoading ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                            Analyzing conditions...
+                        </div>
+                    ) : aiTips ? (
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{aiTips}</p>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Tap the refresh button to get AI-powered hunting tips based on current conditions.
+                        </p>
+                    )}
                 </section>
 
                 {/* Plan Action */}

@@ -37,3 +37,7 @@ A Next.js application with Firebase integration. This appears to be a task/manif
 - Added feedback/suggestions feature to profile page
 - Feedback is stored in Firebase Firestore "feedback" collection
 - Only authenticated users can submit feedback
+- Added Firebase AI Logic (Gemini) integration with three AI features:
+  1. AI Quick Tip on home page - weather-based hunting advice
+  2. AI Hunting Tips on conditions page - detailed tips based on weather
+  3. AI Hunt Analysis on hunt log details - analysis of completed hunts
