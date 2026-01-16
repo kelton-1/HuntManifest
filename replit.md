@@ -25,3 +25,15 @@ A Next.js application with Firebase integration. This appears to be a task/manif
 - `/lib` - Shared utilities and configurations
 - `/public` - Static assets
 - `/Tasks` - Task-related components or data
+
+## Firebase Collections
+- `users/{userId}/profile` - User profile data
+- `users/{userId}/inventory` - User gear inventory
+- `users/{userId}/huntLogs` - Hunt log entries
+- `users/{userId}/huntPlans` - Planned hunts
+- `feedback` - User feedback submissions (authenticated users only)
+
+## Recent Changes
+- Added feedback/suggestions feature to profile page
+- Feedback is stored in Firebase Firestore "feedback" collection
+- Only authenticated users can submit feedback

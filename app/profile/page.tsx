@@ -1,12 +1,13 @@
 "use client";
 
-import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail, LogIn } from "lucide-react";
+import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail, LogIn, MessageSquare, Send } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import Link from "next/link";
 import { useInventory, useHuntLogs } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 import { useUserProfile } from "@/lib/useUserProfile";
+import { submitFeedback } from "@/lib/firestore";
 
 export default function ProfilePage() {
     const { theme, setTheme } = useTheme();
@@ -19,6 +20,8 @@ export default function ProfilePage() {
     const [tempName, setTempName] = useState("");
     const [isEditingLocation, setIsEditingLocation] = useState(false);
     const [tempLocation, setTempLocation] = useState("");
+    const [feedbackText, setFeedbackText] = useState("");
+    const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
     // Check if we're on the client
     const mounted = typeof window !== "undefined";
@@ -55,6 +58,22 @@ export default function ProfilePage() {
         if (confirm("Are you sure you want to sign out?")) {
             await signOut();
             // No reload needed cleanup happens via auth state change
+        }
+    };
+
+    const handleSubmitFeedback = async () => {
+        if (!feedbackText.trim() || !user) return;
+        
+        setFeedbackStatus("sending");
+        try {
+            await submitFeedback(user.uid, user.email, feedbackText.trim());
+            setFeedbackStatus("sent");
+            setFeedbackText("");
+            setTimeout(() => setFeedbackStatus("idle"), 3000);
+        } catch (error) {
+            console.error("Error submitting feedback:", error);
+            setFeedbackStatus("error");
+            setTimeout(() => setFeedbackStatus("idle"), 3000);
         }
     };
 
@@ -323,6 +342,72 @@ export default function ProfilePage() {
                             </div>
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
+                    </div>
+                </section>
+
+                {/* Feedback Section */}
+                <section>
+                    <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Feedback & Suggestions
+                    </h2>
+                    <div className="p-4 bg-card rounded-xl border border-border space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                            Have ideas or feedback? We&apos;d love to hear from you!
+                        </p>
+                        {user ? (
+                            <>
+                                <textarea
+                                    value={feedbackText}
+                                    onChange={(e) => setFeedbackText(e.target.value)}
+                                    placeholder="Share your thoughts, suggestions, or report issues..."
+                                    className="w-full h-24 p-3 bg-secondary rounded-lg border-none resize-none focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                    disabled={feedbackStatus === "sending"}
+                                />
+                                <div className="flex items-center justify-between">
+                                    <div className="text-sm">
+                                        {feedbackStatus === "sent" && (
+                                            <span className="text-green-600 flex items-center gap-1">
+                                                <Check className="h-4 w-4" />
+                                                Thank you for your feedback!
+                                            </span>
+                                        )}
+                                        {feedbackStatus === "error" && (
+                                            <span className="text-destructive">
+                                                Failed to send. Please try again.
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={handleSubmitFeedback}
+                                        disabled={!feedbackText.trim() || feedbackStatus === "sending"}
+                                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {feedbackStatus === "sending" ? (
+                                            <>Sending...</>
+                                        ) : (
+                                            <>
+                                                <Send className="h-4 w-4" />
+                                                Send Feedback
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center py-4">
+                                <p className="text-sm text-muted-foreground mb-3">
+                                    Sign in to share your feedback with us.
+                                </p>
+                                <Link 
+                                    href="/login" 
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+                                >
+                                    <LogIn className="h-4 w-4" />
+                                    Sign In
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </section>
 

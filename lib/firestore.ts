@@ -241,3 +241,27 @@ export async function deleteHuntPlan(userId: string, planId: string): Promise<vo
     const docRef = doc(db, "users", userId, "huntPlans", planId);
     await deleteDoc(docRef);
 }
+
+// ============================================
+// FEEDBACK
+// ============================================
+
+export interface Feedback {
+    id?: string;
+    userId: string;
+    userEmail?: string;
+    message: string;
+    createdAt: Timestamp;
+}
+
+export async function submitFeedback(userId: string, userEmail: string | null, message: string): Promise<string> {
+    const colRef = collection(db, "feedback");
+    const docRef = doc(colRef);
+    await setDoc(docRef, {
+        userId,
+        userEmail: userEmail || null,
+        message,
+        createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+}
