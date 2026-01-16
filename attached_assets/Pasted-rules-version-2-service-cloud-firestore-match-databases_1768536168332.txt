@@ -1,0 +1,191 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Get the current timestamp
+    function now() {
+      return request.time;
+    }
+    
+    // Validate string field
+    function isValidString(field, minLen, maxLen) {
+      return field is string && field.size() >= minLen && field.size() <= maxLen;
+    }
+    
+    // Validate number field
+    function isValidNumber(field, min, max) {
+      return field is number && field >= min && field <= max;
+    }
+    
+    // Validate required fields exist
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    // ============================================
+    // USER PROFILES
+    // ============================================
+    
+    match /users/{userId} {
+      // Allow users to read their own root document
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Prevent accidental deletion
+      
+      // Profile subcollection
+      match /profile/{docId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && validateProfile();
+        allow update: if isOwner(userId) && validateProfileUpdate();
+        allow delete: if false;
+        
+        function validateProfile() {
+          let data = request.resource.data;
+          return hasRequiredFields(['hunterName', 'createdAt'])
+            && isValidString(data.hunterName, 1, 100)
+            && (data.experience == null || data.experience in ['first', 'intermediate', 'veteran'])
+            && (data.temperatureUnit == null || data.temperatureUnit in ['F', 'C'])
+            && (data.windSpeedUnit == null || data.windSpeedUnit in ['mph', 'kph']);
+        }
+        
+        function validateProfileUpdate() {
+          let data = request.resource.data;
+          return isValidString(data.hunterName, 1, 100)
+            && (data.experience == null || data.experience in ['first', 'intermediate', 'veteran'])
+            && (data.temperatureUnit == null || data.temperatureUnit in ['F', 'C'])
+            && (data.windSpeedUnit == null || data.windSpeedUnit in ['mph', 'kph']);
+        }
+      }
+      
+      // ============================================
+      // INVENTORY COLLECTION
+      // ============================================
+      
+      match /inventory/{itemId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && validateInventoryItem();
+        allow update: if isOwner(userId) && validateInventoryUpdate();
+        allow delete: if isOwner(userId);
+        
+        function validateInventoryItem() {
+          let data = request.resource.data;
+          let validCategories = ['Firearm', 'Ammo', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
+          
+          return hasRequiredFields(['name', 'category', 'quantity', 'createdAt'])
+            && isValidString(data.name, 1, 200)
+            && data.category in validCategories
+            && isValidNumber(data.quantity, 0, 10000)
+            && data.createdAt is timestamp;
+        }
+        
+        function validateInventoryUpdate() {
+          let data = request.resource.data;
+          let validCategories = ['Firearm', 'Ammo', 'Decoy', 'Call', 'Clothing', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'];
+          
+          return isValidString(data.name, 1, 200)
+            && data.category in validCategories
+            && isValidNumber(data.quantity, 0, 10000);
+        }
+      }
+      
+      // ============================================
+      // HUNT LOGS COLLECTION
+      // ============================================
+      
+      match /huntLogs/{logId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && validateHuntLog();
+        allow update: if isOwner(userId) && validateHuntLogUpdate();
+        allow delete: if isOwner(userId);
+        
+        function validateHuntLog() {
+          let data = request.resource.data;
+          let validSkyConditions = ['Clear', 'Partly Cloudy', 'Overcast', 'Rain', 'Snow', 'Fog'];
+          
+          return hasRequiredFields(['date', 'location', 'weather', 'harvests', 'createdAt'])
+            && (data.date is string || data.date is timestamp)
+            && data.location.keys().hasAll(['name'])
+            && isValidString(data.location.name, 1, 200)
+            && data.weather.keys().hasAll(['temperature', 'windSpeed', 'windDirection', 'skyCondition'])
+            && isValidNumber(data.weather.temperature, -100, 150)
+            && isValidNumber(data.weather.windSpeed, 0, 200)
+            && data.weather.skyCondition in validSkyConditions
+            && data.harvests is list
+            && data.createdAt is timestamp;
+        }
+        
+        function validateHuntLogUpdate() {
+          let data = request.resource.data;
+          let validSkyConditions = ['Clear', 'Partly Cloudy', 'Overcast', 'Rain', 'Snow', 'Fog'];
+          
+          return (data.date is string || data.date is timestamp)
+            && data.location.keys().hasAll(['name'])
+            && isValidString(data.location.name, 1, 200)
+            && data.weather.keys().hasAll(['temperature', 'windSpeed', 'windDirection', 'skyCondition'])
+            && isValidNumber(data.weather.temperature, -100, 150)
+            && isValidNumber(data.weather.windSpeed, 0, 200)
+            && data.weather.skyCondition in validSkyConditions
+            && data.harvests is list;
+        }
+      }
+      
+      // ============================================
+      // AUDIT LOG (Future-proofing)
+      // ============================================
+      
+      match /auditLog/{logId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false; // Audit logs are immutable
+      }
+      
+      // ============================================
+      // APP SETTINGS / PREFERENCES
+      // ============================================
+      
+      match /settings/{settingId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+    }
+    
+    // ============================================
+    // APP-WIDE CONFIGURATION (Read-only for users)
+    // ============================================
+    
+    match /appConfig/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Admin only via Firebase Console
+    }
+    
+    // ============================================
+    // GLOBAL SPECIES/CATEGORIES (Read-only for users)
+    // ============================================
+    
+    match /species/{speciesId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+    
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+  }
+}
