@@ -56,7 +56,6 @@ export function LocationAutocomplete({
 }: LocationAutocompleteProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const autocompleteRef = useRef<AutocompleteInstance | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
     const [scriptReady, setScriptReady] = useState(googleScriptLoaded);
 
@@ -94,7 +93,6 @@ export function LocationAutocomplete({
         }
 
         if (googleScriptLoaded) {
-            setScriptReady(true);
             return;
         }
 
@@ -104,7 +102,6 @@ export function LocationAutocomplete({
         }
 
         googleScriptLoading = true;
-        setIsLoading(true);
 
         const script = document.createElement("script");
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
@@ -115,14 +112,12 @@ export function LocationAutocomplete({
             googleScriptLoaded = true;
             googleScriptLoading = false;
             setScriptReady(true);
-            setIsLoading(false);
             loadCallbacks.forEach(cb => cb());
             loadCallbacks.length = 0;
         };
 
         script.onerror = () => {
             googleScriptLoading = false;
-            setIsLoading(false);
             console.error("Failed to load Google Places API");
         };
 
@@ -150,7 +145,7 @@ export function LocationAutocomplete({
     return (
         <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
-            {isLoading && (
+            {!scriptReady && googleScriptLoading && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin z-10" />
             )}
             <input
