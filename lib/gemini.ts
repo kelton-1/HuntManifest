@@ -10,7 +10,8 @@ export const geminiModel = getGenerativeModel(ai, { model: "gemini-2.5-flash-lit
 export async function generateText(prompt: string): Promise<string> {
     try {
         const result = await geminiModel.generateContent(prompt);
-        return result.response.text();
+        const text = result.response.text();
+        return text.replace(/\*+/g, '').replace(/#+\s*/g, '').trim();
     } catch (error: unknown) {
         const err = error as { code?: string; customErrorData?: { status?: number } };
         if (err?.code === 'fetch-error' && err?.customErrorData?.status === 429) {
