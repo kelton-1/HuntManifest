@@ -24,18 +24,9 @@ export async function generateHuntingTips(
     weather: { temperature: number; windSpeed: number; windDirection: string; skyCondition: string },
     species?: string[]
 ): Promise<string> {
-    const speciesText = species?.length ? species.join(", ") : "waterfowl";
+    const speciesText = species?.length ? species.join(", ") : "ducks";
     
-    const prompt = `You are an experienced waterfowl hunting guide. Based on the following conditions, provide 2-3 brief, practical hunting tips:
-
-Weather conditions:
-- Temperature: ${weather.temperature}°F
-- Wind: ${weather.windSpeed} mph from the ${weather.windDirection}
-- Sky: ${weather.skyCondition}
-
-Target species: ${speciesText}
-
-Keep your response concise and actionable. Focus on decoy placement, calling strategy, and timing based on these conditions.`;
+    const prompt = `Duck hunting tips for ${weather.temperature}°F, ${weather.windSpeed}mph ${weather.windDirection} wind, ${weather.skyCondition}. Target: ${speciesText}. Give 2 short tips on decoys and calling. Max 50 words.`;
 
     return generateText(prompt);
 }
@@ -48,14 +39,7 @@ export async function analyzeHuntLog(
 ): Promise<string> {
     const harvestText = harvests.map(h => `${h.count} ${h.species}`).join(", ");
     
-    const prompt = `Analyze this waterfowl hunt and provide brief insights:
-
-Location: ${location}
-Weather: ${weather.temperature}°F, ${weather.windSpeed} mph wind, ${weather.skyCondition}
-Harvest: ${harvestText || "None"}
-${notes ? `Notes: ${notes}` : ""}
-
-Provide 2-3 sentences of analysis including what worked well and suggestions for similar conditions in the future.`;
+    const prompt = `Hunt analysis: ${location}, ${weather.temperature}°F, ${weather.windSpeed}mph, ${weather.skyCondition}. Bag: ${harvestText || "0"}. ${notes ? `Note: ${notes.substring(0, 50)}` : ""} Give 2 sentences: what worked and one tip. Max 40 words.`;
 
     return generateText(prompt);
 }
@@ -64,13 +48,7 @@ export async function suggestGear(
     weather: { temperature: number; windSpeed: number; skyCondition: string },
     huntType: string = "duck hunting"
 ): Promise<string> {
-    const prompt = `Based on these conditions for ${huntType}, suggest essential gear to bring:
-
-- Temperature: ${weather.temperature}°F  
-- Wind: ${weather.windSpeed} mph
-- Sky: ${weather.skyCondition}
-
-List 5-7 specific gear recommendations with brief explanations. Focus on practical items.`;
+    const prompt = `${huntType} gear for ${weather.temperature}°F, ${weather.windSpeed}mph, ${weather.skyCondition}. List 4 essential items, one line each. Max 30 words.`;
 
     return generateText(prompt);
 }
