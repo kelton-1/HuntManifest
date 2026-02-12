@@ -79,6 +79,9 @@ This document captures important architectural decisions to prevent accidental r
 | `timber_hunt_logs` | Hunt log entries | `lib/storage.ts` |
 | `timber_hunt_plans` | Hunt plan entries | `lib/storage.ts` |
 | `timber_user_profile` | User preferences (unified) | `lib/useUserProfile.ts` |
+| `timber_onboarding` | Onboarding flow state & checklist | `lib/onboarding.ts` |
+| `timber_checklist_shown_at` | Getting-started checklist auto-dismiss timestamp | `app/components/GettingStartedChecklist.tsx` |
+| `timber_weather_cache` | Weather API response cache (5-min TTL) | `lib/weatherApi.ts` |
 | `talkin_timber_preferences` | Legacy (migrated) | `lib/useUserProfile.ts` |
 
 **Do NOT create new storage keys without documenting here.**

@@ -2,13 +2,13 @@
 
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus, Droplets, Gauge } from "lucide-react";
 import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
 import { useHuntLogs, useHuntPlans, useInventory } from "@/lib/storage";
 import { Harvest, WATERFOWL_SPECIES, WeatherConditions } from "@/lib/types";
 import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
 import { fetchWeather } from "@/lib/weatherApi";
-import { Thermometer, Wind, Cloud, Bird, ChevronDown, ChevronUp } from "lucide-react";
+import { Thermometer, Wind, Cloud, Bird, ChevronDown, ChevronUp, Sunrise, Sunset } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { SmartInput } from "@/app/components/inventory/SmartInput";
 import { ParsedProduct } from "@/lib/services/ProductIntelligenceEngine";
@@ -29,12 +29,13 @@ function NewHuntLogContent() {
     const [locationName, setLocationName] = useState("");
     const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [notes, setNotes] = useState("");
-    const [autoFillLoading, setAutoFillLoading] = useState(false);
+    const [autoFillLoading, setAutoFillLoading] = useState(true);
+    const [autoFillDone, setAutoFillDone] = useState(false);
 
-    // Weather State
+    // Weather State — starts empty, auto-fills on page load
     const [weather, setWeather] = useState<WeatherConditions>({
-        temperature: 40,
-        windSpeed: 5,
+        temperature: 0,
+        windSpeed: 0,
         windDirection: "N",
         skyCondition: "Partly Cloudy",
     });
@@ -110,8 +111,8 @@ function NewHuntLogContent() {
         }
     }, [planId, plans]);
 
-    // Real Auto-Fill with GPS + Weather
-    const handleAutoFill = async () => {
+    // Auto-fill GPS + Weather on page load — zero taps required
+    const runAutoFill = useCallback(async () => {
         setAutoFillLoading(true);
 
         const position = await getCurrentPosition();
@@ -127,13 +128,21 @@ function NewHuntLogContent() {
 
             // Reverse geocode for location name
             const placeName = await reverseGeocode(position.latitude, position.longitude);
-            if (placeName && !locationName) {
-                setLocationName(placeName);
+            if (placeName) {
+                setLocationName(prev => prev || placeName);
             }
+
+            setAutoFillDone(true);
         }
 
         setAutoFillLoading(false);
-    };
+    }, [getCurrentPosition]);
+
+    // Run auto-fill on mount (unless pre-filling from a plan with weather)
+    useEffect(() => {
+        runAutoFill();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const addHarvest = () => {
         setHarvests(prev => {
@@ -218,25 +227,27 @@ function NewHuntLogContent() {
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Auto-Fill Button */}
-                <button
-                    type="button"
-                    onClick={handleAutoFill}
-                    disabled={autoFillLoading}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/10 text-primary py-3.5 font-semibold border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
-                >
-                    {autoFillLoading ? (
-                        <>
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            Getting Location & Weather...
-                        </>
-                    ) : (
-                        <>
-                            <Navigation className="h-5 w-5" />
-                            Auto-Fill with GPS & Weather
-                        </>
-                    )}
-                </button>
+                {/* Auto-Fill Status */}
+                {autoFillLoading ? (
+                    <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/10 text-primary py-3.5 font-semibold border border-primary/20">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Getting Location & Weather...
+                    </div>
+                ) : autoFillDone ? (
+                    <div className="w-full flex items-center justify-center gap-2 rounded-xl bg-green-500/10 text-green-600 dark:text-green-400 py-3 text-sm font-medium border border-green-500/20">
+                        <Check className="h-4 w-4" />
+                        Location & weather auto-filled
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={runAutoFill}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/10 text-primary py-3.5 font-semibold border border-primary/20 hover:bg-primary/20 transition-all"
+                    >
+                        <Navigation className="h-5 w-5" />
+                        Auto-Fill with GPS & Weather
+                    </button>
+                )}
 
                 {/* Date & Location Section */}
                 <section className="space-y-4">
@@ -289,7 +300,7 @@ function NewHuntLogContent() {
                             </label>
                             <input
                                 type="number"
-                                value={weather.temperature}
+                                value={weather.temperature || ''}
                                 onChange={e => setWeather({ ...weather, temperature: parseInt(e.target.value) || 0 })}
                                 className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             />
@@ -300,7 +311,7 @@ function NewHuntLogContent() {
                             </label>
                             <input
                                 type="number"
-                                value={weather.windSpeed}
+                                value={weather.windSpeed || ''}
                                 onChange={e => setWeather({ ...weather, windSpeed: parseInt(e.target.value) || 0 })}
                                 className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                             />
@@ -331,7 +342,47 @@ function NewHuntLogContent() {
                                 ))}
                             </select>
                         </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Droplets className="h-3 w-3" /> Humidity (%)
+                            </label>
+                            <input
+                                type="number"
+                                value={weather.humidity ?? ''}
+                                onChange={e => setWeather({ ...weather, humidity: parseInt(e.target.value) || undefined })}
+                                placeholder="Auto"
+                                className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Gauge className="h-3 w-3" /> Pressure (inHg)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={weather.barometricPressure ?? ''}
+                                onChange={e => setWeather({ ...weather, barometricPressure: parseFloat(e.target.value) || undefined })}
+                                placeholder="Auto"
+                                className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
                     </div>
+                    {/* Sunrise / Sunset — read-only, auto-filled */}
+                    {(weather.sunrise || weather.sunset) && (
+                        <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+                            {weather.sunrise && (
+                                <span className="flex items-center gap-1">
+                                    <Sunrise className="h-3 w-3" /> {weather.sunrise}
+                                </span>
+                            )}
+                            {weather.sunset && (
+                                <span className="flex items-center gap-1">
+                                    <Sunset className="h-3 w-3" /> {weather.sunset}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </section>
 
                 {/* Gear Section */}

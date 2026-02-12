@@ -34,13 +34,15 @@ export async function generateHuntingTips(
 
 export async function analyzeHuntLog(
     location: string,
-    weather: { temperature: number; windSpeed: number; skyCondition: string },
+    weather: { temperature: number; windSpeed: number; skyCondition: string; humidity?: number; barometricPressure?: number },
     harvests: { species: string; count: number }[],
     notes?: string
 ): Promise<string> {
     const harvestText = harvests.map(h => `${h.count} ${h.species}`).join(", ");
-    
-    const prompt = `Hunt analysis: ${location}, ${weather.temperature}°F, ${weather.windSpeed}mph, ${weather.skyCondition}. Bag: ${harvestText || "0"}. ${notes ? `Note: ${notes.substring(0, 50)}` : ""} Give 2 sentences: what worked and one tip. Max 40 words.`;
+    const pressureText = weather.barometricPressure ? `, ${weather.barometricPressure}" barometer` : "";
+    const humidityText = weather.humidity ? `, ${weather.humidity}% humidity` : "";
+
+    const prompt = `Hunt analysis: ${location}, ${weather.temperature}°F, ${weather.windSpeed}mph, ${weather.skyCondition}${humidityText}${pressureText}. Bag: ${harvestText || "0"}. ${notes ? `Note: ${notes.substring(0, 50)}` : ""} Give 2 sentences: what worked and one tip. Max 40 words.`;
 
     return generateText(prompt);
 }

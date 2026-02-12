@@ -43,30 +43,30 @@ Either migrate all callers to lib/firebase/* or remove those modules and keep li
 
 References: active hooks and alternate Firestore modules.
 
-Resolve localStorage key drift and update ADRs
+~~Resolve localStorage key drift and update ADRs~~ DONE
 
-Align ARCHITECTURE.md storage key list with actual usage (timber_inventory_v2, timber_hunt_plans, timber_user_profile).
+Added 3 missing keys to ADR-003: `timber_onboarding`, `timber_checklist_shown_at`, `timber_weather_cache`.
 
 References: storage hook and profile hook keys + ADR doc.
 
 Sprint 3 — UX Consistency + Deployment Hygiene
 Goal: Reduce UX friction, finish architectural alignment, and prevent deploy surprises.
 
-Resolve static export mismatch
+~~Resolve static export mismatch~~ N/A
 
-Align replit.md claim of static export with next.config.ts and Firebase Hosting configuration.
+No mismatch found: next.config.ts, replit.md, and firebase.json are all aligned on static export to `out/`.
 
 References: Next config + Firebase hosting + docs.
 
-Remove or wire up orphan onboarding screens
+~~Remove or wire up orphan onboarding screens~~ DONE
 
-Decide whether to reintroduce GearSetupScreen and AhaMomentScreen into the flow or remove them.
+GearSetupScreen and AhaMomentScreen were fully removed in commit f9ecd30. Onboarding flow is clean with 5 active steps.
 
 References: Onboarding flow + unused screens.
 
-Replace mock weather data in Conditions
+~~Replace mock weather data in Conditions~~ DONE
 
-Remove mock hourly forecast or replace with real data source.
+Hourly forecast now uses the real Open-Meteo API via `fetchHourlyForecast` in `lib/weatherApi.ts`.
 
 Reference: app/conditions/page.tsx.
 

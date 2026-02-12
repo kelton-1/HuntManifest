@@ -75,6 +75,11 @@ interface OpenMeteoResponse {
         wind_direction_10m: number;
         weather_code: number;
         relative_humidity_2m: number;
+        surface_pressure: number;
+    };
+    daily: {
+        sunrise: string[];
+        sunset: string[];
     };
 }
 
@@ -108,6 +113,17 @@ function msToMph(ms: number): number {
     return Math.round(ms * 2.237);
 }
 
+// Convert hPa (hectopascals) to inHg (inches of mercury)
+function hpaToInHg(hpa: number): number {
+    return Math.round(hpa * 0.02953 * 100) / 100;
+}
+
+// Format time string to display format (e.g. "6:42 AM")
+function formatTime(isoTime: string): string {
+    const date = new Date(isoTime);
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 export type WeatherResult =
     | { success: true; data: WeatherConditions; fromCache?: boolean }
     | { success: false; error: string };
@@ -126,7 +142,7 @@ export async function fetchWeather(latitude: number, longitude: number): Promise
     }
 
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&temperature_unit=celsius&wind_speed_unit=ms`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure&daily=sunrise,sunset&temperature_unit=celsius&wind_speed_unit=ms&timezone=auto`;
 
         const response = await fetch(url);
 
@@ -141,6 +157,10 @@ export async function fetchWeather(latitude: number, longitude: number): Promise
             windSpeed: msToMph(data.current.wind_speed_10m),
             windDirection: degreesToDirection(data.current.wind_direction_10m),
             skyCondition: weatherCodeToSkyCondition(data.current.weather_code),
+            humidity: data.current.relative_humidity_2m,
+            barometricPressure: hpaToInHg(data.current.surface_pressure),
+            sunrise: data.daily?.sunrise?.[0] ? formatTime(data.daily.sunrise[0]) : undefined,
+            sunset: data.daily?.sunset?.[0] ? formatTime(data.daily.sunset[0]) : undefined,
         };
 
         // Save to cache

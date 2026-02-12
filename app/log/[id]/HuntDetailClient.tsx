@@ -2,7 +2,7 @@
 
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles, Wind, Droplets, Gauge, Sunrise, Sunset, Thermometer } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 import { analyzeHuntLog } from "@/lib/gemini";
@@ -82,23 +82,72 @@ export default function HuntDetailClient() {
                         <Share2 className="h-4 w-4 text-muted-foreground" />
                     </div>
                 )}
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-1">
-                        <Bird className="h-6 w-6 text-mallard-yellow" />
-                        <span className="text-2xl font-bold font-mono">{totalBirds}</span>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Harvested</span>
+                {/* Harvest Hero */}
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-xl bg-mallard-yellow/15 flex items-center justify-center flex-shrink-0">
+                        <Bird className="h-7 w-7 text-mallard-yellow" />
                     </div>
-                    <div className="bg-card border border-border rounded-xl p-4 shadow-sm flex flex-col items-center justify-center gap-1">
-                        <div className="flex items-center gap-1 text-sky-500">
-                            <CloudSun className="h-5 w-5" />
-                            <span className="font-bold">{formatTemperature(log.weather.temperature, profile.temperatureUnit)}</span>
+                    <div>
+                        <span className="text-3xl font-bold font-mono text-mallard-yellow">{totalBirds}</span>
+                        <span className="text-sm text-muted-foreground ml-2">{totalBirds === 1 ? 'bird' : 'birds'} harvested</span>
+                        {log.harvests.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                {log.harvests.map(h => `${h.count} ${h.species}`).join(', ')}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Weather Conditions */}
+                <div className="space-y-3">
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Conditions</h2>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                            <Thermometer className="h-4 w-4 text-sky-500" />
+                            <span className="text-lg font-bold font-mono">{formatTemperature(log.weather.temperature, profile.temperatureUnit)}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase">Temp</span>
                         </div>
-                        <div className="text-xs text-center text-muted-foreground">
-                            {log.weather.skyCondition}
-                            <br />
-                            {log.weather.windDirection} {formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}
+                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                            <Wind className="h-4 w-4 text-sky-500" />
+                            <span className="text-lg font-bold font-mono">{formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase">{log.weather.windDirection} wind</span>
                         </div>
+                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                            <CloudSun className="h-4 w-4 text-sky-500" />
+                            <span className="text-sm font-bold text-center leading-tight">{log.weather.skyCondition}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase">Sky</span>
+                        </div>
+                        {log.weather.humidity != null && (
+                            <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                                <Droplets className="h-4 w-4 text-blue-400" />
+                                <span className="text-lg font-bold font-mono">{log.weather.humidity}%</span>
+                                <span className="text-[10px] text-muted-foreground uppercase">Humidity</span>
+                            </div>
+                        )}
+                        {log.weather.barometricPressure != null && (
+                            <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                                <Gauge className="h-4 w-4 text-blue-400" />
+                                <span className="text-lg font-bold font-mono">{log.weather.barometricPressure}</span>
+                                <span className="text-[10px] text-muted-foreground uppercase">inHg</span>
+                            </div>
+                        )}
+                        {(log.weather.sunrise || log.weather.sunset) && (
+                            <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                                {log.weather.sunrise && (
+                                    <div className="flex items-center gap-1 text-xs">
+                                        <Sunrise className="h-3 w-3 text-amber-400" />
+                                        <span className="font-medium">{log.weather.sunrise}</span>
+                                    </div>
+                                )}
+                                {log.weather.sunset && (
+                                    <div className="flex items-center gap-1 text-xs">
+                                        <Sunset className="h-3 w-3 text-orange-400" />
+                                        <span className="font-medium">{log.weather.sunset}</span>
+                                    </div>
+                                )}
+                                <span className="text-[10px] text-muted-foreground uppercase">Sun</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -169,7 +218,9 @@ export default function HuntDetailClient() {
                                             {
                                                 temperature: log.weather.temperature,
                                                 windSpeed: log.weather.windSpeed,
-                                                skyCondition: log.weather.skyCondition
+                                                skyCondition: log.weather.skyCondition,
+                                                humidity: log.weather.humidity,
+                                                barometricPressure: log.weather.barometricPressure,
                                             },
                                             log.harvests,
                                             log.notes

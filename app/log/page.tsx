@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, MapPin, Calendar, Bird, ChevronRight, CloudSun, Wind } from "lucide-react";
+import { Plus, MapPin, Calendar, Bird, ChevronRight, CloudSun, Wind, Droplets, Gauge } from "lucide-react";
 import { useHuntLogs } from "@/lib/storage";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
@@ -92,8 +92,8 @@ export default function HuntLogPage() {
                                         </h3>
                                     </div>
 
-                                    {/* Weather Badge */}
-                                    <div className="flex items-center gap-2 mb-3">
+                                    {/* Weather Badges */}
+                                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
                                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
                                             <CloudSun className="h-3 w-3" />
                                             {formatTemperature(log.weather.temperature, profile.temperatureUnit)}
@@ -105,6 +105,18 @@ export default function HuntLogPage() {
                                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
                                             {log.weather.skyCondition}
                                         </div>
+                                        {log.weather.humidity != null && (
+                                            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
+                                                <Droplets className="h-3 w-3" />
+                                                {log.weather.humidity}%
+                                            </div>
+                                        )}
+                                        {log.weather.barometricPressure != null && (
+                                            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
+                                                <Gauge className="h-3 w-3" />
+                                                {log.weather.barometricPressure}&quot;
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Species if any */}
