@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useMemo, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus, Droplets, Gauge } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus, Droplets, Gauge, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
 import { MapPickerModal } from "@/app/components/MapPickerModal";
 import { useHuntLogs, useHuntPlans, useInventory } from "@/lib/storage";
-import { Harvest, WeatherConditions } from "@/lib/types";
-import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
+import { Harvest, WeatherConditions, HuntResult, BirdActivity, HuntingPressure, WaterCondition } from "@/lib/types";
+import { useGeolocation, reverseGeocodeStructured } from "@/lib/geolocation";
+import { getMoonPhase } from "@/lib/moonPhase";
 import { fetchWeather } from "@/lib/weatherApi";
 import { Thermometer, Wind, Cloud, Sunrise, Sunset } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
@@ -17,6 +18,7 @@ import { ParsedProduct } from "@/lib/services/ProductIntelligenceEngine";
 import { HarvestEntry } from "@/app/components/log/HarvestEntry";
 import { StarRating } from "@/app/components/log/StarRating";
 import { QuickTags } from "@/app/components/log/QuickTags";
+import { PillSelector } from "@/app/components/log/PillSelector";
 import { staggerContainer, staggerChild, smooth, gentle, snappy } from "@/lib/motion";
 import { hapticMedium, hapticLight } from "@/lib/haptics";
 
@@ -68,10 +70,32 @@ function NewHuntLogContent() {
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [locationName, setLocationName] = useState("");
     const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+    const [locationStructured, setLocationStructured] = useState<{ county?: string; state?: string } | null>(null);
     const [notes, setNotes] = useState("");
     const [autoFillLoading, setAutoFillLoading] = useState(true);
     const [autoFillDone, setAutoFillDone] = useState(false);
     const [mapOpen, setMapOpen] = useState(false);
+
+    // Time tracking
+    const [startTime, setStartTime] = useState<string>(() => {
+        const now = new Date();
+        return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    });
+    const [endTime, setEndTime] = useState<string>("");
+
+    // Party size
+    const [partySize, setPartySize] = useState<number>(1);
+
+    // Hunt result (auto-computed with manual override)
+    const [resultOverride, setResultOverride] = useState<HuntResult | null>(null);
+
+    // Hunt details (collapsed section)
+    const [huntDetailsOpen, setHuntDetailsOpen] = useState(false);
+    const [birdActivity, setBirdActivity] = useState<BirdActivity | undefined>();
+    const [huntingPressure, setHuntingPressure] = useState<HuntingPressure | undefined>();
+    const [waterCondition, setWaterCondition] = useState<WaterCondition | undefined>();
+    const [shotsFired, setShotsFired] = useState<number | undefined>();
+    const [blindName, setBlindName] = useState<string>("");
 
     // Weather State
     const [weather, setWeather] = useState<WeatherConditions>({
@@ -151,7 +175,7 @@ function NewHuntLogContent() {
         }
     }, [planId, plans]);
 
-    // Auto-fill GPS + Weather
+    // Auto-fill GPS + Weather + Location + Moon Phase
     const runAutoFill = useCallback(async () => {
         setAutoFillLoading(true);
         const position = await getCurrentPosition();
@@ -159,11 +183,13 @@ function NewHuntLogContent() {
             setLocationCoords({ lat: position.latitude, lng: position.longitude });
             const weatherResult = await fetchWeather(position.latitude, position.longitude);
             if (weatherResult.success) {
-                setWeather(weatherResult.data);
+                const moonPhase = getMoonPhase(new Date());
+                setWeather({ ...weatherResult.data, moonPhase });
             }
-            const placeName = await reverseGeocode(position.latitude, position.longitude);
-            if (placeName) {
-                setLocationName(prev => prev || placeName);
+            const geoResult = await reverseGeocodeStructured(position.latitude, position.longitude);
+            if (geoResult) {
+                setLocationName(prev => prev || geoResult.name);
+                setLocationStructured({ county: geoResult.county, state: geoResult.state });
             }
             setAutoFillDone(true);
         }
@@ -187,14 +213,29 @@ function NewHuntLogContent() {
         await addLog({
             id: newLogId,
             date,
-            location: { name: locationName },
+            location: {
+                name: locationName,
+                ...(locationCoords && { latitude: locationCoords.lat, longitude: locationCoords.lng }),
+                ...(locationStructured?.county && { county: locationStructured.county }),
+                ...(locationStructured?.state && { state: locationStructured.state }),
+            },
             weather,
             harvests,
+            result: huntResult,
+            startTime: startTime || undefined,
+            endTime: endTime || undefined,
+            duration: durationMinutes,
+            partySize,
             gear: gearUsed,
             notes,
             rating: rating > 0 ? rating : undefined,
             tags: tags.length > 0 ? tags : undefined,
-            planId: planId || undefined
+            planId: planId || undefined,
+            birdActivity,
+            huntingPressure,
+            waterCondition,
+            shotsFired,
+            blindName: blindName || undefined,
         });
 
         if (planId) {
@@ -216,6 +257,21 @@ function NewHuntLogContent() {
     };
 
     const totalBirds = harvests.reduce((sum, h) => sum + h.count, 0);
+
+    // Auto-compute duration from start/end time
+    const durationMinutes = useMemo(() => {
+        if (!startTime || !endTime) return undefined;
+        const [sh, sm] = startTime.split(':').map(Number);
+        const [eh, em] = endTime.split(':').map(Number);
+        const startMins = sh * 60 + sm;
+        const endMins = eh * 60 + em;
+        const diff = endMins - startMins;
+        return diff > 0 ? diff : undefined;
+    }, [startTime, endTime]);
+
+    // Auto-compute hunt result from harvest count
+    const autoResult: HuntResult = totalBirds > 0 ? 'Successful' : 'Unsuccessful';
+    const huntResult = resultOverride ?? autoResult;
 
     return (
         <div className="pb-28">
@@ -309,9 +365,10 @@ function NewHuntLogContent() {
                                     setLocationName(place.name);
                                     if (place.lat && place.lng) {
                                         setLocationCoords({ lat: place.lat, lng: place.lng });
+                                        const moonPhase = getMoonPhase(new Date());
                                         const weatherResult = await fetchWeather(place.lat, place.lng);
                                         if (weatherResult.success) {
-                                            setWeather(weatherResult.data);
+                                            setWeather({ ...weatherResult.data, moonPhase });
                                         }
                                     }
                                 }}
@@ -319,6 +376,56 @@ function NewHuntLogContent() {
                                 placeholder="Search for a location..."
                                 savedLocations={profile.savedLocations}
                             />
+
+                            {/* Start / End Time */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <label className="text-[12px] text-muted-foreground">Start Time</label>
+                                    <input
+                                        type="time"
+                                        value={startTime}
+                                        onChange={e => setStartTime(e.target.value)}
+                                        className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[12px] text-muted-foreground">End Time</label>
+                                    <input
+                                        type="time"
+                                        value={endTime}
+                                        onChange={e => setEndTime(e.target.value)}
+                                        className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Party Size */}
+                            <div className="flex items-center justify-between">
+                                <label className="text-[12px] text-muted-foreground">Party Size</label>
+                                <div className="flex items-center gap-3">
+                                    <motion.button
+                                        type="button"
+                                        whileTap={{ scale: 0.85 }}
+                                        transition={snappy}
+                                        onClick={() => { if (partySize > 1) { setPartySize(p => p - 1); hapticLight(); } }}
+                                        className={`w-9 h-9 rounded-full border border-border flex items-center justify-center text-lg font-medium transition-colors ${partySize <= 1 ? 'opacity-30' : 'hover:border-mallard-green'}`}
+                                        disabled={partySize <= 1}
+                                    >
+                                        -
+                                    </motion.button>
+                                    <span className="text-lg font-bold tabular-nums w-6 text-center">{partySize}</span>
+                                    <motion.button
+                                        type="button"
+                                        whileTap={{ scale: 0.85 }}
+                                        transition={snappy}
+                                        onClick={() => { if (partySize < 12) { setPartySize(p => p + 1); hapticLight(); } }}
+                                        className={`w-9 h-9 rounded-full border border-border flex items-center justify-center text-lg font-medium transition-colors ${partySize >= 12 ? 'opacity-30' : 'hover:border-mallard-green'}`}
+                                        disabled={partySize >= 12}
+                                    >
+                                        +
+                                    </motion.button>
+                                </div>
+                            </div>
                         </div>
                     </GlassSection>
 
@@ -513,6 +620,43 @@ function NewHuntLogContent() {
                             )}
                         </div>
                         <HarvestEntry harvests={harvests} onUpdate={setHarvests} />
+
+                        {/* Hunt Result — auto-computed with override */}
+                        <div className="pt-3 border-t border-border/50 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[12px] text-muted-foreground">Result</span>
+                                {resultOverride && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setResultOverride(null); hapticLight(); }}
+                                        className="text-[10px] text-primary font-medium"
+                                    >
+                                        Auto
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                {(['Successful', 'Partial', 'Unsuccessful'] as HuntResult[]).map(r => (
+                                    <motion.button
+                                        key={r}
+                                        type="button"
+                                        whileTap={{ scale: 0.93 }}
+                                        transition={snappy}
+                                        onClick={() => {
+                                            hapticLight();
+                                            setResultOverride(r === autoResult ? null : r);
+                                        }}
+                                        className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                                            huntResult === r
+                                                ? 'bg-mallard-green text-white shadow-sm'
+                                                : 'bg-transparent text-muted-foreground border border-border'
+                                        }`}
+                                    >
+                                        {r}
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </div>
                     </GlassSection>
 
                     {/* Section 4: Notes */}
@@ -527,7 +671,81 @@ function NewHuntLogContent() {
                         />
                     </GlassSection>
 
-                    {/* Section 5: Rating */}
+                    {/* Section 5: Hunt Details (collapsed by default) */}
+                    <GlassSection>
+                        <motion.button
+                            type="button"
+                            onClick={() => { setHuntDetailsOpen(!huntDetailsOpen); hapticLight(); }}
+                            className="w-full flex items-center justify-between"
+                        >
+                            <div>
+                                <h3 className="text-[20px] font-semibold tracking-[-0.02em] text-left">Hunt Details</h3>
+                                <p className="text-[11px] text-muted-foreground text-left">
+                                    More detail = better insights
+                                </p>
+                            </div>
+                            <motion.div
+                                animate={{ rotate: huntDetailsOpen ? 180 : 0 }}
+                                transition={snappy}
+                            >
+                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                            </motion.div>
+                        </motion.button>
+
+                        <AnimatePresence>
+                            {huntDetailsOpen && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={smooth}
+                                    className="overflow-hidden space-y-4"
+                                >
+                                    <PillSelector
+                                        label="Bird Activity"
+                                        options={['None', 'Low', 'Moderate', 'High', 'Heavy'] as const}
+                                        value={birdActivity}
+                                        onChange={setBirdActivity}
+                                    />
+                                    <PillSelector
+                                        label="Hunting Pressure"
+                                        options={['None', 'Light', 'Moderate', 'Heavy'] as const}
+                                        value={huntingPressure}
+                                        onChange={setHuntingPressure}
+                                    />
+                                    <PillSelector
+                                        label="Water Conditions"
+                                        options={['Flooded Timber', 'Open Water', 'Sheet Water', 'Marsh', 'Dry Field', 'River'] as const}
+                                        value={waterCondition}
+                                        onChange={setWaterCondition}
+                                    />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] text-muted-foreground">Shots Fired</label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            value={shotsFired ?? ''}
+                                            onChange={e => setShotsFired(e.target.value ? parseInt(e.target.value) : undefined)}
+                                            placeholder="Optional"
+                                            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[12px] text-muted-foreground">Blind / Spot Name</label>
+                                        <input
+                                            type="text"
+                                            value={blindName}
+                                            onChange={e => setBlindName(e.target.value)}
+                                            placeholder="e.g. North Blind, Honey Hole"
+                                            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </GlassSection>
+
+                    {/* Section 6: Rating */}
                     <GlassSection>
                         <h3 className="text-[20px] font-semibold tracking-[-0.02em]">Rating</h3>
                         <StarRating value={rating} onChange={setRating} />

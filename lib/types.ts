@@ -92,6 +92,7 @@ export interface Harvest {
     species: string;
     count: number;
     sex?: HarvestSex;
+    sexBreakdown?: { drake: number; hen: number; unknown: number };
     bandNumber?: string; // For banded birds
     weight?: number; // In pounds
 }
@@ -103,6 +104,12 @@ export interface Harvest {
 export type HuntType = 'Waterfowl' | 'Upland' | 'Turkey' | 'Deer' | 'Other';
 
 export type HuntResult = 'Successful' | 'Unsuccessful' | 'Partial';
+
+export type BirdActivity = 'None' | 'Low' | 'Moderate' | 'High' | 'Heavy';
+
+export type HuntingPressure = 'None' | 'Light' | 'Moderate' | 'Heavy';
+
+export type WaterCondition = 'Flooded Timber' | 'Open Water' | 'Sheet Water' | 'Marsh' | 'Dry Field' | 'River';
 
 export interface GeoLocation {
     name: string;
@@ -136,9 +143,15 @@ export interface HuntLog {
     duration?: number; // In minutes
     participants?: HuntParticipant[];
     blindType?: string;
+    blindName?: string;
     decoySpread?: string;
     callingStrategy?: string;
     lessonsLearned?: string;
+    partySize?: number;
+    shotsFired?: number;
+    birdActivity?: BirdActivity;
+    huntingPressure?: HuntingPressure;
+    waterCondition?: WaterCondition;
     rating?: number; // 1-5 stars
     tags?: string[];
     // Linkage

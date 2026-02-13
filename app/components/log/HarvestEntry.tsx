@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, ChevronRight, Bird, Filter } from "lucide-react";
+import { Search, X, ChevronDown, Bird, Minus } from "lucide-react";
 import { Harvest } from "@/lib/types";
 import { SPECIES_DATA, SPECIES_WHEEL_DEFAULTS, SpeciesCategory } from "@/lib/species-data";
 import { hapticLight, hapticMedium } from "@/lib/haptics";
@@ -18,6 +18,7 @@ export function HarvestEntry({ harvests, onUpdate }: HarvestEntryProps) {
     const [isFullListOpen, setIsFullListOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState<SpeciesCategory | 'All'>('All');
+    const [expandedSpecies, setExpandedSpecies] = useState<string | null>(null);
 
     // Quick Picks Data
     const quickPicks = useMemo(() => {
@@ -132,24 +133,64 @@ export function HarvestEntry({ harvests, onUpdate }: HarvestEntryProps) {
 
             {/* Selected Summary (Bottom of card) */}
             {harvests.length > 0 && (
-                <div className="pt-2 border-t border-border/50">
-                    <div className="flex flex-wrap gap-2">
-                        {harvests.map(h => (
-                            <motion.button
-                                layout
-                                key={h.species}
-                                onClick={() => handleDecrement(h.species)}
-                                className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-mallard-green/10 text-mallard-green text-xs font-semibold rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors group"
-                            >
-                                <span>{h.species}</span>
-                                <span className="bg-mallard-green text-white px-1.5 py-0.5 rounded-md text-[10px] min-w-[18px] text-center group-hover:bg-destructive group-hover:text-white transition-colors">
-                                    {h.count}
-                                </span>
-                            </motion.button>
-                        ))}
-                    </div>
+                <div className="pt-2 border-t border-border/50 space-y-1">
+                    {harvests.map(h => (
+                        <div key={h.species}>
+                            <div className="flex items-center gap-2">
+                                <motion.button
+                                    layout
+                                    type="button"
+                                    onClick={() => {
+                                        hapticLight();
+                                        setExpandedSpecies(expandedSpecies === h.species ? null : h.species);
+                                    }}
+                                    className="flex-1 flex items-center gap-2 pl-3 pr-2 py-1.5 bg-mallard-green/10 text-mallard-green text-xs font-semibold rounded-lg transition-colors"
+                                >
+                                    <span>{h.species}</span>
+                                    <span className="bg-mallard-green text-white px-1.5 py-0.5 rounded-md text-[10px] min-w-[18px] text-center">
+                                        {h.count}
+                                    </span>
+                                    {h.sexBreakdown && (
+                                        <span className="text-[10px] text-mallard-green/70 ml-auto">
+                                            {h.sexBreakdown.drake}D {h.sexBreakdown.hen}H
+                                        </span>
+                                    )}
+                                    <ChevronDown className={`h-3 w-3 transition-transform ${expandedSpecies === h.species ? 'rotate-180' : ''}`} />
+                                </motion.button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => handleDecrement(h.species, e)}
+                                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                                >
+                                    <Minus className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+
+                            {/* Expandable Drake/Hen/Unknown breakdown */}
+                            <AnimatePresence>
+                                {expandedSpecies === h.species && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                        className="overflow-hidden"
+                                    >
+                                        <SexBreakdown
+                                            harvest={h}
+                                            onUpdate={(updated) => {
+                                                onUpdate(harvests.map(hh =>
+                                                    hh.species === h.species ? updated : hh
+                                                ));
+                                            }}
+                                        />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    ))}
                     <p className="text-[10px] text-muted-foreground mt-2 italic text-center">
-                        Tap a chip above to add. Tap a tag below to remove/decrement.
+                        Tap a chip above to add. Expand a tag to set Drake/Hen.
                     </p>
                 </div>
             )}
@@ -267,6 +308,56 @@ export function HarvestEntry({ harvests, onUpdate }: HarvestEntryProps) {
                     </motion.div>
                 )}
             </AnimatePresence>
+        </div>
+    );
+}
+
+/** Inline Drake/Hen/Unknown counter for a harvested species */
+function SexBreakdown({ harvest, onUpdate }: { harvest: Harvest; onUpdate: (h: Harvest) => void }) {
+    const bd = harvest.sexBreakdown || { drake: 0, hen: 0, unknown: harvest.count };
+
+    const adjust = (field: 'drake' | 'hen' | 'unknown', delta: number) => {
+        hapticLight();
+        const newBd = { ...bd, [field]: Math.max(0, bd[field] + delta) };
+        // Auto-decrement unknown when incrementing drake/hen
+        if (delta > 0 && field !== 'unknown') {
+            newBd.unknown = Math.max(0, newBd.unknown - delta);
+        }
+        // Auto-increment unknown when decrementing drake/hen
+        if (delta < 0 && field !== 'unknown') {
+            newBd.unknown = Math.min(harvest.count, newBd.unknown - delta);
+        }
+        // Enforce total constraint
+        const newTotal = newBd.drake + newBd.hen + newBd.unknown;
+        if (newTotal !== harvest.count) return;
+        onUpdate({ ...harvest, sexBreakdown: newBd });
+    };
+
+    return (
+        <div className="mt-1.5 ml-2 p-3 bg-secondary/30 rounded-xl space-y-2">
+            <p className="text-[10px] text-muted-foreground font-medium">Drake / Hen Breakdown</p>
+            {(['drake', 'hen', 'unknown'] as const).map(sex => (
+                <div key={sex} className="flex items-center justify-between">
+                    <span className="text-xs font-medium capitalize w-16">
+                        {sex === 'drake' ? 'Drake' : sex === 'hen' ? 'Hen' : 'Unknown'}
+                    </span>
+                    <div className="flex items-center gap-2.5">
+                        <button
+                            type="button"
+                            onClick={() => adjust(sex, -1)}
+                            disabled={bd[sex] <= 0}
+                            className="w-7 h-7 rounded-full border border-border text-sm flex items-center justify-center disabled:opacity-30 hover:border-mallard-green transition-colors"
+                        >-</button>
+                        <span className="text-sm font-bold tabular-nums w-4 text-center">{bd[sex]}</span>
+                        <button
+                            type="button"
+                            onClick={() => adjust(sex, 1)}
+                            disabled={bd.drake + bd.hen + bd.unknown >= harvest.count && bd[sex === 'unknown' ? 'drake' : 'unknown'] <= 0}
+                            className="w-7 h-7 rounded-full border border-border text-sm flex items-center justify-center disabled:opacity-30 hover:border-mallard-green transition-colors"
+                        >+</button>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 }

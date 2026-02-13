@@ -10,17 +10,36 @@ interface QuickTagsProps {
 }
 
 const PRESET_TAGS = [
-    "Slow Morning",
-    "Hot Action",
-    "Skunked",
-    "Limit Out",
+    // Setup
+    "Layout Blind",
+    "Pit Blind",
+    "Boat Blind",
+    "Walk-In",
+    "Float Hunt",
+    // Strategy
     "Decoyed Well",
     "Called In",
     "Pass Shooting",
-    "New Spot",
-    "Dog Worked Great",
-    "Foggy",
+    "Jump Shooting",
+    "Traffic Hunt",
+    // Conditions
+    "Slow Morning",
+    "Hot Action",
+    "Limit Out",
+    "Skunked",
     "Bluebird Day",
+    "Foggy",
+    "Front Moving In",
+    "Post-Front",
+    // Pressure & Activity
+    "New Spot",
+    "Public Land",
+    "Heavy Pressure",
+    "No Pressure",
+    "Birds Working",
+    "High Flyers Only",
+    "Dog Worked Great",
+    "Late Flight",
 ];
 
 export function QuickTags({ selected, onChange }: QuickTagsProps) {

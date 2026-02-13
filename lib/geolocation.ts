@@ -172,6 +172,60 @@ export function formatLocationName(raw: string): string {
     return raw;
 }
 
+export interface StructuredLocation {
+    name: string;
+    county?: string;
+    state?: string;
+    latitude: number;
+    longitude: number;
+}
+
+/**
+ * Reverse geocode with structured data extraction.
+ * Returns county, state, and display name for Insights data capture.
+ */
+export async function reverseGeocodeStructured(
+    latitude: number,
+    longitude: number
+): Promise<StructuredLocation | null> {
+    try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`;
+
+        const response = await fetch(url, {
+            headers: { 'User-Agent': 'HuntManifest/0.2.0' }
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const address = data.address;
+        if (!address) return null;
+
+        const place = address.hamlet || address.village || address.town || address.city || address.municipality;
+        const stateRaw = address.state;
+        const stateAbbrev = stateRaw ? abbreviateState(stateRaw) : undefined;
+        const county = address.county || undefined;
+
+        let name: string;
+        if (place && stateAbbrev) {
+            name = `${place}, ${stateAbbrev}`;
+        } else if (place) {
+            name = place;
+        } else if (stateAbbrev) {
+            name = stateAbbrev;
+        } else if (data.display_name) {
+            name = formatLocationName(data.display_name);
+        } else {
+            return null;
+        }
+
+        return { name, county, state: stateAbbrev, latitude, longitude };
+    } catch (error) {
+        console.error('Structured reverse geocoding error:', error);
+        return null;
+    }
+}
+
 /**
  * Reverse geocode coordinates to a location name using Nominatim (free, no API key).
  * Returns "City, ST" format for US locations.
