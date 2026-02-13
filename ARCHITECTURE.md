@@ -86,3 +86,18 @@ This document captures important architectural decisions to prevent accidental r
 | `talkin_timber_preferences` | Legacy (migrated) | `lib/useUserProfile.ts` |
 
 **Do NOT create new storage keys without documenting here.**
+
+---
+
+## ADR-004: Adaptive Google Auth Flow (Popup + Redirect)
+
+**Date:** 2026-02-13  
+**Status:** Decided  
+**Context:** `signInWithPopup()` is unreliable in iOS Safari/WebKit-driven webviews and app-wrapper contexts where popup windows are blocked or not persisted. This caused Google auth to fail on mobile wrappers even when desktop browser auth worked.
+
+**Decision:** Use an adaptive Google sign-in strategy in `lib/auth.tsx`:
+- Prefer `signInWithRedirect()` for iOS, webview-like user agents, and standalone/PWA-style contexts.
+- Keep `signInWithPopup()` for desktop browsers where popup auth has better UX.
+- Complete redirect auth on the login screen before rendering normal idle state so users get clean post-auth routing back to `/profile`.
+
+**Why this is required:** Redirect-based OAuth is the most compatible path for iOS/app-wrapper environments because it does not depend on popup window APIs that are often blocked, sandboxed, or inconsistently implemented.

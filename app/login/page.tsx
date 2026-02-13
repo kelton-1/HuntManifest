@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { Mail, Lock, User, AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export default function LoginPage() {
     const router = useRouter();
-    const { signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset } = useAuth();
+    const { signInWithGoogle, completeGoogleRedirectSignIn, signInWithEmail, signUpWithEmail, sendPasswordReset } = useAuth();
 
     // State
     const [isSignUp, setIsSignUp] = useState(false);
@@ -18,19 +18,50 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [loading, setLoading] = useState(false);
+    const [redirectLoadingMessage, setRedirectLoadingMessage] = useState("");
+
+    useEffect(() => {
+        const completeRedirectAuth = async () => {
+            setLoading(true);
+            setRedirectLoadingMessage("Completing Google sign-in...");
+
+            try {
+                const redirectUser = await completeGoogleRedirectSignIn();
+                if (redirectUser) {
+                    router.replace("/profile");
+                    return;
+                }
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Failed to complete Google sign-in";
+                setError(message);
+            } finally {
+                setRedirectLoadingMessage("");
+                setLoading(false);
+            }
+        };
+
+        void completeRedirectAuth();
+    }, [completeGoogleRedirectSignIn, router]);
 
     // Handlers
     const handleGoogleSignIn = async () => {
         setLoading(true);
         setError("");
+        setSuccessMessage("");
+
         try {
-            await signInWithGoogle();
-            router.push("/profile"); // Redirect to profile or home
+            const authMethod = await signInWithGoogle();
+            if (authMethod === "popup") {
+                router.push("/profile");
+                return;
+            }
+
+            setRedirectLoadingMessage("Opening Google sign-in...");
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to sign in with Google";
             setError(message);
-        } finally {
             setLoading(false);
+            setRedirectLoadingMessage("");
         }
     };
 
@@ -126,6 +157,11 @@ export default function LoginPage() {
                 </div>
 
                 {/* Messages */}
+                {redirectLoadingMessage && (
+                    <div className="mb-6 p-4 bg-primary/10 border border-primary/30 rounded-xl text-primary text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                        {redirectLoadingMessage}
+                    </div>
+                )}
                 {error && (
                     <div className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-xl flex items-center gap-3 text-destructive text-sm font-medium animate-in fade-in slide-in-from-top-2">
                         <AlertCircle className="h-5 w-5 flex-shrink-0" />
