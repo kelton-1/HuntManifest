@@ -1,5 +1,9 @@
 "use client";
 
+import { motion } from "framer-motion";
+import { snappy } from "@/lib/motion";
+import { hapticLight } from "@/lib/haptics";
+
 interface QuickTagsProps {
     selected: string[];
     onChange: (tags: string[]) => void;
@@ -21,6 +25,7 @@ const PRESET_TAGS = [
 
 export function QuickTags({ selected, onChange }: QuickTagsProps) {
     const toggle = (tag: string) => {
+        hapticLight();
         if (selected.includes(tag)) {
             onChange(selected.filter(t => t !== tag));
         } else {
@@ -33,18 +38,20 @@ export function QuickTags({ selected, onChange }: QuickTagsProps) {
             {PRESET_TAGS.map(tag => {
                 const isActive = selected.includes(tag);
                 return (
-                    <button
+                    <motion.button
                         key={tag}
                         type="button"
+                        whileTap={{ scale: 0.93 }}
+                        transition={snappy}
                         onClick={() => toggle(tag)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all active:scale-95 ${
+                        className={`px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
                             isActive
-                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                : 'bg-secondary text-muted-foreground border border-border hover:border-primary/50'
+                                ? 'bg-mallard-green text-white shadow-sm'
+                                : 'bg-transparent text-muted-foreground border border-border hover:border-mallard-green/50'
                         }`}
                     >
                         {tag}
-                    </button>
+                    </motion.button>
                 );
             })}
         </div>

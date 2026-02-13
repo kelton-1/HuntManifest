@@ -3,10 +3,12 @@
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles, Wind, Droplets, Gauge, Sunrise, Sunset, Thermometer, Star } from "lucide-react";
+import { motion } from "framer-motion";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 import { analyzeHuntLog } from "@/lib/gemini";
 import { useState } from "react";
+import { staggerContainer, staggerChild, snappy } from "@/lib/motion";
 
 export default function HuntDetailClient() {
     const params = useParams();
@@ -44,16 +46,18 @@ export default function HuntDetailClient() {
     const totalBirds = log.harvests.reduce((sum, h) => sum + h.count, 0);
 
     return (
-        <div className="pb-24 animate-fade-in min-h-screen bg-background relative">
+        <div className="pb-24 min-h-screen bg-background relative">
             {/* Header with Hero Image/Gradient */}
             <div className="h-48 bg-gradient-to-br from-mallard-green to-mallard-green-light relative">
                 <div className="absolute inset-0 bg-black/20" />
-                <button
+                <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    transition={snappy}
                     onClick={() => router.back()}
                     className="absolute top-4 left-4 p-2 bg-black/40 text-white rounded-full hover:bg-black/60 transition-colors backdrop-blur-sm z-20"
                 >
                     <ArrowLeft className="h-5 w-5" />
-                </button>
+                </motion.button>
                 <div className="absolute bottom-4 left-4 text-white z-20">
                     <h1 className="text-2xl font-bold drop-shadow-md">{log.location?.name || "Unknown Location"}</h1>
                     <div className="flex items-center gap-2 text-sm opacity-90">
@@ -63,10 +67,16 @@ export default function HuntDetailClient() {
                 </div>
             </div>
 
-            <div className="p-4 space-y-6 -mt-6 relative z-10">
+            <motion.div
+                variants={staggerContainer}
+                initial="hidden"
+                animate="visible"
+                className="p-4 space-y-6 -mt-6 relative z-10"
+            >
                 {/* Linked Plan Badge */}
                 {linkedPlan && (
-                    <div
+                    <motion.div
+                        variants={staggerChild}
                         onClick={() => router.push(`/plan/${linkedPlan.id}`)}
                         className="bg-background/95 backdrop-blur border border-mallard-yellow/50 rounded-xl p-3 flex items-center justify-between shadow-lg cursor-pointer hover:bg-background/100 transition-all"
                     >
@@ -80,15 +90,19 @@ export default function HuntDetailClient() {
                             </div>
                         </div>
                         <Share2 className="h-4 w-4 text-muted-foreground" />
-                    </div>
+                    </motion.div>
                 )}
+
                 {/* Harvest Hero */}
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                <motion.div
+                    variants={staggerChild}
+                    className="bg-card border border-border rounded-2xl p-5 shadow-sm flex items-center gap-4"
+                >
                     <div className="h-14 w-14 rounded-xl bg-mallard-yellow/15 flex items-center justify-center flex-shrink-0">
                         <Bird className="h-7 w-7 text-mallard-yellow" />
                     </div>
                     <div>
-                        <span className="text-3xl font-bold font-mono text-mallard-yellow">{totalBirds}</span>
+                        <span className="text-3xl font-bold tabular-nums text-mallard-yellow">{totalBirds}</span>
                         <span className="text-sm text-muted-foreground ml-2">{totalBirds === 1 ? 'bird' : 'birds'} harvested</span>
                         {log.harvests.length > 0 && (
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -96,73 +110,82 @@ export default function HuntDetailClient() {
                             </p>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Star Rating */}
                 {log.rating != null && log.rating > 0 && (
-                    <div className="flex items-center gap-1">
+                    <motion.div variants={staggerChild} className="flex items-center gap-1">
                         {[1, 2, 3, 4, 5].map(star => (
-                            <Star
+                            <motion.div
                                 key={star}
-                                className={`h-6 w-6 ${
-                                    star <= log.rating!
-                                        ? 'fill-mallard-yellow text-mallard-yellow'
-                                        : 'text-muted-foreground/20'
-                                }`}
-                            />
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{
+                                    ...snappy,
+                                    delay: (star - 1) * 0.06,
+                                }}
+                            >
+                                <Star
+                                    className={`h-6 w-6 ${
+                                        star <= log.rating!
+                                            ? 'fill-mallard-yellow text-mallard-yellow'
+                                            : 'text-muted-foreground/20'
+                                    }`}
+                                />
+                            </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Tags */}
                 {log.tags && log.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <motion.div variants={staggerChild} className="flex flex-wrap gap-2">
                         {log.tags.map(tag => (
                             <span
                                 key={tag}
-                                className="px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+                                className="px-3 py-1.5 rounded-full text-sm font-medium bg-mallard-green text-white"
                             >
                                 {tag}
                             </span>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Weather Conditions */}
-                <div className="space-y-3">
+                <motion.div variants={staggerChild} className="space-y-3">
                     <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Conditions</h2>
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                        <div className="glass-section rounded-xl p-3 flex flex-col items-center gap-1">
                             <Thermometer className="h-4 w-4 text-sky-500" />
-                            <span className="text-lg font-bold font-mono">{formatTemperature(log.weather.temperature, profile.temperatureUnit)}</span>
+                            <span className="text-lg font-bold tabular-nums">{formatTemperature(log.weather.temperature, profile.temperatureUnit)}</span>
                             <span className="text-[10px] text-muted-foreground uppercase">Temp</span>
                         </div>
-                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                        <div className="glass-section rounded-xl p-3 flex flex-col items-center gap-1">
                             <Wind className="h-4 w-4 text-sky-500" />
-                            <span className="text-lg font-bold font-mono">{formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}</span>
+                            <span className="text-lg font-bold tabular-nums">{formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}</span>
                             <span className="text-[10px] text-muted-foreground uppercase">{log.weather.windDirection} wind</span>
                         </div>
-                        <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                        <div className="glass-section rounded-xl p-3 flex flex-col items-center gap-1">
                             <CloudSun className="h-4 w-4 text-sky-500" />
                             <span className="text-sm font-bold text-center leading-tight">{log.weather.skyCondition}</span>
                             <span className="text-[10px] text-muted-foreground uppercase">Sky</span>
                         </div>
                         {log.weather.humidity != null && (
-                            <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                            <div className="glass-section rounded-xl p-3 flex flex-col items-center gap-1">
                                 <Droplets className="h-4 w-4 text-blue-400" />
-                                <span className="text-lg font-bold font-mono">{log.weather.humidity}%</span>
+                                <span className="text-lg font-bold tabular-nums">{log.weather.humidity}%</span>
                                 <span className="text-[10px] text-muted-foreground uppercase">Humidity</span>
                             </div>
                         )}
                         {log.weather.barometricPressure != null && (
-                            <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                            <div className="glass-section rounded-xl p-3 flex flex-col items-center gap-1">
                                 <Gauge className="h-4 w-4 text-blue-400" />
-                                <span className="text-lg font-bold font-mono">{log.weather.barometricPressure}</span>
+                                <span className="text-lg font-bold tabular-nums">{log.weather.barometricPressure}</span>
                                 <span className="text-[10px] text-muted-foreground uppercase">inHg</span>
                             </div>
                         )}
                         {(log.weather.sunrise || log.weather.sunset) && (
-                            <div className="bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-1">
+                            <div className="glass-section rounded-xl p-3 flex flex-col items-center gap-1">
                                 {log.weather.sunrise && (
                                     <div className="flex items-center gap-1 text-xs">
                                         <Sunrise className="h-3 w-3 text-amber-400" />
@@ -179,51 +202,51 @@ export default function HuntDetailClient() {
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Harvesting Details */}
-                <div className="space-y-3">
+                <motion.div variants={staggerChild} className="space-y-3">
                     <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Harvest Details</h2>
-                    <div className="bg-card border border-border rounded-xl divide-y divide-border">
+                    <div className="glass-section rounded-xl divide-y divide-border/50 !p-0 overflow-hidden">
                         {log.harvests.map((h, i) => (
                             <div key={i} className="flex items-center justify-between p-4">
                                 <span className="font-medium">{h.species}</span>
-                                <span className="font-mono font-bold">{h.count}</span>
+                                <span className="tabular-nums font-bold text-mallard-yellow">{h.count}</span>
                             </div>
                         ))}
                         {log.harvests.length === 0 && (
                             <div className="p-4 text-center text-muted-foreground italic">No harvest recorded</div>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Gear Used */}
                 {log.gear && log.gear.length > 0 && (
-                    <div className="space-y-3">
+                    <motion.div variants={staggerChild} className="space-y-3">
                         <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Gear Used</h2>
                         <div className="flex flex-wrap gap-2">
                             {log.gear.map((g, i) => (
-                                <div key={i} className="bg-secondary px-3 py-1.5 rounded-full text-sm flex items-center gap-1.5 border border-border">
-                                    <Check className="h-3.5 w-3.5 text-primary" />
+                                <div key={i} className="bg-mallard-green/10 text-mallard-green dark:bg-mallard-green dark:text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-1.5">
+                                    <Check className="h-3.5 w-3.5" />
                                     {g.name}
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Notes */}
                 {log.notes && (
-                    <div className="space-y-3">
+                    <motion.div variants={staggerChild} className="space-y-3">
                         <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Notes</h2>
-                        <div className="bg-card border border-border rounded-xl p-4 text-sm leading-relaxed whitespace-pre-wrap">
+                        <div className="glass-section rounded-xl p-4 text-sm leading-relaxed whitespace-pre-wrap">
                             {log.notes}
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* AI Hunt Analysis */}
-                <div className="space-y-3">
+                <motion.div variants={staggerChild} className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-primary" />
@@ -274,18 +297,20 @@ export default function HuntDetailClient() {
                             </button>
                         )}
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
 
             {/* Actions Footer */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-border/50 flex gap-4">
-                <button
+                <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    transition={snappy}
                     onClick={handleDelete}
                     className="flex-1 h-12 rounded-xl border border-destructive/20 text-destructive bg-destructive/5 font-bold text-sm flex items-center justify-center gap-2 hover:bg-destructive/10 transition-colors"
                 >
                     <Trash2 className="h-4 w-4" />
                     Delete Log
-                </button>
+                </motion.button>
                 <button
                     disabled
                     className="flex-1 h-12 rounded-xl bg-secondary text-muted-foreground font-bold text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
