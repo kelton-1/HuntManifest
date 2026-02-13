@@ -53,7 +53,7 @@ export function TopNav() {
         >
             <div className="flex h-16 items-center justify-between px-6 max-w-5xl mx-auto">
                 <div className="flex items-center gap-3 group cursor-pointer">
-                    <img src="/logo.png" alt="Logo" className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110" />
+                    <img src="/logo.png" alt="HuntManifest" className="h-9 w-9 object-contain transition-transform duration-300 group-hover:scale-110" />
                     <div className={`transition-opacity duration-300 ${scrolled ? 'opacity-100' : 'opacity-100'}`}>
                         <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-mallard-green to-mallard-green-light dark:from-mallard-yellow dark:to-mallard-yellow-light bg-clip-text text-transparent">
                             HuntManifest

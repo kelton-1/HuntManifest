@@ -77,7 +77,7 @@ export function WelcomeScreen({ onComplete, autoAdvanceMs = 3000 }: WelcomeScree
                     <div className="w-28 h-28 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-2xl">
                         <img
                             src="/logo.png"
-                            alt="Talkin' Timber"
+                            alt="HuntManifest"
                             className="w-20 h-20 object-contain"
                         />
                     </div>
@@ -89,7 +89,7 @@ export function WelcomeScreen({ onComplete, autoAdvanceMs = 3000 }: WelcomeScree
                         }`}
                     style={{ transitionDelay: '200ms' }}
                 >
-                    TALKIN&apos; TIMBER
+                    HUNTMANIFEST
                 </h1>
 
                 {/* Tagline */}

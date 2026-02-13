@@ -183,7 +183,7 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
         const response = await fetch(url, {
             headers: {
                 // Nominatim requires a User-Agent
-                'User-Agent': 'TalkinTimber/1.0'
+                'User-Agent': 'HuntManifest/0.2.0'
             }
         });
 

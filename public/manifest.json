@@ -1,7 +1,7 @@
 {
     "name": "HuntManifest",
     "short_name": "HuntManifest",
-    "description": "Logistics. For Waterfowl. Created by Talkin' Timber",
+    "description": "Logistics for Waterfowl. Track hunts, manage gear inventory, and log success.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0a0f1a",

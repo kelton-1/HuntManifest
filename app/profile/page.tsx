@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { submitFeedback } from "@/lib/firestore";
 import { useCountUp } from "@/lib/useCountUp";
+import { version as APP_VERSION } from "../../package.json";
 
 function StatCounter({ value, label, highlight }: { value: number; label: string; highlight?: boolean }) {
     const animatedValue = useCountUp(value);
@@ -465,7 +466,7 @@ export default function ProfilePage() {
                     Waterfowl Logistics Manager
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    Created by Talkin&apos; Timber • v1.0.0
+                    v{APP_VERSION}
                 </p>
             </div>
         </div>

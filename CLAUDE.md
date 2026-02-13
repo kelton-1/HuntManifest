@@ -1,76 +1,90 @@
-# HuntManifest — AI Agent Instructions
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Product Overview
 
-HuntManifest is a mobile-first hunting management app. Users track gear inventory, plan hunts, log completed hunts with weather/harvest data, and get AI-powered insights (via Firebase AI / Gemini).
+HuntManifest is a mobile-first waterfowl hunting management app. Users track gear inventory, plan hunts, log completed hunts with weather/harvest data, and get AI-powered insights.
 
-**Version:** 0.2.0  
-**Status:** MVP with Firebase auth + Firestore persistence
+**Version:** 0.2.0 | **Status:** MVP with Firebase auth + Firestore persistence
 
 ## Tech Stack
 
-- **Framework:** Next.js 16.0.7 (App Router, static export)
-- **UI:** React 19.2.0, Tailwind CSS 3.x, Framer Motion
+- **Framework:** Next.js 16 (App Router, `output: 'export'` for static hosting)
+- **UI:** React 19, Tailwind CSS 3.x, Framer Motion, Lucide React (no custom SVGs)
 - **Backend:** Firebase Auth + Firestore
-- **AI:** Firebase AI Logic (Gemini 2.5 Flash Lite)
-- **Icons:** Lucide React (no custom SVGs)
+- **AI:** Firebase AI Logic (Gemini 2.5 Flash Lite) — see `lib/gemini.ts`
+- **Weather:** Open-Meteo API (free, no key) — see `lib/weatherApi.ts`
+- **Location:** Google Places API via `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY`
 
-## Project Structure
+## Development Commands
 
-```
-app/                     # Next.js App Router
-├── page.tsx             # Home dashboard (weather, stats, hunt carousel)
-├── layout.tsx           # Root layout with auth/theme providers
-├── globals.css          # Tailwind + custom CSS
-├── inventory/           # Gear inventory CRUD
-├── log/                 # Hunt log CRUD
-├── plan/                # Hunt plan CRUD
-├── insights/            # Analytics (stub)
-├── profile/             # User profile + settings
-├── login/               # Auth screen
-└── components/          # Shared components
-    ├── BottomNav.tsx     # 4-tab bottom navigation
-    ├── TopNav.tsx        # Top bar with profile link
-    ├── CategoryIcon.tsx  # Lucide icon mapper for categories
-    ├── LocationAutocomplete.tsx
-    ├── home/             # Dashboard widgets
-    ├── inventory/        # Inventory-specific components
-    ├── log/              # Hunt log components
-    └── onboarding/       # Onboarding flow (5 steps)
-
-lib/                     # Core business logic
-├── types.ts             # All TypeScript types & enums
-├── storage.ts           # React hooks (useInventory, useHuntLogs, useHuntPlans)
-├── firestore.ts         # Firestore CRUD functions
-├── firebase.ts          # Firebase app init
-├── auth.tsx             # Auth context provider
-├── useUserProfile.ts    # Profile hook (Firestore + localStorage fallback)
-├── weatherApi.ts        # Open-Meteo weather API
-├── geolocation.ts       # Browser geolocation + reverse geocoding
-├── gemini.ts            # Firebase AI (Gemini) integration
-├── onboarding.ts        # Onboarding state machine
-├── brands.ts            # Brand/model data by category
-├── inventory-data.ts    # Master inventory seed data
-├── formatting.ts        # Unit formatting (temp, wind)
-├── haptics.ts           # Vibration feedback
-├── motion.ts            # Framer Motion presets
-├── schemas/categoryAttributes.ts  # Per-category attribute schemas
-└── services/ProductIntelligenceEngine.ts  # Smart product detection
+```bash
+npm run dev -- -p 3000   # Dev server (default port 5000 conflicts with macOS AirPlay)
+npm run build            # Static export to out/
+npm run lint             # ESLint
+npm run deploy           # Build + Firebase hosting deploy
 ```
 
-## Key Conventions
+No test runner is configured. The project has no test suite.
 
-### 1. Inventory Categories (11 total)
-`Firearm | Ammo | Waders | Decoy | Call | Clothing | Blind | Safety | Dog | Vehicle | Other`
+## Architecture
 
-### 2. Storage Pattern
-All hooks use **Firestore-first with localStorage fallback** for logged-out users.
+### Data Flow
+
+All data hooks in `lib/storage.ts` use **Firestore-first with localStorage fallback** for unauthenticated users:
 - `useInventory()` — gear items
 - `useHuntLogs()` — completed hunts
 - `useHuntPlans()` — planned hunts
-- `useUserProfile()` — user preferences
+- `useUserProfile()` (in `lib/useUserProfile.ts`) — user preferences
 
-### 3. localStorage Keys (documented in ARCHITECTURE.md ADR-003)
+CRUD operations go through `lib/firestore.ts`. Do not create alternate Firestore access paths.
+
+### Firestore Collections
+
+```
+users/{uid}/profile/data     — User profile document
+users/{uid}/inventory/{id}   — Inventory items
+users/{uid}/huntLogs/{id}    — Hunt log entries
+users/{uid}/huntPlans/{id}   — Hunt plan entries
+feedback/{id}                — User feedback (authenticated)
+```
+
+### Authentication (ADR-004)
+
+Adaptive Google sign-in in `lib/auth.tsx`:
+- `signInWithRedirect()` for iOS/webview/PWA contexts (more compatible)
+- `signInWithPopup()` for desktop browsers (better UX)
+- Also supports email/password auth
+- Redirect completion handled on login page before routing
+
+### Theming & Design
+
+- Dark mode via `next-themes` with `class` strategy
+- **Mallard palette:** green `#0B3D2E`, yellow `#F5B800` (defined in `tailwind.config.js`)
+- Dark background: `#0B0E14`
+
+### Motion Presets (`lib/motion.ts`)
+
+- `snappy` (400 stiffness) — buttons, counters
+- `smooth` (300 stiffness) — card entries
+- `gentle` (200 stiffness) — backgrounds
+- `staggerContainer` + `staggerChild` — section reveals
+
+## Key Conventions
+
+### Inventory Categories (11 total)
+`Firearm | Ammo | Waders | Decoy | Call | Clothing | Blind | Safety | Dog | Vehicle | Other`
+
+Use `InventoryCategory` enum from `lib/types.ts`. All types and enums live in that file.
+
+### Icons
+ALL icons use **Lucide React**. No custom SVGs, no composite icons. See `CategoryIcon.tsx` for the category-to-icon mapping. New icons must be documented there.
+
+### localStorage Keys (ADR-003)
+
+All keys use `timber_` prefix. **Do not create new keys without adding them to `ARCHITECTURE.md` ADR-003.**
+
 | Key | Purpose |
 |-----|---------|
 | `timber_inventory_v2` | Gear items |
@@ -81,38 +95,20 @@ All hooks use **Firestore-first with localStorage fallback** for logged-out user
 | `timber_checklist_shown_at` | Checklist timestamp |
 | `timber_weather_cache` | Weather cache (5-min TTL) |
 
-### 4. Icons
-ALL icons use **Lucide React**. No custom SVGs. See `CategoryIcon.tsx` for the mapping.
+### Haptic Feedback
 
-### 5. Firestore Collections
-```
-users/{uid}/profile/data     — User profile document
-users/{uid}/inventory/{id}   — Inventory items
-users/{uid}/huntLogs/{id}    — Hunt log entries
-users/{uid}/huntPlans/{id}   — Hunt plan entries
-feedback/{id}                — User feedback (authenticated)
-```
+`lib/haptics.ts` provides `hapticLight()`, `hapticMedium()`, `hapticHeavy()` for mobile vibration on interactions.
 
-## Development Commands
+## Sprint Status
 
-```bash
-npm run dev          # Dev server (default: 0.0.0.0:5000, use -p 3000 if port conflict)
-npm run build        # Static export to out/
-npm run deploy       # Build + Firebase hosting deploy
-npm run lint         # ESLint
-```
-
-## Active Sprint Status
-
-See `sprintlist.md` for the full 3-sprint plan. Summary:
+See `sprintlist.md` for full details. Current state:
 - **Sprint 1** (Security): Firestore rules hardening — in progress
-- **Sprint 2** (Architecture): Unify data models, resolve lib/firebase vs lib/firestore — not started
-- **Sprint 3** (UX): Polish + deployment hygiene — partially done
+- **Sprint 2** (Architecture): Unify data models (`lib/types.ts` vs unused `lib/firebase/models.ts`), consolidate Firestore access — not started
+- **Sprint 3** (UX): Mostly done (static export verified, orphan screens removed, real weather data wired up). Remaining: evaluate reverse geocoding approach.
 
-## Important Notes
+## Important Reminders
 
-- The app uses `output: 'export'` for static hosting on Firebase
-- Do NOT create new localStorage keys without adding them to `ARCHITECTURE.md` ADR-003
-- Do NOT use custom SVG icons — use Lucide only
-- The `Tasks/` folder contains product planning docs (not executable tasks)
-- Environment variable: `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` for location autocomplete
+- Static export: `output: 'export'` in `next.config.ts` — no server-side features (no API routes, no SSR)
+- The `Tasks/` folder contains product planning docs, not executable tasks
+- `ARCHITECTURE.md` contains 4 ADRs that must be consulted before changing inventory, icons, storage keys, or auth
+- Sprint 1 (Firestore rules) must be completed before Sprint 2 work begins

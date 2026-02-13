@@ -19,10 +19,13 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "HuntManifest | Waterfowl Logistics",
-  description: "Logistics for Waterfowl. Track hunts, manage gear inventory, and log success. Created by Talkin' Timber.",
+  description: "Logistics for Waterfowl. Track hunts, manage gear inventory, and log success.",
   keywords: ["waterfowl", "duck hunting", "hunt tracker", "hunting log", "gear inventory", "logistics"],
-  authors: [{ name: "Talkin' Timber" }],
+  authors: [{ name: "HuntManifest" }],
   manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

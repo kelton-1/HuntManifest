@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
-import { Mail, Lock, User, AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, Lock, AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-mallard-green to-mallard-green-light flex items-center justify-center mb-6 shadow-lg">
-                        <User className="h-10 w-10 text-white" />
+                        <img src="/logo.png" alt="HuntManifest" className="w-14 h-14 object-contain" />
                     </div>
                     <h1 className="text-3xl font-bold mb-2 tracking-tight">
                         {isSignUp ? "Create Account" : "Welcome Back"}
