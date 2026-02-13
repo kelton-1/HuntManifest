@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus, Droplets, Gauge } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
+import { MapPickerModal } from "@/app/components/MapPickerModal";
 import { useHuntLogs, useHuntPlans, useInventory } from "@/lib/storage";
 import { Harvest, WeatherConditions } from "@/lib/types";
 import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
@@ -70,6 +71,7 @@ function NewHuntLogContent() {
     const [notes, setNotes] = useState("");
     const [autoFillLoading, setAutoFillLoading] = useState(true);
     const [autoFillDone, setAutoFillDone] = useState(false);
+    const [mapOpen, setMapOpen] = useState(false);
 
     // Weather State
     const [weather, setWeather] = useState<WeatherConditions>({
@@ -313,15 +315,10 @@ function NewHuntLogContent() {
                                         }
                                     }
                                 }}
+                                onOpenMap={() => setMapOpen(true)}
                                 placeholder="Search for a location..."
                                 savedLocations={profile.savedLocations}
                             />
-                            {locationCoords && (
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Navigation className="h-3 w-3" />
-                                    GPS: {locationCoords.lat.toFixed(4)}°, {locationCoords.lng.toFixed(4)}°
-                                </p>
-                            )}
                         </div>
                     </GlassSection>
 
@@ -622,6 +619,22 @@ function NewHuntLogContent() {
                     </motion.button>
                 </motion.div>
             </form>
+
+            {/* Map Picker Modal */}
+            <MapPickerModal
+                open={mapOpen}
+                onClose={() => setMapOpen(false)}
+                onConfirm={async (result) => {
+                    setLocationCoords({ lat: result.lat, lng: result.lng });
+                    setLocationName(result.name);
+                    const weatherResult = await fetchWeather(result.lat, result.lng);
+                    if (weatherResult.success) {
+                        setWeather(weatherResult.data);
+                    }
+                }}
+                initialLat={locationCoords?.lat}
+                initialLng={locationCoords?.lng}
+            />
         </div>
     );
 }

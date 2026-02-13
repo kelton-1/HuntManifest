@@ -94,8 +94,8 @@ export function BottomNav() {
                                     />
                                 )}
                                 <item.icon
-                                    className={`relative h-5 w-5 transition-all duration-300 ${active ? "fill-current scale-110" : ""
-                                        }`}
+                                    className="relative h-5 w-5 transition-all duration-300"
+                                    strokeWidth={active ? 2.5 : 1.5}
                                 />
                                 <span className={`relative text-[10px] font-semibold tracking-wide ${active ? "opacity-100" : "opacity-70"
                                     }`}>
@@ -209,8 +209,8 @@ export function BottomNav() {
                                     />
                                 )}
                                 <item.icon
-                                    className={`relative h-5 w-5 transition-all duration-300 ${active ? "fill-current scale-110" : ""
-                                        }`}
+                                    className="relative h-5 w-5 transition-all duration-300"
+                                    strokeWidth={active ? 2.5 : 1.5}
                                 />
                                 <span className={`relative text-[10px] font-semibold tracking-wide ${active ? "opacity-100" : "opacity-70"
                                     }`}>

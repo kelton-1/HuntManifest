@@ -1,8 +1,8 @@
 "use client";
 
-import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail, LogIn, MessageSquare, Send } from "lucide-react";
+import { User, Settings, Bell, Moon, ChevronRight, Trash2, Download, MapPin, Thermometer, HelpCircle, Info, Edit2, Check, X, LogOut, Mail, LogIn, MessageSquare, Send, Camera } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useInventory, useHuntLogs } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
@@ -36,6 +36,19 @@ export default function ProfilePage() {
     const [tempLocation, setTempLocation] = useState("");
     const [feedbackText, setFeedbackText] = useState("");
     const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+    const [profileImage, setProfileImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                setProfileImage(ev.target?.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Check if we're on the client
     const mounted = typeof window !== "undefined";
@@ -99,9 +112,31 @@ export default function ProfilePage() {
             <header className="mb-6 text-center">
                 <div className="relative mx-auto w-24 h-24 mb-4">
                     <div className="absolute -inset-1.5 rounded-full bg-primary/20 blur-md" />
-                    <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-mallard-green to-mallard-green-light flex items-center justify-center shadow-lg">
-                        <User className="h-12 w-12 text-white" />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="relative w-24 h-24 rounded-full bg-gradient-to-br from-mallard-green to-mallard-green-light flex items-center justify-center shadow-lg overflow-hidden group"
+                    >
+                        {profileImage ? (
+                            <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <User className="h-12 w-12 text-white" />
+                        )}
+                        {/* Camera overlay */}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity rounded-full">
+                            <Camera className="h-6 w-6 text-white" />
+                        </div>
+                    </button>
+                    {/* Small camera badge */}
+                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center border-2 border-background shadow-md">
+                        <Camera className="h-4 w-4 text-primary-foreground" />
                     </div>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageChange}
+                        className="hidden"
+                    />
                 </div>
 
                 {/* Editable Name */}

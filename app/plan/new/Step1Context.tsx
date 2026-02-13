@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, Cloud, Check } from "lucide-react";
-import { useGeolocation } from "@/lib/geolocation";
+import { Calendar, Cloud, Check } from "lucide-react";
+import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
 import { fetchWeather } from "@/lib/weatherApi";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { WeatherConditions, WATERFOWL_SPECIES } from "@/lib/types";
 import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
+import { MapPickerModal } from "@/app/components/MapPickerModal";
 import { getHuntingSuitability } from "@/lib/huntingSuitability";
 
 export interface PlanContextData {
@@ -26,7 +27,8 @@ interface Step1Props {
 export function Step1Context({ data, setData, onNext }: Step1Props) {
     const { getCurrentPosition } = useGeolocation();
     const { profile } = useUserProfile();
-    const [loadingLocation, setLoadingLocation] = useState(false);
+    const [mapOpen, setMapOpen] = useState(false);
+    const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
     // Initialize date if empty
     useEffect(() => {
@@ -35,17 +37,35 @@ export function Step1Context({ data, setData, onNext }: Step1Props) {
         }
     }, []);
 
-    const handleUseCurrentLocation = async () => {
-        setLoadingLocation(true);
-        const position = await getCurrentPosition();
-        if (position) {
-            setData({ locationName: "Current Location" });
-            const weatherRes = await fetchWeather(position.latitude, position.longitude);
-            if (weatherRes.success) {
-                setData({ weather: weatherRes.data });
+    // Auto-resolve GPS location on mount (if no location set yet)
+    useEffect(() => {
+        if (data.locationName && data.locationName !== "Current Location") return;
+
+        const autoResolve = async () => {
+            const position = await getCurrentPosition();
+            if (position) {
+                setCoords({ lat: position.latitude, lng: position.longitude });
+                const placeName = await reverseGeocode(position.latitude, position.longitude);
+                if (placeName) {
+                    setData({ locationName: placeName });
+                }
+                const weatherRes = await fetchWeather(position.latitude, position.longitude);
+                if (weatherRes.success) {
+                    setData({ weather: weatherRes.data });
+                }
             }
+        };
+
+        autoResolve();
+    }, []);
+
+    const handleMapConfirm = async (result: { name: string; lat: number; lng: number }) => {
+        setCoords({ lat: result.lat, lng: result.lng });
+        setData({ locationName: result.name });
+        const weatherRes = await fetchWeather(result.lat, result.lng);
+        if (weatherRes.success) {
+            setData({ weather: weatherRes.data });
         }
-        setLoadingLocation(false);
     };
 
     const toggleSpecies = (sp: string) => {
@@ -91,32 +111,23 @@ export function Step1Context({ data, setData, onNext }: Step1Props) {
 
                 <div className="space-y-2">
                     <label className="text-sm font-bold ml-1">Location</label>
-                    <div className="flex gap-2">
-                        <div className="flex-1">
-                            <LocationAutocomplete
-                                value={data.locationName}
-                                onChange={(value) => setData({ locationName: value })}
-                                onPlaceSelect={async (place) => {
-                                    setData({ locationName: place.name });
-                                    if (place.lat && place.lng) {
-                                        const weatherRes = await fetchWeather(place.lat, place.lng);
-                                        if (weatherRes.success) {
-                                            setData({ weather: weatherRes.data });
-                                        }
-                                    }
-                                }}
-                                placeholder="Search for a location..."
-                                savedLocations={profile.savedLocations}
-                            />
-                        </div>
-                        <button
-                            onClick={handleUseCurrentLocation}
-                            disabled={loadingLocation}
-                            className="p-3 bg-secondary rounded-xl hover:bg-secondary/80 transition-colors"
-                        >
-                            <MapPin className={`h-5 w-5 ${loadingLocation ? "animate-pulse" : ""}`} />
-                        </button>
-                    </div>
+                    <LocationAutocomplete
+                        value={data.locationName}
+                        onChange={(value) => setData({ locationName: value })}
+                        onPlaceSelect={async (place) => {
+                            setData({ locationName: place.name });
+                            if (place.lat && place.lng) {
+                                setCoords({ lat: place.lat, lng: place.lng });
+                                const weatherRes = await fetchWeather(place.lat, place.lng);
+                                if (weatherRes.success) {
+                                    setData({ weather: weatherRes.data });
+                                }
+                            }
+                        }}
+                        onOpenMap={() => setMapOpen(true)}
+                        placeholder="Search for a location..."
+                        savedLocations={profile.savedLocations}
+                    />
                 </div>
 
                 {/* Species Selector */}
@@ -179,6 +190,15 @@ export function Step1Context({ data, setData, onNext }: Step1Props) {
             >
                 Next: Select Gear
             </button>
+
+            {/* Map Picker Modal */}
+            <MapPickerModal
+                open={mapOpen}
+                onClose={() => setMapOpen(false)}
+                onConfirm={handleMapConfirm}
+                initialLat={coords?.lat}
+                initialLng={coords?.lng}
+            />
         </div>
     );
 }

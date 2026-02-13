@@ -39,6 +39,7 @@ interface LocationAutocompleteProps {
     value: string;
     onChange: (value: string) => void;
     onPlaceSelect?: (place: { name: string; lat?: number; lng?: number }) => void;
+    onOpenMap?: () => void;
     placeholder?: string;
     className?: string;
     savedLocations?: string[];
@@ -52,6 +53,7 @@ export function LocationAutocomplete({
     value,
     onChange,
     onPlaceSelect,
+    onOpenMap,
     placeholder = "Enter location...",
     className = "",
     savedLocations = []
@@ -148,7 +150,18 @@ export function LocationAutocomplete({
 
     return (
         <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+            {onOpenMap ? (
+                <button
+                    type="button"
+                    onClick={onOpenMap}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-0.5 rounded hover:bg-primary/10 transition-colors"
+                    aria-label="Open map"
+                >
+                    <MapPin className="h-5 w-5 text-primary" />
+                </button>
+            ) : (
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+            )}
             {!scriptReady && googleScriptLoading && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin z-10" />
             )}
