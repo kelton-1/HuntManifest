@@ -13,130 +13,130 @@ export const SPECIES_WHEEL_DEFAULTS = [
 ];
 
 export const SPECIES_DATA: SpeciesData[] = [
-    // Puddle Ducks
+    // Puddle Ducks - Vibrant & Distinct
     {
         id: 'mallard',
         name: 'Mallard',
         category: 'Puddle',
         isCommon: true,
-        colors: ['#004d26', '#593826', '#e4dcc8'] // Emerald Head, Chestnut Chest, Cream/Grey Body
+        colors: ['#00A86B', '#8B4513', '#E6E6FA'] // Emerald Green (Vibrant), Saddle Brown, Lavender Mist (Cream substitute)
     },
     {
         id: 'wood_duck',
         name: 'Wood Duck',
         category: 'Puddle',
         isCommon: true,
-        colors: ['#2e4726', '#872e29', '#e0c78e'] // Iridescent Green, Burgundy, Gold Flank
+        colors: ['#32CD32', '#800020', '#FFD700'] // Lime Green, Burgundy, Gold
     },
     {
         id: 'teal_gw',
         name: 'Teal (Green-winged)',
         category: 'Puddle',
         isCommon: true,
-        colors: ['#4b2e2a', '#2d6a4f', '#b3b3b3'] // Rust Head, Green Stripe, Grey Body
+        colors: ['#8B0000', '#00FA9A', '#C0C0C0'] // Dark Red, Medium Spring Green, Silver
     },
     {
         id: 'teal_bw',
         name: 'Teal (Blue-winged)',
         category: 'Puddle',
-        colors: ['#3e4a59', '#7daedb', '#a67d58'] // Slate Head, Powder Blue Wing, Brown Body
+        colors: ['#708090', '#87CEEB', '#D2691E'] // Slate Gray, Sky Blue, Chocolate
     },
     {
         id: 'gadwall',
         name: 'Gadwall',
         category: 'Puddle',
         isCommon: true,
-        colors: ['#8c8c8c', '#333333', '#d9cba3'] // Grey Body, Black Butt, Tan Head scale
+        colors: ['#696969', '#000000', '#F5DEB3'] // Dim Gray, Black, Wheat
     },
     {
         id: 'wigeon',
         name: 'Wigeon',
         category: 'Puddle',
         isCommon: true,
-        colors: ['#e4dcc8', '#2d6a4f', '#a67d58'] // Cream Pale, Green Stripe, Pinkish Brown
+        colors: ['#FFE4E1', '#228B22', '#BC8F8F'] // Misty Rose (Pinkish), Forest Green, Rosy Brown
     },
     {
         id: 'pintail',
         name: 'Pintail',
         category: 'Puddle',
-        colors: ['#4a3728', '#ffffff', '#8c9bb3'] // Chocolate Head, White Neck, Slate/Grey Body
+        colors: ['#8B4513', '#FFFFFF', '#778899'] // Saddle Brown, White, Light Slate Gray
     },
     {
         id: 'black_duck',
         name: 'Black Duck',
         category: 'Puddle',
-        colors: ['#3d2b1f', '#6b4e36', '#2d4f82'] // Dark Brown Body, Lighter Head, Purple Speculum
+        colors: ['#2F4F4F', '#A0522D', '#483D8B'] // Dark Slate Gray, Sienna, Dark Slate Blue (Purple Speculum)
     },
     {
         id: 'shoveler',
         name: 'Shoveler',
         category: 'Puddle',
-        colors: ['#0f281e', '#ffffff', '#872e29'] // Green Head, White Chest, Rust Flank
+        colors: ['#006400', '#FFFFFF', '#B22222'] // Dark Green, White, Firebrick
     },
 
-    // Diver Ducks
+    // Diver Ducks - High Contrast
     {
         id: 'canvasback',
         name: 'Canvasback',
         category: 'Diver',
-        colors: ['#e4e4e4', '#872e29', '#000000'] // Canvas White, Rust Head, Black Chest
+        colors: ['#F5F5F5', '#800000', '#1C1C1C'] // White Smoke, Maroon, Eerie Black
     },
     {
         id: 'redhead',
         name: 'Redhead',
         category: 'Diver',
-        colors: ['#a62929', '#1a1a1a', '#8a8a8a'] // Red Head, Black Chest, Grey Body
+        colors: ['#DC143C', '#000000', '#808080'] // Crimson, Black, Gray
     },
     {
         id: 'ring_neck',
         name: 'Ring-necked Duck',
         category: 'Diver',
-        colors: ['#1a1a1a', '#8c8c8c', '#ffffff'] // Black Back/Purple Sheen, Grey Flank, White Mark
+        colors: ['#000000', '#D3D3D3', '#FFFFFF'] // Black, Light Gray, White
     },
     {
         id: 'scaup',
         name: 'Scaup',
         category: 'Diver',
-        colors: ['#1a1a1a', '#e4e4e4', '#4b5563'] // Black Head, White Side, Grey Back
+        colors: ['#000080', '#F0F8FF', '#708090'] // Navy, Alice Blue, Slate Gray
     },
     {
         id: 'goldeneye',
         name: 'Goldeneye',
         category: 'Diver',
-        colors: ['#1a1a1a', '#ffffff', '#fcd34d'] // Black Head, White Spot/Body, Gold Eye
+        colors: ['#000000', '#FFFFFF', '#FFD700'] // Black, White, Gold
     },
     {
         id: 'bufflehead',
         name: 'Bufflehead',
         category: 'Diver',
-        colors: ['#ffffff', '#1a1a1a', '#6b21a8'] // White Pie, Black, Purple/Green Sheen
+        colors: ['#FFFFFF', '#000000', '#9400D3'] // White, Black, Dark Violet
     },
 
-    // Geese
+    // Geese - distinct patterns
     {
         id: 'canada_goose',
         name: 'Canada Goose',
         category: 'Goose',
         isCommon: true,
-        colors: ['#1a1a1a', '#f5f5f4', '#a18e76'] // Black Head/Neck, White Cheek, Tan Body
+        colors: ['#1C1C1C', '#F5F5DC', '#8B4513'] // Eerie Black, Beige, Saddle Brown
     },
     {
         id: 'snow_goose',
         name: 'Snow Goose',
         category: 'Goose',
-        colors: ['#ffffff', '#1a1a1a', '#eb7d8c'] // White Body, Black Wingtips, Pink Bill/Legs
+        colors: ['#FFFFFF', '#000000', '#FF69B4'] // White, Black, Hot Pink
     },
     {
         id: 'specklebelly',
         name: 'Specklebelly (White-fronted)',
         category: 'Goose',
-        colors: ['#786b59', '#1a1a1a', '#e69138'] // Grey-Brown, Black Bars, Orange Legs
+        colors: ['#808000', '#000000', '#FF8C00'] // Olive, Black, Dark Orange
     },
     {
         id: 'ross_goose',
         name: 'Ross Goose',
         category: 'Goose',
-        colors: ['#ffffff', '#1a1a1a', '#f87171'] // White (Smaller), Black Tips, Reddish Bill
+        colors: ['#FFFFFF', '#000000', '#CD5C5C'] // White, Black, Indian Red
     },
 
     // Other
@@ -144,18 +144,18 @@ export const SPECIES_DATA: SpeciesData[] = [
         id: 'coot',
         name: 'Coot',
         category: 'Other',
-        colors: ['#1a1a1a', '#374151', '#ffffff'] // Black Body, Dark Grey, White Beak
+        colors: ['#000000', '#2F4F4F', '#F0FFFF'] // Black, Dark Slate Gray, Azure
     },
     {
         id: 'merganser',
         name: 'Merganser',
         category: 'Other',
-        colors: ['#1a1a1a', '#ffffff', '#ef4444'] // Green/Black Head, White Body, Red Bill
+        colors: ['#228B22', '#FFFFFF', '#FF4500'] // Forest Green, White, Orange Red
     },
     {
         id: 'other',
         name: 'Other',
         category: 'Other',
-        colors: ['#52525b', '#a1a1aa', '#d4d4d8'] // Generic Grey Scale
+        colors: ['#696969', '#A9A9A9', '#DCDCDC'] // Dims of Gray
     },
 ];

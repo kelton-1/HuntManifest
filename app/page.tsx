@@ -12,6 +12,8 @@ import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 import { SeasonGoalsRing } from "./components/home/SeasonGoalsRing";
 import { AtmosphericCard } from "./components/home/AtmosphericCard";
 import { HuntMemoryCarousel } from "./components/home/HuntMemoryCarousel";
+import { CommandCenterHero } from "./components/home/CommandCenterHero";
+import { WeatherForecastWidget } from "./components/home/WeatherForecastWidget";
 
 export default function Home() {
   const { logs } = useHuntLogs();
@@ -50,12 +52,8 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-4 pb-4 animate-fade-in">
 
-      {/* 1. Season Goals Radial Dashboard */}
-      <SeasonGoalsRing
-        totalHunts={totalHunts}
-        totalHarvest={totalHarvest}
-        hunterName={hunterName}
-      />
+      {/* 1. Command Center Hero (Replaces SeasonGoalsRing) */}
+      <CommandCenterHero />
 
       {/* 2. Atmospheric Weather Widget */}
       <AtmosphericCard
@@ -66,6 +64,9 @@ export default function Home() {
         temperatureUnit={profile.temperatureUnit}
         windSpeedUnit={profile.windSpeedUnit}
       />
+
+      {/* 3. Weather Forecast (New) */}
+      <WeatherForecastWidget />
 
       {/* 3. Hunt Memory Carousel */}
       <HuntMemoryCarousel

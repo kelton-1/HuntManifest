@@ -577,11 +577,13 @@ h6 {
   }
 
   .input:focus {
-    box-shadow: 0 0 0 3px rgba(11, 61, 46, 0.1);
+    box-shadow: 0 0 0 4px rgba(11, 61, 46, 0.2), 0 0 12px rgba(11, 61, 46, 0.1);
+    transform: translateY(-1px);
   }
 
   .dark .input:focus {
-    box-shadow: 0 0 0 3px rgba(245, 184, 0, 0.1);
+    box-shadow: 0 0 0 4px rgba(245, 184, 0, 0.2), 0 0 12px rgba(245, 184, 0, 0.1);
+    transform: translateY(-1px);
   }
 
   .badge {

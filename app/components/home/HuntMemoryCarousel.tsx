@@ -71,7 +71,7 @@ export function HuntMemoryCarousel({ logs, formatTemperature, temperatureUnit }:
                                 className="flex-shrink-0 snap-start group/card relative"
                             >
                                 <div
-                                    className={`relative w-52 h-36 rounded-2xl overflow-hidden glass-card shadow-lg bg-gradient-to-br ${getCardGradient(harvestCount, index)} group-hover/card:scale-[1.02] transition-transform duration-300`}
+                                    className={`relative z-10 w-52 h-36 rounded-2xl overflow-hidden glass-card shadow-lg bg-gradient-to-br ${getCardGradient(harvestCount, index)} group-hover/card:scale-[1.02] transition-transform duration-300`}
                                 >
                                     {/* Gradient Scrim for readability */}
                                     <div className="absolute inset-0 card-gradient-overlay opacity-60 group-hover/card:opacity-50 transition-opacity" />

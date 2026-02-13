@@ -171,7 +171,7 @@ export function AtmosphericCard({
                 {/* 2. Temperature Tile */}
                 <div className="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group/tile">
                     <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
-                        <Thermometer className="h-4 w-4 text-mallard-yellow" />
+                        <Thermometer className="h-6 w-6 text-mallard-yellow" />
                     </div>
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Temp</span>
                     <span className="text-2xl font-bold tabular-nums text-foreground mt-1">
@@ -182,7 +182,7 @@ export function AtmosphericCard({
                 {/* 3. Sky Condition Tile */}
                 <div className="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group/tile">
                     <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
-                        <CloudSun className="h-4 w-4 text-sky-500" />
+                        <CloudSun className="h-6 w-6 text-sky-500" />
                     </div>
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sky</span>
                     <span className="text-sm font-bold leading-tight mt-2 line-clamp-2">
@@ -194,7 +194,7 @@ export function AtmosphericCard({
                 {weather.humidity && (
                     <div className="col-span-2 glass-card rounded-xl p-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Droplets className="h-4 w-4 text-blue-400" />
+                            <Droplets className="h-5 w-5 text-blue-400" />
                             <span className="text-sm font-medium">Humidity</span>
                         </div>
                         <span className="font-bold tabular-nums">{weather.humidity}%</span>

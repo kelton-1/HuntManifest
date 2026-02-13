@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ChevronRight, Bird, Filter } from "lucide-react";
 import { Harvest } from "@/lib/types";
@@ -28,6 +28,18 @@ export function HarvestEntry({ harvests, onUpdate }: HarvestEntryProps) {
     const getCount = (name: string) => {
         return harvests.find(h => h.species === name)?.count || 0;
     };
+
+    // Body scroll lock
+    useEffect(() => {
+        if (isFullListOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [isFullListOpen]);
 
     // Handler: Add/Increment
     const handleIncrement = (speciesName: string) => {
@@ -171,11 +183,12 @@ export function HarvestEntry({ harvests, onUpdate }: HarvestEntryProps) {
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <input
-                                    type="text"
+                                    autoFocus
+                                    type="search"
                                     placeholder="Search species..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-secondary/30 border border-transparent focus:bg-background focus:border-primary transition-all outline-none"
+                                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-secondary/30 border border-transparent focus:bg-background focus:border-primary transition-all outline-none appearance-none"
                                 />
                             </div>
 
