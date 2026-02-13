@@ -8,6 +8,19 @@ import { useInventory, useHuntLogs } from "@/lib/storage";
 import { useAuth } from "@/lib/auth";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { submitFeedback } from "@/lib/firestore";
+import { useCountUp } from "@/lib/useCountUp";
+
+function StatCounter({ value, label, highlight }: { value: number; label: string; highlight?: boolean }) {
+    const animatedValue = useCountUp(value);
+    return (
+        <div className="text-center">
+            <p className={`text-2xl font-bold tabular-nums ${highlight ? "text-mallard-yellow" : "text-primary"}`}>
+                {animatedValue}
+            </p>
+            <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+    );
+}
 
 export default function ProfilePage() {
     const { theme, setTheme } = useTheme();
@@ -142,22 +155,15 @@ export default function ProfilePage() {
 
             {/* Stats Bar */}
             <div className="flex justify-center gap-6 mb-6 p-4 glass-card rounded-2xl">
-                <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">{inventory.length}</p>
-                    <p className="text-xs text-muted-foreground">Gear Items</p>
-                </div>
+                <StatCounter value={inventory.length} label="Gear Items" />
                 <div className="w-px bg-border" />
-                <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">{logs.length}</p>
-                    <p className="text-xs text-muted-foreground">Hunts Recorded</p>
-                </div>
+                <StatCounter value={logs.length} label="Hunts Recorded" />
                 <div className="w-px bg-border" />
-                <div className="text-center">
-                    <p className="text-2xl font-bold text-mallard-yellow">
-                        {logs.reduce((acc, log) => acc + log.harvests.reduce((sum, h) => sum + h.count, 0), 0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Total Harvest</p>
-                </div>
+                <StatCounter
+                    value={logs.reduce((acc, log) => acc + log.harvests.reduce((sum, h) => sum + h.count, 0), 0)}
+                    label="Total Harvest"
+                    highlight
+                />
             </div>
 
             {/* Account CTA (Signed Out State) */}

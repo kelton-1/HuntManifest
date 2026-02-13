@@ -6,6 +6,7 @@ import { Plus, Search, ChevronDown, Trash2, Edit2, Package, Filter } from "lucid
 import { useInventory } from "@/lib/storage";
 import { InventoryItem, InventoryCategory, INVENTORY_CATEGORIES } from "@/lib/types";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
+import { StaggerContainer, StaggerItem } from "@/app/components/StaggerAnimation";
 
 
 // Sample items to show when user wants to see what a full inventory looks like
@@ -225,67 +226,70 @@ export default function InventoryPage() {
 
             {/* Inventory Grid */}
             {(inventory.length > 0 || showSamplePreview) && (
-                <div className="p-4 grid grid-cols-2 gap-3">
+                <StaggerContainer className="p-4 grid grid-cols-2 gap-3">
                     {displayItems.map((item) => (
-                        <div
-                            key={item.id}
-                            className="relative glass-card rounded-2xl p-3.5 group hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                        >
-                            {/* Category Icon Badge */}
-                            <div className="absolute -top-2.5 -left-2 flex items-center justify-center h-8 w-8 bg-primary/15 dark:bg-primary/20 rounded-xl border border-primary/20 shadow-sm">
-                                <CategoryIcon category={item.category} className="h-4 w-4 text-primary" />
-                            </div>
+                        <StaggerItem key={item.id}>
+                            <div
+                                className="relative glass-card rounded-2xl p-3.5 group hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                            >
+                                {/* Category Icon Badge */}
+                                <div className="absolute -top-2.5 -left-2 flex items-center justify-center h-8 w-8 bg-primary/15 dark:bg-primary/20 rounded-xl border border-primary/20 shadow-sm">
+                                    <CategoryIcon category={item.category} className="h-4 w-4 text-primary" />
+                                </div>
 
-                            {/* Quick Actions (shown on hover/tap) */}
-                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Link
-                                    href={`/inventory/edit/${item.id}`}
-                                    className="p-1.5 bg-secondary/80 backdrop-blur-sm rounded-lg hover:bg-primary hover:text-white transition-colors"
-                                >
-                                    <Edit2 className="h-3 w-3" />
-                                </Link>
-                                <button
-                                    onClick={() => handleDelete(item.id)}
-                                    className={`p-1.5 rounded-lg transition-colors ${deleteConfirmId === item.id
-                                        ? "bg-red-500 text-white"
-                                        : "bg-secondary/80 backdrop-blur-sm hover:bg-red-500/20 hover:text-red-400"
-                                        }`}
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                </button>
-                            </div>
+                                {/* Quick Actions (shown on hover/tap) */}
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Link
+                                        href={`/inventory/edit/${item.id}`}
+                                        className="p-1.5 bg-secondary/80 backdrop-blur-sm rounded-lg hover:bg-primary hover:text-white transition-colors"
+                                    >
+                                        <Edit2 className="h-3 w-3" />
+                                    </Link>
+                                    <button
+                                        onClick={() => handleDelete(item.id)}
+                                        className={`p-1.5 rounded-lg transition-colors ${deleteConfirmId === item.id
+                                            ? "bg-red-500 text-white"
+                                            : "bg-secondary/80 backdrop-blur-sm hover:bg-red-500/20 hover:text-red-400"
+                                            }`}
+                                    >
+                                        <Trash2 className="h-3 w-3" />
+                                    </button>
+                                </div>
 
-                            {/* Content */}
-                            <div className="pt-3">
-                                <p className="font-bold text-sm leading-tight line-clamp-2 mb-0.5">
-                                    {item.name}
-                                </p>
-                                {item.specs?.brand && (
-                                    <p className="text-[11px] text-muted-foreground/80 mb-2.5">{item.specs.brand}</p>
-                                )}
-                                <div className="flex items-center justify-between mt-auto">
-                                    <span className="text-xs text-muted-foreground">
-                                        Qty: <span className="font-bold text-foreground tabular-nums">{item.quantity}</span>
-                                    </span>
-                                    <span className="text-[9px] px-2 py-0.5 bg-primary/10 dark:bg-primary/8 rounded-full text-primary font-semibold uppercase tracking-wider">
-                                        {item.category}
-                                    </span>
+                                {/* Content */}
+                                <div className="pt-3">
+                                    <p className="font-bold text-sm leading-tight line-clamp-2 mb-0.5">
+                                        {item.name}
+                                    </p>
+                                    {item.specs?.brand && (
+                                        <p className="text-[11px] text-muted-foreground/80 mb-2.5">{item.specs.brand}</p>
+                                    )}
+                                    <div className="flex items-center justify-between mt-auto">
+                                        <span className="text-xs text-muted-foreground">
+                                            Qty: <span className="font-bold text-foreground tabular-nums">{item.quantity}</span>
+                                        </span>
+                                        <span className="text-[9px] px-2 py-0.5 bg-primary/10 dark:bg-primary/8 rounded-full text-primary font-semibold uppercase tracking-wider">
+                                            {item.category}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </StaggerItem>
                     ))}
 
                     {/* Add New Card */}
-                    <Link
-                        href={activeCategory !== "all" ? `/inventory/add?category=${activeCategory}` : "/inventory/add"}
-                        className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border/60 rounded-2xl text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/8 transition-all min-h-[120px]"
-                    >
-                        <div className="p-2 rounded-xl bg-primary/10 dark:bg-primary/8">
-                            <Plus className="h-5 w-5" />
-                        </div>
-                        <span className="text-xs font-semibold">Add Item</span>
-                    </Link>
-                </div>
+                    <StaggerItem>
+                        <Link
+                            href={activeCategory !== "all" ? `/inventory/add?category=${activeCategory}` : "/inventory/add"}
+                            className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border/60 rounded-2xl text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/8 transition-all min-h-[120px]"
+                        >
+                            <div className="p-2 rounded-xl bg-primary/10 dark:bg-primary/8">
+                                <Plus className="h-5 w-5" />
+                            </div>
+                            <span className="text-xs font-semibold">Add Item</span>
+                        </Link>
+                    </StaggerItem>
+                </StaggerContainer>
             )}
 
         </div>

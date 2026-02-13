@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Trophy, Bird, TrendingUp } from "lucide-react";
+import { useCountUp } from "@/lib/useCountUp";
 
 interface SeasonGoalsRingProps {
     totalHunts: number;
@@ -34,6 +35,8 @@ export function SeasonGoalsRing({ totalHunts, totalHarvest, hunterName }: Season
                     sublabel: `of ${seasonGoals.hunts} goal`,
                     progress: Math.min((totalHunts / seasonGoals.hunts) * 100, 100),
                     icon: Bird,
+                    color: "text-mallard-green dark:text-mallard-green-light",
+                    gradientId: "grad-hunts"
                 };
             case "harvest":
                 return {
@@ -43,6 +46,8 @@ export function SeasonGoalsRing({ totalHunts, totalHarvest, hunterName }: Season
                     sublabel: `of ${seasonGoals.harvest} goal`,
                     progress: Math.min((totalHarvest / seasonGoals.harvest) * 100, 100),
                     icon: Trophy,
+                    color: "text-mallard-yellow",
+                    gradientId: "grad-harvest"
                 };
             case "average":
                 return {
@@ -52,99 +57,134 @@ export function SeasonGoalsRing({ totalHunts, totalHarvest, hunterName }: Season
                     sublabel: "birds per outing",
                     progress: Math.min((parseFloat(avgPerHunt) / 5) * 100, 100),
                     icon: TrendingUp,
+                    color: "text-sky-500",
+                    gradientId: "grad-avg"
                 };
         }
     };
 
     const metric = getMetricData();
     const Icon = metric.icon;
+    const animatedValue = useCountUp(typeof metric.value === 'number' ? metric.value : parseFloat(metric.value as string));
+    const displayValue = activeMetric === 'average'
+        ? (animatedValue / 10).toFixed(1)
+        : animatedValue;
 
     // SVG circle dimensions
-    const size = 140;
-    const strokeWidth = 10;
+    const size = 160;
+    const strokeWidth = 12;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (metric.progress / 100) * circumference;
 
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-mallard-green via-mallard-green to-mallard-green-light rounded-2xl p-5 text-white shadow-lg glow-radial">
-            {/* Background Pattern */}
-            <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <pattern id="feathers-ring" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                        <path d="M10 0C10 5.5 5.5 10 0 10C5.5 10 10 14.5 10 20C10 14.5 14.5 10 20 10C14.5 10 10 5.5 10 0Z" fill="currentColor" />
-                    </pattern>
-                    <rect x="0" y="0" width="100" height="100" fill="url(#feathers-ring)" />
-                </svg>
-            </div>
+        <section className="relative overflow-hidden glass-card rounded-2xl p-0 shadow-lg group">
+            {/* Ambient Background Gradient (Behind Glass) */}
+            <div className={`absolute inset-0 opacity-10 dark:opacity-20 transition-colors duration-500 bg-gradient-to-br ${activeMetric === 'hunts' ? 'from-mallard-green via-mallard-green-light to-transparent' :
+                    activeMetric === 'harvest' ? 'from-mallard-yellow via-orange-400 to-transparent' :
+                        'from-sky-500 via-blue-600 to-transparent'
+                }`} />
 
-            <div className="relative flex items-center gap-5">
-                {/* Radial Progress Ring */}
+            <div className="relative p-6 flex flex-col sm:flex-row items-center gap-6">
+                {/* Visual Ring Section */}
                 <div className="relative flex-shrink-0">
-                    <svg width={size} height={size} className="transform -rotate-90">
-                        {/* Background track */}
-                        <circle
-                            cx={size / 2}
-                            cy={size / 2}
-                            r={radius}
-                            fill="none"
-                            stroke="rgba(255,255,255,0.15)"
-                            strokeWidth={strokeWidth}
-                        />
-                        {/* Progress arc */}
-                        <circle
-                            cx={size / 2}
-                            cy={size / 2}
-                            r={radius}
-                            fill="none"
-                            stroke="url(#progressGradient)"
-                            strokeWidth={strokeWidth}
-                            strokeLinecap="round"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={strokeDashoffset}
-                            className="transition-all duration-700 ease-out"
-                        />
-                        {/* Gradient definition */}
-                        <defs>
-                            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#FFD700" />
-                                <stop offset="100%" stopColor="#90EE90" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
+                    <div className="relative">
+                        <svg width={size} height={size} className="transform -rotate-90">
+                            {/* Background track */}
+                            <circle
+                                cx={size / 2}
+                                cy={size / 2}
+                                r={radius}
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={strokeWidth}
+                                className="text-muted-foreground/10"
+                            />
+                            {/* Progress arc */}
+                            <circle
+                                cx={size / 2}
+                                cy={size / 2}
+                                r={radius}
+                                fill="none"
+                                stroke={`url(#${metric.gradientId})`}
+                                strokeWidth={strokeWidth}
+                                strokeLinecap="round"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                className="transition-all duration-700 ease-out"
+                            />
 
-                    {/* Center content */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <Icon className="h-4 w-4 text-mallard-yellow mb-1" />
-                        <span className="text-3xl font-bold tracking-tight">{metric.value}</span>
-                        <span className="text-[10px] text-white/70 uppercase tracking-wide">{metric.label}</span>
+                            {/* Gradients */}
+                            <defs>
+                                <linearGradient id="grad-hunts" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#166653" />
+                                    <stop offset="100%" stopColor="#2DD4BF" />
+                                </linearGradient>
+                                <linearGradient id="grad-harvest" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#F5B800" />
+                                    <stop offset="100%" stopColor="#FB923C" />
+                                </linearGradient>
+                                <linearGradient id="grad-avg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#0EA5E9" />
+                                    <stop offset="100%" stopColor="#6366F1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+
+                        {/* Center content */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <Icon className={`h-5 w-5 mb-1 transition-colors duration-300 ${metric.color}`} />
+                            <span className="text-4xl font-bold tracking-tight tabular-nums transition-all">{displayValue}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">{metric.label}</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Right side content */}
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-lg font-bold tracking-tight mb-0.5 truncate">
-                        Welcome, {hunterName}
-                    </h1>
-                    <p className="text-white/70 text-xs mb-3">
-                        {metric.sublabel}
-                    </p>
+                {/* Content Section */}
+                <div className="flex-1 w-full min-w-0 flex flex-col gap-4">
+                    <div>
+                        <h1 className="text-lg font-bold tracking-tight mb-0.5 truncate">
+                            Welcome, {hunterName}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            You're {Math.round(metric.progress)}% of the way to your {metric.label.toLowerCase()} goal.
+                        </p>
+                    </div>
 
-                    {/* Metric toggle pills */}
-                    <div className="flex gap-1.5">
+                    {/* Metric Selection Pills */}
+                    <div className="flex p-1 bg-secondary/50 rounded-xl backdrop-blur-sm self-start">
                         {(["hunts", "harvest", "average"] as MetricType[]).map((type) => (
                             <button
                                 key={type}
                                 onClick={() => setActiveMetric(type)}
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${activeMetric === type
-                                    ? "bg-white/25 text-white"
-                                    : "bg-white/10 text-white/60 hover:bg-white/15"
+                                className={`relative px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-300 ${activeMetric === type
+                                    ? "text-primary shadow-sm bg-background"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                                     }`}
                             >
+                                {activeMetric === type && (
+                                    <div className="absolute inset-0 rounded-lg ring-1 ring-black/5 dark:ring-white/10" />
+                                )}
                                 {type === "average" ? "Avg" : type}
                             </button>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* Bottom Stat Micro-Grid */}
+            <div className="grid grid-cols-3 divide-x divide-border/40 border-t border-border/40 bg-secondary/30">
+                <div className="p-3 text-center hover:bg-white/5 transition-colors">
+                    <span className="block text-lg font-bold tabular-nums text-foreground">{totalHunts}</span>
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Hunts</span>
+                </div>
+                <div className="p-3 text-center hover:bg-white/5 transition-colors">
+                    <span className="block text-lg font-bold tabular-nums text-mallard-yellow">{totalHarvest}</span>
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Harvest</span>
+                </div>
+                <div className="p-3 text-center hover:bg-white/5 transition-colors">
+                    <span className="block text-lg font-bold tabular-nums text-sky-500">{avgPerHunt}</span>
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Avg/Hunt</span>
                 </div>
             </div>
         </section>

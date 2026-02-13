@@ -9,6 +9,7 @@ import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 import { analyzeHuntLog } from "@/lib/gemini";
 import { useState } from "react";
 import { staggerContainer, staggerChild, snappy } from "@/lib/motion";
+import { SpeciesIcon } from "@/app/components/log/SpeciesIcon";
 
 export default function HuntDetailClient() {
     const params = useParams();
@@ -105,9 +106,14 @@ export default function HuntDetailClient() {
                         <span className="text-3xl font-bold tabular-nums text-mallard-yellow">{totalBirds}</span>
                         <span className="text-sm text-muted-foreground ml-2">{totalBirds === 1 ? 'bird' : 'birds'} harvested</span>
                         {log.harvests.length > 0 && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                {log.harvests.map(h => `${h.count} ${h.species}`).join(', ')}
-                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {log.harvests.map(h => (
+                                    <span key={h.species} className="inline-flex items-center gap-1.5 bg-secondary/50 rounded-md px-2 py-1 text-xs text-foreground/80">
+                                        <SpeciesIcon id={h.species} size={14} className="rounded-sm" />
+                                        <span>{h.count} {h.species}</span>
+                                    </span>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </motion.div>
@@ -126,11 +132,10 @@ export default function HuntDetailClient() {
                                 }}
                             >
                                 <Star
-                                    className={`h-6 w-6 ${
-                                        star <= log.rating!
-                                            ? 'fill-mallard-yellow text-mallard-yellow'
-                                            : 'text-muted-foreground/20'
-                                    }`}
+                                    className={`h-6 w-6 ${star <= log.rating!
+                                        ? 'fill-mallard-yellow text-mallard-yellow'
+                                        : 'text-muted-foreground/20'
+                                        }`}
                                 />
                             </motion.div>
                         ))}
@@ -210,8 +215,11 @@ export default function HuntDetailClient() {
                     <div className="glass-section rounded-xl divide-y divide-border/50 !p-0 overflow-hidden">
                         {log.harvests.map((h, i) => (
                             <div key={i} className="flex items-center justify-between p-4">
-                                <span className="font-medium">{h.species}</span>
-                                <span className="tabular-nums font-bold text-mallard-yellow">{h.count}</span>
+                                <div className="flex items-center gap-3">
+                                    <SpeciesIcon id={h.species} size={40} className="rounded-lg shadow-sm" />
+                                    <span className="font-medium">{h.species}</span>
+                                </div>
+                                <span className="tabular-nums font-bold text-mallard-yellow text-lg">{h.count}</span>
                             </div>
                         ))}
                         {log.harvests.length === 0 && (
@@ -319,6 +327,6 @@ export default function HuntDetailClient() {
                     Share (Soon)
                 </button>
             </div>
-        </div>
+        </div >
     );
 }

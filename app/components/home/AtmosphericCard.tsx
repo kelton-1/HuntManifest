@@ -1,6 +1,6 @@
 "use client";
 
-import { Thermometer, Droplets } from "lucide-react";
+import { Thermometer, Droplets, CloudSun } from "lucide-react";
 import { WindRose } from "./WindRose";
 import { WeatherConditions, SkyCondition } from "@/lib/types";
 
@@ -94,13 +94,21 @@ export function AtmosphericCard({
     temperatureUnit,
     windSpeedUnit,
 }: AtmosphericCardProps) {
+    // Loading State - Shimmer Skeletons
     if (loading) {
         return (
-            <div
-                className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-5 text-white shadow-lg"
-            >
-                <div className="flex items-center justify-center h-24">
-                    <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className="relative overflow-hidden rounded-2xl glass-card p-4 space-y-4">
+                {/* Header Skeleton */}
+                <div className="flex justify-between items-center">
+                    <div className="h-6 w-32 rounded-lg bg-white/5 animate-shimmer" />
+                    <div className="h-6 w-16 rounded-lg bg-white/5 animate-shimmer" />
+                </div>
+
+                {/* Grid Skeleton */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="h-32 rounded-xl bg-white/5 animate-shimmer col-span-2" /> {/* Wind Rose spot */}
+                    <div className="h-24 rounded-xl bg-white/5 animate-shimmer" />
+                    <div className="h-24 rounded-xl bg-white/5 animate-shimmer" />
                 </div>
             </div>
         );
@@ -108,71 +116,90 @@ export function AtmosphericCard({
 
     if (!weather) {
         return (
-            <div
-                className="relative overflow-hidden bg-gradient-to-br from-sky-dawn/60 via-sky-morning/60 to-water-blue/60 rounded-2xl p-5 text-white/70 shadow-lg backdrop-blur-sm border border-white/10"
-            >
-                <div className="flex items-center justify-between">
-                    <div className="text-center flex-1">
-                        <p className="text-sm font-medium">Weather unavailable</p>
-                        <p className="text-xs opacity-70 mt-1">Enable location access</p>
-                    </div>
+            <div className="relative overflow-hidden glass-card rounded-2xl p-6 text-center space-y-3">
+                <div className="inline-flex p-3 rounded-full bg-white/5 mb-2">
+                    <CloudSun className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div>
+                    <p className="font-medium text-foreground">Weather Unavailable</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Enable location access to compare conditions with your past hunts.
+                    </p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div
-            className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-4 text-white shadow-lg border-glow-rotate"
-        >
-            {/* Glassmorphism overlay */}
-            <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />
+        <div className="relative group">
+            {/* Ambient Background - tied to conditions */}
+            <div className="absolute -inset-4 rounded-[2rem] opacity-20 blur-2xl transition-colors duration-700"
+                style={{
+                    background: weather.skyCondition === 'Clear' ? 'radial-gradient(circle, #0EA5E9 0%, transparent 70%)' :
+                        weather.skyCondition === 'Rain' ? 'radial-gradient(circle, #64748B 0%, transparent 70%)' :
+                            weather.skyCondition === 'Overcast' ? 'radial-gradient(circle, #94A3B8 0%, transparent 70%)' :
+                                'radial-gradient(circle, #0EA5E9 0%, transparent 70%)'
+                }}
+            />
 
-            {/* Animated weather background */}
-            <WeatherBackground condition={weather.skyCondition} />
+            {/* Animated Particles Container (Behind cards) */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0">
+                <WeatherBackground condition={weather.skyCondition} />
+            </div>
 
-            <div className="relative flex items-center gap-4">
-                {/* Wind Rose */}
-                <div className="w-20 h-20 flex-shrink-0">
-                    <WindRose
-                        direction={weather.windDirection}
-                        speed={weather.windSpeed}
-                        className="w-full h-full"
-                    />
+            {/* Content Grid */}
+            <div className="relative z-10 grid grid-cols-2 gap-3">
+
+                {/* 1. Wind Rose (Full Width) */}
+                <div className="col-span-2 glass-card rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
+                    <div className="relative z-10">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Wind Direction</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-bold tabular-nums text-foreground">{weather.windDirection}</span>
+                            <span className="text-sm font-medium text-muted-foreground">{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
+                        </div>
+                    </div>
+                    <div className="w-20 h-20 -my-2">
+                        <WindRose
+                            direction={weather.windDirection}
+                            speed={weather.windSpeed}
+                            className="w-full h-full opacity-90"
+                        />
+                    </div>
                 </div>
 
-                {/* Weather stats */}
-                <div className="flex-1 space-y-2">
-                    {/* Temperature row */}
-                    <div className="flex items-center justify-between">
+                {/* 2. Temperature Tile */}
+                <div className="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group/tile">
+                    <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
+                        <Thermometer className="h-4 w-4 text-mallard-yellow" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Temp</span>
+                    <span className="text-2xl font-bold tabular-nums text-foreground mt-1">
+                        {formatTemperature(weather.temperature, temperatureUnit)}
+                    </span>
+                </div>
+
+                {/* 3. Sky Condition Tile */}
+                <div className="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group/tile">
+                    <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
+                        <CloudSun className="h-4 w-4 text-sky-500" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sky</span>
+                    <span className="text-sm font-bold leading-tight mt-2 line-clamp-2">
+                        {weather.skyCondition}
+                    </span>
+                </div>
+
+                {/* 4. Humidity (Full Width or Split if we have more data) */}
+                {weather.humidity && (
+                    <div className="col-span-2 glass-card rounded-xl p-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Thermometer className="h-4 w-4 text-mallard-yellow" />
-                            <span className="text-2xl font-bold">
-                                {formatTemperature(weather.temperature, temperatureUnit)}
-                            </span>
+                            <Droplets className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm font-medium">Humidity</span>
                         </div>
-                        <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                            {weather.skyCondition === "Partly Cloudy" ? "P. Cloudy" : weather.skyCondition}
-                        </span>
+                        <span className="font-bold tabular-nums">{weather.humidity}%</span>
                     </div>
-
-                    {/* Wind info */}
-                    <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-white/70">Wind</span>
-                            <span className="font-bold">
-                                {weather.windDirection} {formatWindSpeed(weather.windSpeed, windSpeedUnit)}
-                            </span>
-                        </div>
-                        {weather.humidity && (
-                            <div className="flex items-center gap-1">
-                                <Droplets className="h-3 w-3 text-water-blue" />
-                                <span className="text-white/70">{weather.humidity}%</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
+                )}
             </div>
         </div>
     );

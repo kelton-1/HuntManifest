@@ -13,7 +13,7 @@ import { Thermometer, Wind, Cloud, Sunrise, Sunset } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { SmartInput } from "@/app/components/inventory/SmartInput";
 import { ParsedProduct } from "@/lib/services/ProductIntelligenceEngine";
-import { SpeciesTapGrid } from "@/app/components/log/SpeciesTapGrid";
+import { HarvestEntry } from "@/app/components/log/HarvestEntry";
 import { StarRating } from "@/app/components/log/StarRating";
 import { QuickTags } from "@/app/components/log/QuickTags";
 import { staggerContainer, staggerChild, smooth, gentle, snappy } from "@/lib/motion";
@@ -494,7 +494,7 @@ function NewHuntLogContent() {
                                 </motion.span>
                             )}
                         </div>
-                        <SpeciesTapGrid harvests={harvests} onUpdate={setHarvests} pastLogs={logs} />
+                        <HarvestEntry harvests={harvests} onUpdate={setHarvests} />
                     </GlassSection>
 
                     {/* Section 4: Notes */}
@@ -543,11 +543,10 @@ function NewHuntLogContent() {
                                                     setGearUsed(prev => [...prev, { id: item.id, name: item.name }]);
                                                 }
                                             }}
-                                            className={`px-3 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                                                isSelected
-                                                    ? 'bg-mallard-green text-white shadow-sm'
-                                                    : 'bg-transparent text-muted-foreground border border-border hover:border-mallard-green/50'
-                                            }`}
+                                            className={`px-3 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5 ${isSelected
+                                                ? 'bg-mallard-green text-white shadow-sm'
+                                                : 'bg-transparent text-muted-foreground border border-border hover:border-mallard-green/50'
+                                                }`}
                                         >
                                             {isSelected && <Check className="h-3.5 w-3.5" />}
                                             {item.name}

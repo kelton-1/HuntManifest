@@ -36,8 +36,8 @@ export function BottomNav() {
                                 key={item.href}
                                 href={item.href}
                                 className={`relative flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 ${active
-                                        ? "text-primary"
-                                        : "text-muted-foreground hover:text-foreground"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
                                     }`}
                             >
                                 {active && (
@@ -66,7 +66,7 @@ export function BottomNav() {
                     >
                         <div className="relative">
                             {/* Glow ring behind the FAB */}
-                            <div className="absolute -inset-1.5 rounded-full bg-primary/20 dark:bg-primary/15 blur-md group-hover:bg-primary/30 transition-all duration-500" />
+                            <div className="absolute -inset-1.5 rounded-full bg-primary/20 dark:bg-primary/15 blur-md group-hover:bg-primary/30 transition-all duration-500 animate-glow-pulse" />
                             <motion.div
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
@@ -85,8 +85,8 @@ export function BottomNav() {
                                 key={item.href}
                                 href={item.href}
                                 className={`relative flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl transition-all duration-300 ${active
-                                        ? "text-primary"
-                                        : "text-muted-foreground hover:text-foreground"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
                                     }`}
                             >
                                 {active && (
