@@ -123,7 +123,7 @@ export function AtmosphericCard({
 
     return (
         <div
-            className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-4 text-white shadow-lg"
+            className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-4 text-white shadow-lg border-glow-rotate"
         >
             {/* Glassmorphism overlay */}
             <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />

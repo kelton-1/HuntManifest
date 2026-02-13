@@ -59,9 +59,22 @@ export default function RootLayout({
         >
           <AuthProvider>
             <AppWrapper>
-              <div className="min-h-screen flex flex-col">
+              <div className="min-h-screen flex flex-col relative">
+                {/* Mesh gradient ambient layer — dark mode only */}
+                <div
+                  className="hidden dark:block fixed inset-0 pointer-events-none"
+                  aria-hidden="true"
+                  style={{
+                    background: `
+                      radial-gradient(ellipse 60% 50% at 10% 20%, rgba(22, 102, 83, 0.06) 0%, transparent 70%),
+                      radial-gradient(ellipse 50% 40% at 85% 75%, rgba(245, 184, 0, 0.04) 0%, transparent 70%),
+                      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(30, 58, 95, 0.08) 0%, transparent 60%)
+                    `,
+                    zIndex: 0,
+                  }}
+                />
                 <TopNav />
-                <main className="flex-1 pb-24 pt-4 px-4 max-w-md mx-auto w-full">
+                <main className="flex-1 pb-24 pt-4 px-4 max-w-md mx-auto w-full relative z-[1]">
                   {children}
                 </main>
                 <BottomNav />

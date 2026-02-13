@@ -67,7 +67,7 @@ export function SeasonGoalsRing({ totalHunts, totalHarvest, hunterName }: Season
     const strokeDashoffset = circumference - (metric.progress / 100) * circumference;
 
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-mallard-green via-mallard-green to-mallard-green-light rounded-2xl p-5 text-white shadow-lg">
+        <section className="relative overflow-hidden bg-gradient-to-br from-mallard-green via-mallard-green to-mallard-green-light rounded-2xl p-5 text-white shadow-lg glow-radial">
             {/* Background Pattern */}
             <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
                 <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -137,8 +137,8 @@ export function SeasonGoalsRing({ totalHunts, totalHarvest, hunterName }: Season
                                 key={type}
                                 onClick={() => setActiveMetric(type)}
                                 className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${activeMetric === type
-                                        ? "bg-white/25 text-white"
-                                        : "bg-white/10 text-white/60 hover:bg-white/15"
+                                    ? "bg-white/25 text-white"
+                                    : "bg-white/10 text-white/60 hover:bg-white/15"
                                     }`}
                             >
                                 {type === "average" ? "Avg" : type}

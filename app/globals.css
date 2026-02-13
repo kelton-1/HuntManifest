@@ -104,6 +104,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Noise Texture Overlay (dark mode only) ── */
+.dark body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Ensure all direct children sit above the noise layer */
+.dark body>* {
+  position: relative;
+  z-index: 1;
+}
+
 h1,
 h2,
 h3,
@@ -184,7 +203,7 @@ h6 {
     background: rgba(14, 18, 26, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   /* Elevated glass cards */
@@ -251,6 +270,49 @@ h6 {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* ── Radial Accent Glow ── */
+  .glow-radial {
+    position: relative;
+  }
+
+  .dark .glow-radial::before {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center,
+        rgba(245, 184, 0, 0.08) 0%,
+        rgba(22, 102, 83, 0.05) 40%,
+        transparent 70%);
+    filter: blur(30px);
+    pointer-events: none;
+  }
+
+  /* ── Animated Conic-Gradient Border ── */
+  .border-glow-rotate {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dark .border-glow-rotate::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from var(--border-angle, 0deg),
+        transparent 30%,
+        rgba(245, 184, 0, 0.3) 50%,
+        transparent 70%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: border-rotate 4s linear infinite;
+  }
 }
 
 /* Custom Animations */
@@ -316,12 +378,15 @@ h6 {
     transform: translateY(-10px);
     opacity: 0;
   }
+
   10% {
     opacity: 1;
   }
+
   90% {
     opacity: 1;
   }
+
   100% {
     transform: translateY(100px);
     opacity: 0;
@@ -333,12 +398,15 @@ h6 {
     transform: translateY(-10px) rotate(0deg);
     opacity: 0;
   }
+
   10% {
     opacity: 1;
   }
+
   90% {
     opacity: 0.8;
   }
+
   100% {
     transform: translateY(80px) rotate(360deg);
     opacity: 0;
@@ -346,10 +414,13 @@ h6 {
 }
 
 @keyframes fog {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(-5%);
     opacity: 0.1;
   }
+
   50% {
     transform: translateX(5%);
     opacity: 0.2;
@@ -361,12 +432,15 @@ h6 {
     transform: translateX(-100%);
     opacity: 0;
   }
+
   10% {
     opacity: 1;
   }
+
   90% {
     opacity: 1;
   }
+
   100% {
     transform: translateX(400%);
     opacity: 0;
@@ -387,6 +461,18 @@ h6 {
 
 .animate-cloud-drift {
   animation: cloud-drift 12s linear infinite;
+}
+
+@keyframes border-rotate {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
 }
 
 /* Component Styles */
