@@ -35,6 +35,12 @@ const DEFAULT_PROFILE: UnifiedUserProfile = {
 
 const PROFILE_KEY = "timber_user_profile";
 
+function compactUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, value]) => value !== undefined)
+    ) as Partial<T>;
+}
+
 /**
  * Unified hook for user profile data.
  * - Syncs with Firestore when authenticated
@@ -117,16 +123,38 @@ export function useUserProfile() {
         // Sync to Firestore if authenticated
         if (user) {
             try {
-                await firestoreService.updateUserProfile(user.uid, {
-                    hunterName: updates.hunterName,
-                    homeLocation: updates.homeLocation,
-                    temperatureUnit: updates.temperatureUnit,
-                    windSpeedUnit: updates.windSpeedUnit,
-                    notificationsEnabled: updates.notificationsEnabled,
-                    experience: updates.hunterExperience,
-                    huntingStyle: updates.hunterStyle,
-                    brandAffinities: updates.brandAffinities,
+                // Firestore updateDoc fails on `undefined`, so only send explicitly provided keys
+                // and drop any `undefined` values before calling firestoreService.updateUserProfile.
+                const firestoreUpdate = compactUndefined({
+                    ...(Object.prototype.hasOwnProperty.call(updates, "hunterName") && {
+                        hunterName: updates.hunterName,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "homeLocation") && {
+                        homeLocation: updates.homeLocation,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "temperatureUnit") && {
+                        temperatureUnit: updates.temperatureUnit,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "windSpeedUnit") && {
+                        windSpeedUnit: updates.windSpeedUnit,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "notificationsEnabled") && {
+                        notificationsEnabled: updates.notificationsEnabled,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "hunterExperience") && {
+                        experience: updates.hunterExperience,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "hunterStyle") && {
+                        huntingStyle: updates.hunterStyle,
+                    }),
+                    ...(Object.prototype.hasOwnProperty.call(updates, "brandAffinities") && {
+                        brandAffinities: updates.brandAffinities,
+                    }),
                 });
+
+                if (Object.keys(firestoreUpdate).length > 0) {
+                    await firestoreService.updateUserProfile(user.uid, firestoreUpdate);
+                }
             } catch (error) {
                 console.error("Error updating profile in Firestore:", error);
             }
