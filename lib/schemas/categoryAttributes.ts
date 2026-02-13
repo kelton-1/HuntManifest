@@ -79,12 +79,6 @@ export interface SafetyAttributes extends BaseAttributes {
     itemType?: 'PFD' | 'First Aid' | 'Light' | 'Communication' | 'Protection';
 }
 
-// Dog-specific attributes
-export interface DogAttributes extends BaseAttributes {
-    itemType?: 'Vest' | 'Kennel' | 'Stand' | 'Training' | 'First Aid' | 'Blind';
-    size?: string;
-}
-
 // Vehicle-specific attributes
 export interface VehicleAttributes extends BaseAttributes {
     vehicleType?: 'Boat' | 'ATV' | 'UTV' | 'Trailer' | 'Motor';
@@ -107,7 +101,6 @@ export type CategoryAttributes =
     | ClothingAttributes
     | BlindAttributes
     | SafetyAttributes
-    | DogAttributes
     | VehicleAttributes
     | OtherAttributes;
 
@@ -194,12 +187,6 @@ export const CATEGORY_SCHEMAS: Record<InventoryCategory, AttributeSchema> = {
         category: 'Safety',
         requiredFields: ['name'],
         optionalFields: ['itemType'],
-        extractionPatterns: {},
-    },
-    Dog: {
-        category: 'Dog',
-        requiredFields: ['name'],
-        optionalFields: ['itemType', 'size'],
         extractionPatterns: {},
     },
     Vehicle: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Thermometer, Droplets, ChevronRight } from "lucide-react";
+import { Thermometer, Droplets } from "lucide-react";
 import { WindRose } from "./WindRose";
 import { WeatherConditions, SkyCondition } from "@/lib/types";
 
@@ -11,7 +11,6 @@ interface AtmosphericCardProps {
     formatWindSpeed: (speed: number, unit: "mph" | "kph") => string;
     temperatureUnit: "F" | "C";
     windSpeedUnit: "mph" | "kph";
-    onClick?: () => void;
 }
 
 // Animated weather background based on conditions
@@ -94,13 +93,11 @@ export function AtmosphericCard({
     formatWindSpeed,
     temperatureUnit,
     windSpeedUnit,
-    onClick,
 }: AtmosphericCardProps) {
     if (loading) {
         return (
             <div
-                onClick={onClick}
-                className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-5 text-white shadow-lg cursor-pointer"
+                className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-5 text-white shadow-lg"
             >
                 <div className="flex items-center justify-center h-24">
                     <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -112,15 +109,13 @@ export function AtmosphericCard({
     if (!weather) {
         return (
             <div
-                onClick={onClick}
-                className="relative overflow-hidden bg-gradient-to-br from-sky-dawn/60 via-sky-morning/60 to-water-blue/60 rounded-2xl p-5 text-white/70 shadow-lg backdrop-blur-sm border border-white/10 cursor-pointer card-hover group"
+                className="relative overflow-hidden bg-gradient-to-br from-sky-dawn/60 via-sky-morning/60 to-water-blue/60 rounded-2xl p-5 text-white/70 shadow-lg backdrop-blur-sm border border-white/10"
             >
                 <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
                         <p className="text-sm font-medium">Weather unavailable</p>
                         <p className="text-xs opacity-70 mt-1">Enable location access</p>
                     </div>
-                    <ChevronRight className="h-5 w-5 opacity-50 group-hover:opacity-100 transition-opacity" />
                 </div>
             </div>
         );
@@ -128,8 +123,7 @@ export function AtmosphericCard({
 
     return (
         <div
-            onClick={onClick}
-            className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-4 text-white shadow-lg cursor-pointer card-hover group"
+            className="relative overflow-hidden bg-gradient-to-br from-sky-dawn via-sky-morning to-water-blue rounded-2xl p-4 text-white shadow-lg"
         >
             {/* Glassmorphism overlay */}
             <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />
@@ -179,8 +173,6 @@ export function AtmosphericCard({
                     </div>
                 </div>
 
-                {/* Chevron indicator */}
-                <ChevronRight className="h-5 w-5 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
             </div>
         </div>
     );

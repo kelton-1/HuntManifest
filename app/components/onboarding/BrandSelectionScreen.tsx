@@ -14,7 +14,7 @@ interface BrandSelectionScreenProps {
 
 // Order of categories to show
 const CATEGORY_ORDER: InventoryCategory[] = [
-    'Firearm', 'Ammo', 'Waders', 'Clothing', 'Decoy', 'Call', 'Blind', 'Safety', 'Dog', 'Vehicle', 'Other'
+    'Firearm', 'Ammo', 'Waders', 'Clothing', 'Decoy', 'Call', 'Blind', 'Safety', 'Vehicle', 'Other'
 ];
 
 export function BrandSelectionScreen({

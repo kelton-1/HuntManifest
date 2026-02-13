@@ -1,12 +1,15 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
 export function TopNav() {
     const { setTheme, theme } = useTheme();
     const [mounted, setMounted] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -28,20 +31,30 @@ export function TopNav() {
                     </div>
                 </div>
 
-                {mounted && (
-                    <button
-                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        className="relative p-2.5 rounded-xl hover:bg-accent transition-all duration-300 border border-border/50 group"
-                        aria-label="Toggle Theme"
+                <div className="flex items-center gap-2">
+                    {mounted && (
+                        <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="relative p-2.5 rounded-xl hover:bg-accent transition-all duration-300 border border-border/50 group"
+                            aria-label="Toggle Theme"
+                        >
+                            <div className="absolute inset-0 bg-primary/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            {theme === "dark" ? (
+                                <Sun className="h-5 w-5 text-mallard-yellow transition-transform group-hover:rotate-45 duration-300" />
+                            ) : (
+                                <Moon className="h-5 w-5 text-mallard-green transition-transform group-hover:-rotate-12 duration-300" />
+                            )}
+                        </button>
+                    )}
+
+                    <Link
+                        href="/profile"
+                        className={`relative p-2.5 rounded-xl hover:bg-accent transition-all duration-300 border border-border/50 ${pathname === "/profile" ? "text-primary" : "text-muted-foreground"}`}
+                        aria-label="Profile"
                     >
-                        <div className="absolute inset-0 bg-primary/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        {theme === "dark" ? (
-                            <Sun className="h-5 w-5 text-mallard-yellow transition-transform group-hover:rotate-45 duration-300" />
-                        ) : (
-                            <Moon className="h-5 w-5 text-mallard-green transition-transform group-hover:-rotate-12 duration-300" />
-                        )}
-                    </button>
-                )}
+                        <User className="h-5 w-5" />
+                    </Link>
+                </div>
             </div>
         </header>
     );

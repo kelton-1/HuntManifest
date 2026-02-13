@@ -6,11 +6,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Camera, Clipboard, Link2, Loader2, X, Check } from "lucide-react";
+import { Loader2, X, Check } from "lucide-react";
 import {
     getProductIntelligenceEngine,
     ParsedProduct,
-    InputType
 } from "@/lib/services/ProductIntelligenceEngine";
 import { InventoryCategory } from "@/lib/types";
 import { CategoryIcon } from "../CategoryIcon";
@@ -124,85 +123,9 @@ export function SmartInput({
         }
     };
 
-    // Handle paste event - detect URLs or trigger paste parsing
-    const handlePaste = async (e: React.ClipboardEvent) => {
-        const text = e.clipboardData.getData('text');
-
-        // Check if it's a URL
-        if (text.startsWith('http://') || text.startsWith('https://')) {
-            e.preventDefault();
-            setInputValue(text);
-            setState('processing');
-
-            const parsed = await engine.parseInput({
-                type: 'url',
-                data: text,
-            });
-
-            if (parsed) {
-                setResult(parsed);
-                setState('result');
-                onPartialResult?.(parsed);
-            } else {
-                // Fall back to text parsing
-                const textParsed = await engine.parseInput({
-                    type: 'text',
-                    data: text,
-                });
-                if (textParsed) {
-                    setResult(textParsed);
-                    setState('result');
-                    onPartialResult?.(textParsed);
-                } else {
-                    setState('idle');
-                }
-            }
-        }
-    };
-
-    // Handle camera/scan button
-    const handleScan = () => {
-        // TODO Phase 2: Implement barcode scanner
-        console.log('Scan not yet implemented');
-        setError('Scanning coming soon');
-        setTimeout(() => setError(null), 2000);
-    };
-
-    // Handle clipboard button (read from clipboard)
-    const handleClipboard = async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            if (text) {
-                setInputValue(text);
-                handleInputChange(text);
-                inputRef.current?.focus();
-            }
-        } catch (err) {
-            console.error('Clipboard read failed:', err);
-            setError('Clipboard access denied');
-            setTimeout(() => setError(null), 2000);
-        }
-    };
-
-    // Handle URL button
-    const handleUrlPrompt = () => {
-        const url = prompt('Paste product URL:');
-        if (url) {
-            setInputValue(url);
-            engine.parseInput({ type: 'url', data: url }).then(parsed => {
-                if (parsed) {
-                    setResult(parsed);
-                    setState('result');
-                    onPartialResult?.(parsed);
-                }
-            });
-        }
-    };
-
     // Confirm result and notify parent
     const confirmResult = () => {
         if (result) {
-            engine.recordSelection(inputValue, result);
             onResult(result);
             // Reset state
             setInputValue('');
@@ -243,32 +166,12 @@ export function SmartInput({
                         onFocus={() => setShowSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                        onPaste={handlePaste}
                         placeholder={placeholder}
-                        className="flex-1 rounded-xl border border-input bg-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary pr-20"
+                        className="flex-1 rounded-xl border border-input bg-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary pr-10"
                     />
                     <div className="absolute right-2 flex items-center gap-1">
-                        {state === 'processing' ? (
+                        {state === 'processing' && (
                             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={handleScan}
-                                    className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
-                                    title="Scan barcode"
-                                >
-                                    <Camera className="h-4 w-4 text-muted-foreground" />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleClipboard}
-                                    className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
-                                    title="Paste from clipboard"
-                                >
-                                    <Clipboard className="h-4 w-4 text-muted-foreground" />
-                                </button>
-                            </>
                         )}
                     </div>
                 </div>
@@ -307,7 +210,6 @@ export function SmartInput({
                         onFocus={() => setShowSuggestions(true)}
                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                        onPaste={handlePaste}
                         placeholder={placeholder}
                         disabled={state === 'processing' || state === 'result'}
                         className="w-full rounded-2xl border-2 border-border bg-card px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all disabled:opacity-50"
@@ -319,36 +221,6 @@ export function SmartInput({
                         </div>
                     )}
                 </div>
-
-                {/* Action icons */}
-                {state !== 'result' && (
-                    <div className="flex justify-center gap-4 mt-3">
-                        <button
-                            type="button"
-                            onClick={handleScan}
-                            className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-secondary transition-colors"
-                            title="Scan"
-                        >
-                            <Camera className="h-6 w-6 text-muted-foreground" />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleClipboard}
-                            className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-secondary transition-colors"
-                            title="Paste"
-                        >
-                            <Clipboard className="h-6 w-6 text-muted-foreground" />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleUrlPrompt}
-                            className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-secondary transition-colors"
-                            title="URL"
-                        >
-                            <Link2 className="h-6 w-6 text-muted-foreground" />
-                        </button>
-                    </div>
-                )}
 
                 {/* Suggestions dropdown */}
                 {showSuggestions && suggestions.length > 0 && state === 'typing' && (

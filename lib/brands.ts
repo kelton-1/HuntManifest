@@ -99,15 +99,6 @@ export const BRAND_DATA: Partial<Record<InventoryCategory, BrandModelData>> = {
             "Garmin": ["inReach"]
         }
     },
-    Dog: {
-        brands: ["Gunner Kennels", "Lucky Duck", "Momarsh", "Rig'Em Right", "Dokken"],
-        models: {
-            "Gunner Kennels": ["G1 Intermediate", "G1 Large"],
-            "Lucky Duck": ["Intermediate Kennel"],
-            "Momarsh": ["Invisilab", "Final Stand"],
-            "Rig'Em Right": ["Field Bully Dog Blind"]
-        }
-    },
     Vehicle: {
         brands: ["Polaris", "Can-Am", "Honda", "Yamaha", "Gator-Tail", "Pro-Drive", "War Eagle", "Xpress"],
         models: {

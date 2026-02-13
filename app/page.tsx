@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Map,
   BookOpen,
@@ -25,7 +24,6 @@ import { HuntMemoryCarousel } from "./components/home/HuntMemoryCarousel";
 import { InventoryDashboard } from "./components/home/InventoryDashboard";
 
 export default function Home() {
-  const router = useRouter();
   const { inventory } = useInventory();
   const { logs } = useHuntLogs();
   const { plans } = useHuntPlans();
@@ -125,7 +123,6 @@ export default function Home() {
         formatWindSpeed={formatWindSpeed}
         temperatureUnit={profile.temperatureUnit}
         windSpeedUnit={profile.windSpeedUnit}
-        onClick={() => router.push('/conditions')}
       />
 
       {/* AI Quick Tip */}

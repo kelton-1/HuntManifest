@@ -18,7 +18,7 @@ import { geminiModel } from '../gemini';
 // TYPES
 // ============================================
 
-export type InputType = 'text' | 'barcode' | 'url' | 'image' | 'clipboard';
+export type InputType = 'text';
 
 export interface InputPayload {
     type: InputType;
@@ -36,7 +36,7 @@ export interface ParsedProduct {
     model?: string;
     attributes: Partial<CategoryAttributes>;
     confidence: number; // 0-1
-    source: 'brand_match' | 'regex' | 'ai' | 'barcode' | 'url' | 'cache';
+    source: 'brand_match' | 'regex' | 'ai' | 'cache';
     imageUrl?: string;
     rawInput?: string;
 }
@@ -117,7 +117,6 @@ export function detectCategory(input: string): { category: InventoryCategory; co
         Clothing: ['jacket', 'coat', 'pants', 'bibs', 'gloves', 'hat', 'beanie', 'base layer'],
         Blind: ['blind', 'layout', 'a-frame', 'pit blind', 'boat blind'],
         Safety: ['pfd', 'life jacket', 'first aid', 'headlamp', 'safety', 'whistle'],
-        Dog: ['dog', 'kennel', 'vest', 'bumper', 'dummy', 'e-collar'],
         Vehicle: ['boat', 'mud motor', 'atv', 'utv', 'trailer', 'kayak'],
         Other: ['thermos', 'cooler', 'bag', 'strap', 'knife', 'license'],
     };
@@ -200,11 +199,9 @@ export class ProductIntelligenceEngine {
      * Parse any input into structured product data
      */
     async parseInput(payload: InputPayload): Promise<ParsedProduct | null> {
-        const { type, data } = payload;
+        const { data } = payload;
 
         if (typeof data !== 'string') {
-            // Handle image/blob in future phases
-            console.warn('Image parsing not yet implemented');
             return null;
         }
 
@@ -212,26 +209,12 @@ export class ProductIntelligenceEngine {
         if (!input) return null;
 
         // Check cache
-        const cacheKey = `${type}:${input}`;
+        const cacheKey = `text:${input}`;
         if (this.cache.has(cacheKey)) {
             return { ...this.cache.get(cacheKey)!, source: 'cache' };
         }
 
-        let result: ParsedProduct | null = null;
-
-        switch (type) {
-            case 'text':
-                result = await this.parseText(input);
-                break;
-            case 'barcode':
-                result = await this.parseBarcode(input);
-                break;
-            case 'url':
-                result = await this.parseUrl(input);
-                break;
-            default:
-                result = await this.parseText(input);
-        }
+        const result = await this.parseText(input);
 
         // Cache successful results
         if (result) {
@@ -305,24 +288,6 @@ export class ProductIntelligenceEngine {
     }
 
     /**
-     * Parse barcode/UPC
-     */
-    private async parseBarcode(upc: string): Promise<ParsedProduct | null> {
-        // TODO Phase 2: Integrate UPC database API
-        console.log('Barcode lookup not yet implemented:', upc);
-        return null;
-    }
-
-    /**
-     * Parse URL (product page)
-     */
-    private async parseUrl(url: string): Promise<ParsedProduct | null> {
-        // TODO Phase 2: Integrate URL scraping
-        console.log('URL parsing not yet implemented:', url);
-        return null;
-    }
-
-    /**
      * Get autocomplete suggestions based on partial input
      */
     async getSuggestions(
@@ -376,13 +341,6 @@ export class ProductIntelligenceEngine {
             .map(({ label, category, brand }) => ({ label, category, brand }));
     }
 
-    /**
-     * Record user selection for learning (future use)
-     */
-    recordSelection(query: string, selected: ParsedProduct): void {
-        // TODO Phase 5: Store in Firestore for personalization
-        console.log('Recording selection:', { query, selected: selected.name });
-    }
 }
 
 // Singleton instance

@@ -192,13 +192,6 @@ export const MASTER_INVENTORY_LIST: Omit<InventoryItem, "id" | "createdAt" | "up
         specs: { notes: "Bulk burlap or die-cut" }
     },
     {
-        name: "Face Concealment (Dog)",
-        category: "Dog",
-        quantity: 1,
-        status: "READY",
-        specs: { notes: "Mut Hut" }
-    },
-    {
         name: "Saw/Pruners",
         category: "Blind",
         quantity: 1,
@@ -269,27 +262,6 @@ export const MASTER_INVENTORY_LIST: Omit<InventoryItem, "id" | "createdAt" | "up
     // -------------------------
     // LOGISTICS, DOG & SURVIVAL
     // -------------------------
-    {
-        name: "Neoprene Dog Vest",
-        category: "Dog",
-        quantity: 1,
-        status: "READY",
-        specs: { notes: "Warmth/Flotation" }
-    },
-    {
-        name: "Dog Stand",
-        category: "Dog",
-        quantity: 1,
-        status: "READY",
-        specs: { notes: "Platform for water" }
-    },
-    {
-        name: "Dog First Aid",
-        category: "Dog",
-        quantity: 1,
-        status: "READY",
-        specs: { notes: "EMT Gel, Stapler, Eyewash" }
-    },
     {
         name: "Boat Plug",
         category: "Vehicle",
