@@ -81,7 +81,8 @@ export function useInventory() {
             setLoading(false);
         };
         loadInventory();
-    }, [user, localInventory]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
 
     const addItem = useCallback(async (item: InventoryItem) => {
         if (user) {
@@ -270,7 +271,8 @@ export function useHuntLogs() {
             setLoading(false);
         };
         loadLogs();
-    }, [user, localLogs]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
 
     const addLog = useCallback(async (log: HuntLog) => {
         if (user) {
@@ -349,7 +351,8 @@ export function useHuntPlans() {
             setLoading(false);
         };
         loadPlans();
-    }, [user, localPlans]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
 
     const addPlan = useCallback(async (plan: HuntPlan) => {
         if (user) {

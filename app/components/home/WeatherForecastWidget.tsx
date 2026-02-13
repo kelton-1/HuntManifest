@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CloudRain, CloudSun, Sun, Wind, Droplets, CalendarDays } from "lucide-react";
 import { snappy } from "@/lib/motion";
@@ -35,7 +35,8 @@ const generateForecast = (days: number): DailyForecast[] => {
 
 export function WeatherForecastWidget() {
     const [mode, setMode] = useState<ForecastMode>(3);
-    const forecast = generateForecast(mode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const forecast = useMemo(() => generateForecast(mode), [mode]);
 
     const cycleMode = () => {
         if (mode === 3) setMode(5);

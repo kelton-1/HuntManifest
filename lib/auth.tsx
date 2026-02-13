@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from "react";
 import {
     User,
     getRedirectResult,
@@ -59,60 +59,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    const signInWithGooglePopup = async () => {
+    const signInWithGooglePopup = useCallback(async () => {
         await signInWithPopup(auth, googleProvider);
-    };
+    }, []);
 
-    const signInWithGoogleRedirect = async () => {
+    const signInWithGoogleRedirect = useCallback(async () => {
         await signInWithRedirect(auth, googleProvider);
-    };
+    }, []);
 
-    const signInWithGoogle = async (): Promise<"popup" | "redirect"> => {
+    const signInWithGoogle = useCallback(async (): Promise<"popup" | "redirect"> => {
         if (shouldUseGoogleRedirectFlow()) {
-            await signInWithGoogleRedirect();
+            await signInWithRedirect(auth, googleProvider);
             return "redirect";
         }
 
-        await signInWithGooglePopup();
+        await signInWithPopup(auth, googleProvider);
         return "popup";
-    };
+    }, []);
 
-    const completeGoogleRedirectSignIn = async () => {
+    const completeGoogleRedirectSignIn = useCallback(async () => {
         const result = await getRedirectResult(auth);
         return result?.user ?? null;
-    };
+    }, []);
 
-    const signInWithEmail = async (email: string, password: string) => {
+    const signInWithEmail = useCallback(async (email: string, password: string) => {
         await signInWithEmailAndPassword(auth, email, password);
-    };
+    }, []);
 
-    const signUpWithEmail = async (email: string, password: string) => {
+    const signUpWithEmail = useCallback(async (email: string, password: string) => {
         await createUserWithEmailAndPassword(auth, email, password);
-    };
+    }, []);
 
-    const sendPasswordReset = async (email: string) => {
+    const sendPasswordReset = useCallback(async (email: string) => {
         await sendPasswordResetEmail(auth, email);
-    };
+    }, []);
 
-    const signOut = async () => {
+    const signOut = useCallback(async () => {
         await firebaseSignOut(auth);
-    };
+    }, []);
+
+    const value = useMemo(() => ({
+        user,
+        loading,
+        signInWithGooglePopup,
+        signInWithGoogleRedirect,
+        signInWithGoogle,
+        completeGoogleRedirectSignIn,
+        signInWithEmail,
+        signUpWithEmail,
+        signOut,
+        sendPasswordReset,
+    }), [user, loading, signInWithGooglePopup, signInWithGoogleRedirect, signInWithGoogle, completeGoogleRedirectSignIn, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset]);
 
     return (
-        <AuthContext.Provider
-            value={{
-                user,
-                loading,
-                signInWithGooglePopup,
-                signInWithGoogleRedirect,
-                signInWithGoogle,
-                completeGoogleRedirectSignIn,
-                signInWithEmail,
-                signUpWithEmail,
-                signOut,
-                sendPasswordReset,
-            }}
-        >
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

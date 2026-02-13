@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Thermometer, Droplets, CloudSun } from "lucide-react";
 import { WindRose } from "./WindRose";
 import { WeatherConditions, SkyCondition } from "@/lib/types";
@@ -13,6 +14,10 @@ interface AtmosphericCardProps {
     temperatureUnit: "F" | "C";
     windSpeedUnit: "mph" | "kph";
 }
+
+// Pre-computed random durations to avoid recalculating on every render
+const RAIN_DURATIONS = Array.from({ length: 12 }, () => 0.8 + Math.random() * 0.4);
+const SNOW_DURATIONS = Array.from({ length: 10 }, () => 2 + Math.random());
 
 // Animated weather background based on conditions
 function WeatherBackground({ condition }: { condition?: SkyCondition }) {
@@ -29,7 +34,7 @@ function WeatherBackground({ condition }: { condition?: SkyCondition }) {
                                 style={{
                                     left: `${8 + i * 8}%`,
                                     animationDelay: `${i * 0.15}s`,
-                                    animationDuration: `${0.8 + Math.random() * 0.4}s`,
+                                    animationDuration: `${RAIN_DURATIONS[i]}s`,
                                 }}
                             />
                         ))}
@@ -46,7 +51,7 @@ function WeatherBackground({ condition }: { condition?: SkyCondition }) {
                                 style={{
                                     left: `${5 + i * 10}%`,
                                     animationDelay: `${i * 0.3}s`,
-                                    animationDuration: `${2 + Math.random()}s`,
+                                    animationDuration: `${SNOW_DURATIONS[i]}s`,
                                 }}
                             />
                         ))}

@@ -5,17 +5,16 @@ import { Calendar, NotebookPen, Package, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { hapticLight } from "@/lib/haptics";
 import { staggerContainer, staggerChild } from "@/lib/motion";
-import { useInventory, useHuntPlans } from "@/lib/storage";
-import { WeatherConditions } from "@/lib/types";
+import { WeatherConditions, InventoryItem, HuntPlan } from "@/lib/types";
 import { getHuntingSuitability } from "@/lib/huntingSuitability";
 
 interface QuickActionsProps {
     weather: WeatherConditions | null;
+    inventory: InventoryItem[];
+    plans: HuntPlan[];
 }
 
-export function QuickActions({ weather }: QuickActionsProps) {
-    const { inventory } = useInventory();
-    const { plans } = useHuntPlans();
+export function QuickActions({ weather, inventory, plans }: QuickActionsProps) {
 
     const suitability = weather ? getHuntingSuitability(weather) : null;
     const hasActivePlan = plans.some((p) => p.status === "ACTIVE");

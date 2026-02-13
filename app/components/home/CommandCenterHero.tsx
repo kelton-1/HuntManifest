@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { MapPin, Calendar, ArrowRight } from "lucide-react";
-import { useHuntLogs, useHuntPlans } from "@/lib/storage";
-import { useUserProfile } from "@/lib/useUserProfile";
-import { WeatherConditions } from "@/lib/types";
+import { WeatherConditions, HuntLog, HuntPlan } from "@/lib/types";
 import { getHuntingSuitability } from "@/lib/huntingSuitability";
+import { UnifiedUserProfile } from "@/lib/useUserProfile";
 
 interface CommandCenterHeroProps {
     weather?: WeatherConditions | null;
+    logs: HuntLog[];
+    plans: HuntPlan[];
+    profile: UnifiedUserProfile;
 }
 
 type HeroContent = {
@@ -25,7 +27,7 @@ type HeroContent = {
 function getHeroContent(
     hunterName: string,
     totalHunts: number,
-    plans: ReturnType<typeof useHuntPlans>["plans"],
+    plans: HuntPlan[],
     weather: WeatherConditions | null | undefined,
 ): HeroContent {
     const name = hunterName || "Hunter";
@@ -75,11 +77,7 @@ function getHeroContent(
     };
 }
 
-export function CommandCenterHero({ weather }: CommandCenterHeroProps) {
-    const { logs } = useHuntLogs();
-    const { plans } = useHuntPlans();
-    const { profile } = useUserProfile();
-
+export function CommandCenterHero({ weather, logs, plans, profile }: CommandCenterHeroProps) {
     const totalHunts = logs.length;
     const hero = getHeroContent(profile.hunterName, totalHunts, plans, weather);
 

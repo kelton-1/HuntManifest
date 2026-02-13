@@ -134,6 +134,14 @@ export function LocationAutocomplete({
         if (scriptReady) {
             initAutocomplete();
         }
+
+        return () => {
+            // Clean up autocomplete listeners on unmount
+            if (autocompleteRef.current && (window as any).google?.maps?.event) {
+                (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
+                autocompleteRef.current = null;
+            }
+        };
     }, [scriptReady, initAutocomplete]);
 
     const handleSavedLocationClick = (loc: string) => {

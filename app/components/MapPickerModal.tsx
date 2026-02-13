@@ -58,6 +58,11 @@ export function MapPickerModal({ open, onClose, onConfirm, initialLat, initialLn
 
         return () => {
             clearTimeout(debounceTimer);
+            // Clean up map instance to prevent memory leaks
+            if (mapInstanceRef.current) {
+                google.maps.event.clearInstanceListeners(mapInstanceRef.current);
+                mapInstanceRef.current = null;
+            }
         };
     }, [open, defaultLat, defaultLng]);
 

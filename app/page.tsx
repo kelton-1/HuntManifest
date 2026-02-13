@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useHuntLogs } from "@/lib/storage";
+import { useHuntLogs, useHuntPlans, useInventory } from "@/lib/storage";
 import { fetchWeather } from "@/lib/weatherApi";
 import { useGeolocation } from "@/lib/geolocation";
 import { WeatherConditions } from "@/lib/types";
@@ -9,7 +9,6 @@ import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 
 // Premium Components
-import { SeasonGoalsRing } from "./components/home/SeasonGoalsRing";
 import { AtmosphericCard } from "./components/home/AtmosphericCard";
 import { HuntMemoryCarousel } from "./components/home/HuntMemoryCarousel";
 import { CommandCenterHero } from "./components/home/CommandCenterHero";
@@ -18,15 +17,14 @@ import { QuickActions } from "./components/home/QuickActions";
 
 export default function Home() {
   const { logs } = useHuntLogs();
+  const { plans } = useHuntPlans();
+  const { inventory } = useInventory();
   const { profile } = useUserProfile();
 
   // Weather state
   const [weather, setWeather] = useState<WeatherConditions | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const { getCurrentPosition } = useGeolocation();
-
-  // Hunter name from unified profile
-  const hunterName = profile.hunterName;
 
   // Fetch weather on mount
   useEffect(() => {
@@ -46,15 +44,11 @@ export default function Home() {
     loadWeather();
   }, []);
 
-  // Basic stats
-  const totalHarvest = logs.reduce((acc, log) => acc + log.harvests.reduce((hAcc, h) => hAcc + h.count, 0), 0);
-  const totalHunts = logs.length;
-
   return (
     <div className="flex flex-col gap-4 pb-4 animate-fade-in">
 
-      {/* 1. Command Center Hero (Replaces SeasonGoalsRing) */}
-      <CommandCenterHero weather={weather} />
+      {/* 1. Command Center Hero */}
+      <CommandCenterHero weather={weather} logs={logs} plans={plans} profile={profile} />
 
       {/* 2. Atmospheric Weather Widget */}
       <AtmosphericCard
@@ -70,7 +64,7 @@ export default function Home() {
       <WeatherForecastWidget />
 
       {/* 4. Quick Actions Grid */}
-      <QuickActions weather={weather} />
+      <QuickActions weather={weather} inventory={inventory} plans={plans} />
 
       {/* 5. Hunt Memory Carousel */}
       <HuntMemoryCarousel
