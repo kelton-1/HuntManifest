@@ -1,17 +1,17 @@
 "use client";
 
 import { useHuntPlans } from "@/lib/storage";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, Check, MoreVertical, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
 
 export default function PlanDetailClient() {
-    const params = useParams();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { plans, updatePlan, deletePlan, loading } = useHuntPlans();
 
-    const id = params.id as string;
+    const id = searchParams.get("id")?.trim() ?? "";
     const plan = plans.find(p => p.id === id);
 
     // Filter gear by status
@@ -23,11 +23,20 @@ export default function PlanDetailClient() {
 
     const [showOptions, setShowOptions] = useState(false);
 
+    if (!id) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground px-6 text-center">
+                <p className="font-medium">Missing plan ID.</p>
+                <button onClick={() => router.replace("/plan")} className="mt-4 text-primary hover:underline">Back to Plans</button>
+            </div>
+        );
+    }
+
     if (!plan) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground">
                 <p>Plan not found</p>
-                <button onClick={() => router.back()} className="mt-4 text-primary hover:underline">Go Back</button>
+                <button onClick={() => router.replace("/plan")} className="mt-4 text-primary hover:underline">Back to Plans</button>
             </div>
         );
     }
@@ -166,7 +175,7 @@ export default function PlanDetailClient() {
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-border/50 flex gap-4">
                 {plan.resultLogId ? (
                     <button
-                        onClick={() => router.push(`/log/${plan.resultLogId}`)}
+                        onClick={() => router.push(`/log/detail?id=${plan.resultLogId}`)}
                         className="flex-1 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/90 text-primary-foreground font-bold shadow-lg flex items-center justify-center gap-2 hover:shadow-xl transition-all"
                     >
                         <Check className="h-5 w-5" />

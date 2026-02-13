@@ -51,7 +51,7 @@ export function InventoryAuditCard({ item, onDelete, onToggleStatus, onSetMissin
 
     const handleClick = () => {
         if (offset === 0) {
-            router.push(`/inventory/${item.id}`);
+            router.push(`/inventory/item?id=${item.id}`);
         }
     };
 

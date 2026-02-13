@@ -1,18 +1,33 @@
 "use client";
 
 import { useInventory, useHuntLogs } from "@/lib/storage";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Trash2, Edit2, History, Calendar, Tag, Info } from "lucide-react";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
 
 
 export default function InventoryItemDetailClient() {
-    const params = useParams();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { inventory, deleteItem } = useInventory();
     const { logs } = useHuntLogs();
 
-    const id = params.id as string;
+    const id = searchParams.get("id")?.trim() ?? "";
+
+    if (!id) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground px-6 text-center">
+                <p className="font-medium">Missing inventory item ID.</p>
+                <button
+                    onClick={() => router.replace("/inventory")}
+                    className="mt-4 text-primary hover:underline"
+                >
+                    Back to Inventory
+                </button>
+            </div>
+        );
+    }
+
     const item = inventory.find((i) => i.id === id);
 
     if (!item) {
@@ -20,10 +35,10 @@ export default function InventoryItemDetailClient() {
             <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground">
                 <p>Item not found</p>
                 <button
-                    onClick={() => router.back()}
+                    onClick={() => router.replace("/inventory")}
                     className="mt-4 text-primary hover:underline"
                 >
-                    Go Back
+                    Back to Inventory
                 </button>
             </div>
         );

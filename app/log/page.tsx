@@ -62,7 +62,7 @@ export default function HuntLogPage() {
 
                         return (
                             <Link
-                                href={`/log/${log.id}`}
+                                href={`/log/detail?id=${log.id}`}
                                 key={log.id}
                                 className="block group glass-card rounded-2xl overflow-hidden card-hover animate-slide-up"
                                 style={{ animationDelay: `${index * 75}ms` }}

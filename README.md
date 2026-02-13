@@ -83,6 +83,17 @@ This project includes instructions for multiple AI coding platforms:
 
 All three files share the same core information about the project's conventions, architecture, and development workflow.
 
+
+## Static Export Route Strategy
+
+Because this app uses `output: 'export'`, detail screens avoid dynamic path segments (e.g. `/log/[id]`) and instead use static pages with query parameters:
+
+- `/inventory/item?id=<inventoryId>`
+- `/plan/detail?id=<planId>`
+- `/log/detail?id=<logId>`
+
+This keeps routes static-export-friendly while still supporting record-specific detail views on the client.
+
 ## Architecture Decisions
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for documented ADRs covering:

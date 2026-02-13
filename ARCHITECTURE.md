@@ -101,3 +101,22 @@ This document captures important architectural decisions to prevent accidental r
 - Complete redirect auth on the login screen before rendering normal idle state so users get clean post-auth routing back to `/profile`.
 
 **Why this is required:** Redirect-based OAuth is the most compatible path for iOS/app-wrapper environments because it does not depend on popup window APIs that are often blocked, sandboxed, or inconsistently implemented.
+
+---
+
+## ADR-005: Static Export Detail Routes (Query Parameter Pattern)
+
+**Date:** 2026-02-13  
+**Status:** Decided  
+**Context:** With Next.js static export (`output: 'export'`), dynamic segment detail pages such as `/inventory/[id]`, `/plan/[id]`, and `/log/[id]` required placeholder `generateStaticParams()` workarounds that produced non-real routes.
+
+**Decision:** Use static detail pages plus query parameters for entity IDs:
+- `/inventory/item?id=<inventoryId>`
+- `/plan/detail?id=<planId>`
+- `/log/detail?id=<logId>`
+
+**Implementation notes:**
+1. Remove `_placeholder` `generateStaticParams()` workarounds.
+2. Read IDs from `useSearchParams()` in client detail components.
+3. Handle missing/invalid IDs gracefully by showing a fallback message with navigation back to list pages.
+4. Update all internal links/navigation calls to emit the query-parameter routes above.

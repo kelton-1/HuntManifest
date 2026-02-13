@@ -57,7 +57,7 @@ export default function PlansPage() {
                             {sortedActive.map(plan => (
                                 <Link
                                     key={plan.id}
-                                    href={`/plan/${plan.id}`}
+                                    href={`/plan/detail?id=${plan.id}`}
                                     className="block bg-card border border-border rounded-xl p-4 shadow-sm hover:bg-secondary/50 transition-colors active:scale-[0.99]"
                                 >
                                     <h3 className="font-bold text-lg mb-1">{plan.title}</h3>
@@ -100,7 +100,7 @@ export default function PlansPage() {
                             {pastPlans.map(plan => (
                                 <Link
                                     key={plan.id}
-                                    href={`/plan/${plan.id}`}
+                                    href={`/plan/detail?id=${plan.id}`}
                                     className="block bg-card/50 border border-border rounded-xl p-4 grayscale hover:grayscale-0 transition-all"
                                 >
                                     <h3 className="font-semibold">{plan.title}</h3>

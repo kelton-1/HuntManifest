@@ -67,7 +67,7 @@ export function HuntMemoryCarousel({ logs, formatTemperature, temperatureUnit }:
                         return (
                             <Link
                                 key={log.id}
-                                href={`/log/${log.id}`}
+                                href={`/log/detail?id=${log.id}`}
                                 className="flex-shrink-0 snap-start group"
                             >
                                 <div

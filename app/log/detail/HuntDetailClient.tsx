@@ -1,7 +1,7 @@
 "use client";
 
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles, Wind, Droplets, Gauge, Sunrise, Sunset, Thermometer, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserProfile } from "@/lib/useUserProfile";
@@ -11,18 +11,27 @@ import { useState } from "react";
 import { staggerContainer, staggerChild, snappy } from "@/lib/motion";
 
 export default function HuntDetailClient() {
-    const params = useParams();
+    const searchParams = useSearchParams();
     const router = useRouter();
     const { logs, deleteLog } = useHuntLogs();
     const { plans } = useHuntPlans();
     const { profile } = useUserProfile();
 
-    const id = params.id as string;
+    const id = searchParams.get("id")?.trim() ?? "";
     const log = logs.find(l => l.id === id);
 
     // AI Analysis state
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
     const [aiLoading, setAiLoading] = useState(false);
+
+    if (!id) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground px-6 text-center">
+                <p className="font-medium">Missing hunt log ID.</p>
+                <button onClick={() => router.replace("/log")} className="mt-4 text-primary hover:underline">Back to Hunt Log</button>
+            </div>
+        );
+    }
 
     // Find linked plan if any
     const linkedPlan = log?.planId ? plans.find(p => p.id === log.planId) : null;
@@ -31,7 +40,7 @@ export default function HuntDetailClient() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen text-muted-foreground">
                 <p>Hunt log not found</p>
-                <button onClick={() => router.back()} className="mt-4 text-primary hover:underline">Go Back</button>
+                <button onClick={() => router.replace("/log")} className="mt-4 text-primary hover:underline">Back to Hunt Log</button>
             </div>
         );
     }
@@ -77,7 +86,7 @@ export default function HuntDetailClient() {
                 {linkedPlan && (
                     <motion.div
                         variants={staggerChild}
-                        onClick={() => router.push(`/plan/${linkedPlan.id}`)}
+                        onClick={() => router.push(`/plan/detail?id=${linkedPlan.id}`)}
                         className="bg-background/95 backdrop-blur border border-mallard-yellow/50 rounded-xl p-3 flex items-center justify-between shadow-lg cursor-pointer hover:bg-background/100 transition-all"
                     >
                         <div className="flex items-center gap-3">
