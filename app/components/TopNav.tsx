@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Moon, Sun, User } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
@@ -10,7 +8,6 @@ import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-
 export function TopNav() {
     const { setTheme, theme } = useTheme();
     const [mounted, setMounted] = useState(false);
-    const pathname = usePathname();
     const { scrollY } = useScroll();
 
     const [hidden, setHidden] = useState(false);
@@ -90,14 +87,6 @@ export function TopNav() {
                             </AnimatePresence>
                         </button>
                     )}
-
-                    <Link
-                        href="/profile"
-                        className={`relative p-2 rounded-full hover:bg-accent/50 transition-all duration-300 border border-transparent hover:border-border/50 ${pathname === "/profile" ? "text-primary bg-accent/30" : "text-muted-foreground"}`}
-                        aria-label="Profile"
-                    >
-                        <User className="h-5 w-5" />
-                    </Link>
                 </div>
             </div>
         </motion.header>

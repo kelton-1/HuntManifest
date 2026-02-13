@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Package, NotebookPen, BarChart3, Plus, X, Calendar, Crosshair } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Home, Package, NotebookPen, User, Plus, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { hapticMedium, hapticLight } from "@/lib/haptics";
-import { snappy, staggerContainer, staggerChild } from "@/lib/motion";
+import { staggerContainer, staggerChild } from "@/lib/motion";
 
 export function BottomNav() {
     const pathname = usePathname();
-    const router = useRouter();
     const [isFabOpen, setIsFabOpen] = useState(false);
     const fabRef = useRef<HTMLDivElement>(null);
 
@@ -35,12 +34,14 @@ export function BottomNav() {
         };
     }, [isFabOpen]);
 
-    const navItems = [
+    const leftItems = [
         { href: "/", icon: Home, label: "Home", matchExact: true },
+        { href: "/log", icon: NotebookPen, label: "Journal", matchExact: false },
     ];
 
     const rightItems = [
-        { href: "/insights", icon: BarChart3, label: "Insights", matchExact: false },
+        { href: "/inventory", icon: Package, label: "Gear", matchExact: false },
+        { href: "/profile", icon: User, label: "Profile", matchExact: false },
     ];
 
     const isActive = (href: string, matchExact: boolean) =>
@@ -73,7 +74,7 @@ export function BottomNav() {
                 <div className="flex items-center justify-between h-[68px] glass-nav rounded-2xl px-3 relative">
 
                     {/* Left nav items */}
-                    {navItems.map((item) => {
+                    {leftItems.map((item) => {
                         const active = isActive(item.href, item.matchExact);
                         return (
                             <Link

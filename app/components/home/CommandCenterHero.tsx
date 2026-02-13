@@ -1,121 +1,133 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Timer, MapPin, ArrowRight, Sun, Calendar, ShieldCheck, Zap } from "lucide-react";
-import { useHuntPlans } from "@/lib/storage";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { MapPin, Calendar, ArrowRight } from "lucide-react";
+import { useHuntLogs, useHuntPlans } from "@/lib/storage";
+import { useUserProfile } from "@/lib/useUserProfile";
+import { WeatherConditions } from "@/lib/types";
+import { getHuntingSuitability } from "@/lib/huntingSuitability";
 
-export function CommandCenterHero() {
-    const router = useRouter();
-    const { plans } = useHuntPlans();
+interface CommandCenterHeroProps {
+    weather?: WeatherConditions | null;
+}
 
-    // Derived state: Next upcoming hunt
-    const nextHunt = plans
-        .filter(p => new Date(p.date) > new Date())
+type HeroContent = {
+    mode: "upcoming" | "favorable" | "default";
+    greeting: string;
+    name: string;
+    subtitle: string;
+    cta?: { label: string; href: string };
+    planTitle?: string;
+    planLocation?: string;
+    daysAway?: number;
+};
+
+function getHeroContent(
+    hunterName: string,
+    totalHunts: number,
+    plans: ReturnType<typeof useHuntPlans>["plans"],
+    weather: WeatherConditions | null | undefined,
+): HeroContent {
+    const name = hunterName || "Hunter";
+
+    // 1. Check for active plan within 48 hours
+    const now = Date.now();
+    const in48h = now + 48 * 60 * 60 * 1000;
+    const upcomingPlan = plans
+        .filter((p) => p.status === "ACTIVE" && new Date(p.date).getTime() <= in48h && new Date(p.date).getTime() >= now)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
-    // Mock "Readiness" score based on inventory/profile (placeholder logic for now)
-    const readinessScore = 85;
+    if (upcomingPlan) {
+        const daysAway = Math.ceil((new Date(upcomingPlan.date).getTime() - now) / (1000 * 60 * 60 * 24));
+        return {
+            mode: "upcoming",
+            greeting: "Upcoming Hunt",
+            name,
+            subtitle: daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `In ${daysAway} days`,
+            cta: { label: "View Plan", href: `/plan/${upcomingPlan.id}` },
+            planTitle: upcomingPlan.title,
+            planLocation: upcomingPlan.location?.name,
+            daysAway,
+        };
+    }
+
+    // 2. Check for favorable weather conditions
+    if (weather) {
+        const suitability = getHuntingSuitability(weather);
+        if (suitability.level === "GOOD") {
+            return {
+                mode: "favorable",
+                greeting: "Good conditions today",
+                name,
+                subtitle: "Conditions look good for hunting",
+                cta: { label: "Plan a Hunt", href: "/plan/new" },
+            };
+        }
+    }
+
+    // 3. Default: season progress
+    const huntText = totalHunts === 1 ? "1 hunt recorded" : `${totalHunts} hunts recorded`;
+    return {
+        mode: "default",
+        greeting: "Welcome back",
+        name,
+        subtitle: totalHunts > 0 ? `Season: ${huntText}` : "Ready when you are",
+    };
+}
+
+export function CommandCenterHero({ weather }: CommandCenterHeroProps) {
+    const { logs } = useHuntLogs();
+    const { plans } = useHuntPlans();
+    const { profile } = useUserProfile();
+
+    const totalHunts = logs.length;
+    const hero = getHeroContent(profile.hunterName, totalHunts, plans, weather);
 
     return (
-        <section className="relative overflow-hidden rounded-3xl bg-card border border-border/50 shadow-xl group">
-            {/* Dynamic Background - subtle animated gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-mallard-green/20 via-background to-background animate-pulse-soft" />
+        <section className="glass-card rounded-2xl p-5">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+                {hero.greeting}
+            </p>
+            <h1 className="text-2xl font-bold font-heading">{hero.name}</h1>
+            <p className="text-sm text-primary font-medium mt-1">{hero.subtitle}</p>
 
-            {/* Content Container */}
-            <div className="relative z-10 p-5 space-y-4">
-
-                {/* Header: Date & Status */}
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
-                            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                        </h2>
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                            Command Center
-                        </h1>
-                    </div>
-                    {/* Readiness Badge */}
-                    <div className="flex items-center gap-1.5 bg-background/50 backdrop-blur border border-border px-2.5 py-1 rounded-full">
-                        <ShieldCheck className={`h-3.5 w-3.5 ${readinessScore > 80 ? 'text-mallard-green' : 'text-amber-500'}`} />
-                        <span className="text-xs font-bold tabular-nums">{readinessScore}% Ready</span>
-                    </div>
-                </div>
-
-                {/* Main Action Area */}
-                <div className="grid grid-cols-1 gap-3">
-                    {nextHunt ? (
-                        <Link href={`/plan/${nextHunt.id}`}>
-                            <div className="bg-background/60 backdrop-blur-md rounded-2xl p-4 border border-border/50 hover:border-primary/30 transition-all group/card relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-3 opacity-10">
-                                    <Timer className="h-12 w-12" />
-                                </div>
-
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                        <Calendar className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] font-bold uppercase text-primary tracking-wide">Next Mission</div>
-                                        <div className="font-bold text-lg leading-none">{nextHunt.title}</div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3">
-                                    <div className="flex items-center gap-1.5">
-                                        <MapPin className="h-3.5 w-3.5" />
-                                        <span>{nextHunt.location.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Timer className="h-3.5 w-3.5" />
-                                        <span>In {Math.ceil((new Date(nextHunt.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    ) : (
-                        <Link href="/plan/new">
-                            <div className="bg-background/40 backdrop-blur-sm rounded-2xl p-4 border border-dashed border-border hover:border-primary/50 hover:bg-background/60 transition-all flex items-center justify-between group/empty">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-secondary text-muted-foreground group-hover/empty:bg-primary/10 group-hover/empty:text-primary transition-colors">
-                                        <Calendar className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-foreground">No Upcoming Hunts</div>
-                                        <div className="text-xs text-muted-foreground">Plan your next outing</div>
-                                    </div>
-                                </div>
-                                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover/empty:translate-x-1 transition-transform" />
-                            </div>
-                        </Link>
-                    )}
-                </div>
-
-                {/* Quick Stats / Intel Row */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-background/40 backdrop-blur-sm rounded-xl p-3 border border-border/30 flex items-center gap-3">
-                        <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-500">
-                            <Zap className="h-4 w-4" />
+            {hero.mode === "upcoming" && (
+                <div className="mt-4 bg-background/40 backdrop-blur-sm rounded-xl p-3 border border-border/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                            <Calendar className="h-5 w-5" />
                         </div>
                         <div>
-                            <div className="text-[10px] uppercase text-muted-foreground font-bold">Activity</div>
-                            <div className="text-sm font-bold">High</div>
+                            <div className="font-semibold text-sm">{hero.planTitle}</div>
+                            {hero.planLocation && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                    <MapPin className="h-3 w-3" />
+                                    <span>{hero.planLocation}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
-                    <div className="bg-background/40 backdrop-blur-sm rounded-xl p-3 border border-border/30 flex items-center gap-3">
-                        <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500">
-                            <Sun className="h-4 w-4" />
-                        </div>
-                        <div>
-                            <div className="text-[10px] uppercase text-muted-foreground font-bold">Daylight</div>
-                            <div className="text-sm font-bold">10h 24m</div>
-                        </div>
-                    </div>
+                    <Link
+                        href={hero.cta!.href}
+                        className="bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1"
+                    >
+                        {hero.cta!.label}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
+            )}
 
-            </div>
+            {hero.mode === "favorable" && hero.cta && (
+                <div className="mt-4">
+                    <Link
+                        href={hero.cta.href}
+                        className="inline-flex items-center gap-1 bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-semibold"
+                    >
+                        {hero.cta.label}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                </div>
+            )}
         </section>
     );
 }

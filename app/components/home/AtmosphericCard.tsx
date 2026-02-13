@@ -3,6 +3,7 @@
 import { Thermometer, Droplets, CloudSun } from "lucide-react";
 import { WindRose } from "./WindRose";
 import { WeatherConditions, SkyCondition } from "@/lib/types";
+import { getHuntingSuitability } from "@/lib/huntingSuitability";
 
 interface AtmosphericCardProps {
     weather: WeatherConditions | null;
@@ -146,6 +147,16 @@ export function AtmosphericCard({
             <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none z-0">
                 <WeatherBackground condition={weather.skyCondition} />
             </div>
+
+            {/* Suitability Badge */}
+            {(() => {
+                const suit = getHuntingSuitability(weather);
+                return (
+                    <div className={`absolute top-3 right-3 z-20 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${suit.bgClass} ${suit.textClass}`}>
+                        {suit.level}
+                    </div>
+                );
+            })()}
 
             {/* Content Grid */}
             <div className="relative z-10 grid grid-cols-2 gap-3">

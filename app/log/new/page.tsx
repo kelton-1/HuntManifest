@@ -83,6 +83,10 @@ function NewHuntLogContent() {
     // Harvest State
     const [harvests, setHarvests] = useState<Harvest[]>([]);
 
+    // Plan banner
+    const [showPlanBanner, setShowPlanBanner] = useState(true);
+    const sourcePlan = planId ? plans.find(p => p.id === planId) : null;
+
     // Rating & Tags
     const [rating, setRating] = useState<number>(0);
     const [tags, setTags] = useState<string[]>([]);
@@ -230,6 +234,23 @@ function NewHuntLogContent() {
                     </p>
                 </div>
             </header>
+
+            {/* Plan-to-Log Banner */}
+            {sourcePlan && showPlanBanner && (
+                <div className="mb-4 p-3 bg-primary/10 border border-primary/30 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                        <Save className="h-4 w-4" />
+                        Logging from plan: {sourcePlan.title}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowPlanBanner(false)}
+                        className="p-1 hover:bg-primary/10 rounded-full transition-colors"
+                    >
+                        <X className="h-4 w-4 text-primary" />
+                    </button>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <motion.div

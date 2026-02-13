@@ -14,6 +14,7 @@ import { AtmosphericCard } from "./components/home/AtmosphericCard";
 import { HuntMemoryCarousel } from "./components/home/HuntMemoryCarousel";
 import { CommandCenterHero } from "./components/home/CommandCenterHero";
 import { WeatherForecastWidget } from "./components/home/WeatherForecastWidget";
+import { QuickActions } from "./components/home/QuickActions";
 
 export default function Home() {
   const { logs } = useHuntLogs();
@@ -53,7 +54,7 @@ export default function Home() {
     <div className="flex flex-col gap-4 pb-4 animate-fade-in">
 
       {/* 1. Command Center Hero (Replaces SeasonGoalsRing) */}
-      <CommandCenterHero />
+      <CommandCenterHero weather={weather} />
 
       {/* 2. Atmospheric Weather Widget */}
       <AtmosphericCard
@@ -65,10 +66,13 @@ export default function Home() {
         windSpeedUnit={profile.windSpeedUnit}
       />
 
-      {/* 3. Weather Forecast (New) */}
+      {/* 3. Weather Forecast */}
       <WeatherForecastWidget />
 
-      {/* 3. Hunt Memory Carousel */}
+      {/* 4. Quick Actions Grid */}
+      <QuickActions weather={weather} />
+
+      {/* 5. Hunt Memory Carousel */}
       <HuntMemoryCarousel
         logs={logs}
         formatTemperature={formatTemperature}

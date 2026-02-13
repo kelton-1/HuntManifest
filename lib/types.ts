@@ -189,6 +189,7 @@ export interface HuntPlan {
     location: GeoLocation;
     weather?: WeatherConditions; // Expected
     gear: PlanGearItem[];
+    species?: string[];
     status: PlanStatus;
     notes?: string;
     // Linkage
