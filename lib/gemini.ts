@@ -55,3 +55,41 @@ export async function suggestGear(
 
     return generateText(prompt);
 }
+
+export interface InsightsSummary {
+    totalHunts: number;
+    successRate: number;
+    totalHarvest: number;
+    topSpecies: { name: string; count: number }[];
+    favoriteLocation: string | null;
+    sweetSpot: { temp: string; wind: string; sky: string; avgHarvest: number } | null;
+    uniqueLocations: number;
+    avgRating: number | null;
+    shootingEfficiency: number | null;
+    perHunterAvg: number | null;
+}
+
+export async function generateInsightsAnalysis(summary: InsightsSummary): Promise<string> {
+    const speciesText = summary.topSpecies.slice(0, 3).map(s => `${s.count} ${s.name}`).join(', ');
+    const sweetSpotText = summary.sweetSpot
+        ? `Best conditions: ${summary.sweetSpot.temp}, ${summary.sweetSpot.wind} wind, ${summary.sweetSpot.sky} (${summary.sweetSpot.avgHarvest} birds/hunt avg).`
+        : '';
+    const efficiencyText = summary.shootingEfficiency
+        ? `Shooting efficiency: ${summary.shootingEfficiency} birds per shot.`
+        : '';
+    const locationText = summary.favoriteLocation
+        ? `Favorite spot: ${summary.favoriteLocation} (${summary.uniqueLocations} total locations).`
+        : '';
+
+    const prompt = `You are an experienced waterfowl hunting guide analyzing a client's season data. Be specific to THEIR numbers, not generic advice.
+
+Season stats: ${summary.totalHunts} hunts, ${summary.successRate}% success rate, ${summary.totalHarvest} total birds.
+Top species: ${speciesText || 'none yet'}.
+${sweetSpotText}
+${locationText}
+${efficiencyText}
+
+Give exactly 3 specific observations about their patterns, then 2 actionable recommendations for improving their season. Reference their actual numbers. Be concise and direct, like a guide talking to a hunter. Max 200 words.`;
+
+    return generateText(prompt);
+}
