@@ -2,16 +2,19 @@
 
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus, Droplets, Gauge } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Navigation, Check, X, Plus, Droplets, Gauge, ChevronDown, ChevronUp } from "lucide-react";
 import { LocationAutocomplete } from "@/app/components/LocationAutocomplete";
 import { useHuntLogs, useHuntPlans, useInventory } from "@/lib/storage";
 import { Harvest, WATERFOWL_SPECIES, WeatherConditions } from "@/lib/types";
 import { useGeolocation, reverseGeocode } from "@/lib/geolocation";
 import { fetchWeather } from "@/lib/weatherApi";
-import { Thermometer, Wind, Cloud, Bird, ChevronDown, ChevronUp, Sunrise, Sunset } from "lucide-react";
+import { Thermometer, Wind, Cloud, Bird, Sunrise, Sunset } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { SmartInput } from "@/app/components/inventory/SmartInput";
 import { ParsedProduct } from "@/lib/services/ProductIntelligenceEngine";
+import { SpeciesTapGrid } from "@/app/components/log/SpeciesTapGrid";
+import { StarRating } from "@/app/components/log/StarRating";
+import { QuickTags } from "@/app/components/log/QuickTags";
 
 function NewHuntLogContent() {
     const router = useRouter();
@@ -42,11 +45,15 @@ function NewHuntLogContent() {
 
     // Harvest State
     const [harvests, setHarvests] = useState<Harvest[]>([]);
-    const [selectedSpecies, setSelectedSpecies] = useState(WATERFOWL_SPECIES[0]);
+
+    // Rating & Tags
+    const [rating, setRating] = useState<number>(0);
+    const [tags, setTags] = useState<string[]>([]);
 
     // Gear State
     const [gearUsed, setGearUsed] = useState<{ id: string; name: string }[]>([]);
     const [showGearAdd, setShowGearAdd] = useState(false);
+    const [gearExpanded, setGearExpanded] = useState(false);
 
     // Remove gear from list
     const removeGear = (id: string) => {
@@ -144,27 +151,6 @@ function NewHuntLogContent() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const addHarvest = () => {
-        setHarvests(prev => {
-            const existing = prev.find(h => h.species === selectedSpecies);
-            if (existing) {
-                return prev.map(h => h.species === selectedSpecies ? { ...h, count: h.count + 1 } : h);
-            }
-            return [...prev, { species: selectedSpecies, count: 1 }];
-        });
-    };
-
-    const removeHarvest = (species: string) => {
-        setHarvests(prev => {
-            return prev.map(h => {
-                if (h.species === species) {
-                    return { ...h, count: Math.max(0, h.count - 1) };
-                }
-                return h;
-            }).filter(h => h.count > 0);
-        });
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!locationName) {
@@ -183,6 +169,8 @@ function NewHuntLogContent() {
             harvests,
             gear: gearUsed,
             notes,
+            rating: rating > 0 ? rating : undefined,
+            tags: tags.length > 0 ? tags : undefined,
             planId: planId || undefined
         });
 
@@ -385,68 +373,79 @@ function NewHuntLogContent() {
                     )}
                 </section>
 
-                {/* Gear Section */}
+                {/* Gear Section — Collapsible */}
                 <section className="space-y-4">
-                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setGearExpanded(!gearExpanded)}
+                        className="w-full font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2"
+                    >
                         <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">3</span>
                         Gear Used
-                        <span className="ml-auto px-2 py-0.5 bg-secondary text-muted-foreground rounded-full text-xs font-bold">
-                            {gearUsed.length} items
+                        <span className="ml-auto flex items-center gap-2">
+                            <span className="px-2 py-0.5 bg-secondary text-muted-foreground rounded-full text-xs font-bold">
+                                {gearUsed.length} items
+                            </span>
+                            {gearExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </span>
-                    </h3>
+                    </button>
 
-                    {gearUsed.length > 0 && (
-                        <div className="bg-card border border-border rounded-xl p-3 space-y-2">
-                            {gearUsed.map((g) => (
-                                <div key={g.id} className="flex items-center justify-between gap-2 text-sm py-1">
-                                    <div className="flex items-center gap-2">
-                                        <Check className="h-4 w-4 text-green-500" />
-                                        <span>{g.name}</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeGear(g.id)}
-                                        className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-destructive transition-colors"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </button>
+                    {gearExpanded && (
+                        <div className="space-y-4">
+                            {gearUsed.length > 0 && (
+                                <div className="bg-card border border-border rounded-xl p-3 space-y-2">
+                                    {gearUsed.map((g) => (
+                                        <div key={g.id} className="flex items-center justify-between gap-2 text-sm py-1">
+                                            <div className="flex items-center gap-2">
+                                                <Check className="h-4 w-4 text-green-500" />
+                                                <span>{g.name}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeGear(g.id)}
+                                                className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-destructive transition-colors"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            )}
 
-                    {/* Inline Add */}
-                    {showGearAdd ? (
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">Add gear</span>
+                            {/* Inline Add */}
+                            {showGearAdd ? (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">Add gear</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowGearAdd(false)}
+                                            className="text-xs text-muted-foreground hover:text-primary"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                    <SmartInput
+                                        onResult={handleGearAddResult}
+                                        compact={true}
+                                        placeholder="Scan, paste, or type..."
+                                    />
+                                </div>
+                            ) : (
                                 <button
                                     type="button"
-                                    onClick={() => setShowGearAdd(false)}
-                                    className="text-xs text-muted-foreground hover:text-primary"
+                                    onClick={() => setShowGearAdd(true)}
+                                    className="w-full py-2 border border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
                                 >
-                                    Cancel
+                                    <Plus className="h-4 w-4" />
+                                    Add gear
                                 </button>
-                            </div>
-                            <SmartInput
-                                onResult={handleGearAddResult}
-                                compact={true}
-                                placeholder="Scan, paste, or type..."
-                            />
+                            )}
                         </div>
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => setShowGearAdd(true)}
-                            className="w-full py-2 border border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-                        >
-                            <Plus className="h-4 w-4" />
-                            Add gear
-                        </button>
                     )}
                 </section>
 
-                {/* Harvest Section */}
+                {/* Harvest Section — Tap Grid */}
                 <section className="space-y-4">
                     <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">4</span>
@@ -458,61 +457,7 @@ function NewHuntLogContent() {
                         )}
                     </h3>
 
-                    <div className="flex gap-2">
-                        <select
-                            value={selectedSpecies}
-                            onChange={e => setSelectedSpecies(e.target.value)}
-                            className="flex-1 rounded-xl border border-input bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                            {WATERFOWL_SPECIES.map(s => (
-                                <option key={s} value={s}>{s}</option>
-                            ))}
-                        </select>
-                        <button
-                            type="button"
-                            onClick={addHarvest}
-                            className="px-5 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
-                        >
-                            + Add
-                        </button>
-                    </div>
-
-                    <div className="space-y-2">
-                        {harvests.map(h => (
-                            <div key={h.species} className="flex items-center justify-between bg-card p-4 rounded-xl border border-border">
-                                <div className="flex items-center gap-3">
-                                    <Bird className="h-5 w-5 text-mallard-yellow" />
-                                    <span className="font-medium">{h.species}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => removeHarvest(h.species)}
-                                        className="h-9 w-9 flex items-center justify-center rounded-xl bg-secondary hover:bg-destructive/10 hover:text-destructive transition-colors"
-                                    >
-                                        <ChevronDown className="h-4 w-4" />
-                                    </button>
-                                    <span className="text-xl font-bold w-8 text-center font-mono">{h.count}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setHarvests(prev => prev.map(item =>
-                                                item.species === h.species ? { ...item, count: item.count + 1 } : item
-                                            ));
-                                        }}
-                                        className="h-9 w-9 flex items-center justify-center rounded-xl bg-secondary hover:bg-primary/10 hover:text-primary transition-colors"
-                                    >
-                                        <ChevronUp className="h-4 w-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                        {harvests.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-6 italic">
-                                No birds logged yet
-                            </p>
-                        )}
-                    </div>
+                    <SpeciesTapGrid harvests={harvests} onUpdate={setHarvests} />
                 </section>
 
                 {/* Notes Section */}
@@ -528,6 +473,24 @@ function NewHuntLogContent() {
                         className="w-full rounded-xl border border-input bg-card px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="How was the spread? Did they finish committed?"
                     />
+                </section>
+
+                {/* Rating Section */}
+                <section className="space-y-4">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">6</span>
+                        Rating
+                    </h3>
+                    <StarRating value={rating} onChange={setRating} />
+                </section>
+
+                {/* Quick Tags Section */}
+                <section className="space-y-4">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">7</span>
+                        Quick Tags
+                    </h3>
+                    <QuickTags selected={tags} onChange={setTags} />
                 </section>
 
                 {/* Submit Button */}

@@ -2,7 +2,7 @@
 
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles, Wind, Droplets, Gauge, Sunrise, Sunset, Thermometer } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles, Wind, Droplets, Gauge, Sunrise, Sunset, Thermometer, Star } from "lucide-react";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 import { analyzeHuntLog } from "@/lib/gemini";
@@ -97,6 +97,36 @@ export default function HuntDetailClient() {
                         )}
                     </div>
                 </div>
+
+                {/* Star Rating */}
+                {log.rating != null && log.rating > 0 && (
+                    <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map(star => (
+                            <Star
+                                key={star}
+                                className={`h-6 w-6 ${
+                                    star <= log.rating!
+                                        ? 'fill-mallard-yellow text-mallard-yellow'
+                                        : 'text-muted-foreground/20'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Tags */}
+                {log.tags && log.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                        {log.tags.map(tag => (
+                            <span
+                                key={tag}
+                                className="px-3 py-1.5 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+                            >
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+                )}
 
                 {/* Weather Conditions */}
                 <div className="space-y-3">
