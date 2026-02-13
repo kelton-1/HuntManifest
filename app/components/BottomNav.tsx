@@ -44,8 +44,12 @@ export function BottomNav() {
         { href: "/profile", icon: User, label: "Profile", matchExact: false },
     ];
 
-    const isActive = (href: string, matchExact: boolean) =>
-        matchExact ? pathname === href : pathname.startsWith(href);
+    const isActive = (href: string, matchExact: boolean) => {
+        if (matchExact) {
+            return pathname === href || (href === "/" && pathname === "/insights");
+        }
+        return pathname.startsWith(href);
+    };
 
     const toggleFab = () => {
         hapticMedium();

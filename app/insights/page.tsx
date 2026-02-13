@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3, NotebookPen } from "lucide-react";
+import { BarChart3, NotebookPen, CloudSun, Bird, MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useHuntLogs } from "@/lib/storage";
 import { useInsights, InsightsTier } from "@/lib/useInsights";
@@ -113,7 +113,7 @@ export default function InsightsPage() {
                 ) : (
                     <InsightCard
                         title="Weather Patterns"
-                        icon={BarChart3}
+                        icon={CloudSun}
                         locked
                         lockMessage={`Log ${huntsNeededForGrowing} more hunt${huntsNeededForGrowing !== 1 ? 's' : ''} to unlock weather analysis.`}
                     >
@@ -127,7 +127,7 @@ export default function InsightsPage() {
                 ) : !isGrowing ? (
                     <InsightCard
                         title="Species Breakdown"
-                        icon={BarChart3}
+                        icon={Bird}
                         locked
                         lockMessage={`Log ${huntsNeededForGrowing} more hunt${huntsNeededForGrowing !== 1 ? 's' : ''} to unlock species analysis.`}
                     >
@@ -141,7 +141,7 @@ export default function InsightsPage() {
                 ) : !isGrowing ? (
                     <InsightCard
                         title="Location Intel"
-                        icon={BarChart3}
+                        icon={MapPin}
                         locked
                         lockMessage={`Log ${huntsNeededForGrowing} more hunt${huntsNeededForGrowing !== 1 ? 's' : ''} to unlock location analysis.`}
                     >
@@ -155,7 +155,7 @@ export default function InsightsPage() {
                 ) : (
                     <InsightCard
                         title="AI Coach"
-                        icon={BarChart3}
+                        icon={Sparkles}
                         locked
                         lockMessage={`Log ${huntsNeededForFull} more hunt${huntsNeededForFull !== 1 ? 's' : ''} to unlock AI-powered coaching.`}
                     >
