@@ -117,6 +117,7 @@ export function detectCategory(input: string): { category: InventoryCategory; co
         Clothing: ['jacket', 'coat', 'pants', 'bibs', 'gloves', 'hat', 'beanie', 'base layer'],
         Blind: ['blind', 'layout', 'a-frame', 'pit blind', 'boat blind'],
         Safety: ['pfd', 'life jacket', 'first aid', 'headlamp', 'safety', 'whistle'],
+        Dog: ['dog', 'kennel', 'crate', 'collar', 'leash', 'vest', 'dog vest', 'bumper', 'retriever'],
         Vehicle: ['boat', 'mud motor', 'atv', 'utv', 'trailer', 'kayak'],
         Other: ['thermos', 'cooler', 'bag', 'strap', 'knife', 'license'],
     };

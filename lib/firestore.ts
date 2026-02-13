@@ -81,10 +81,6 @@ export async function updateUserProfile(userId: string, data: Partial<UserProfil
 // INVENTORY
 // ============================================
 
-// ============================================
-// INVENTORY
-// ============================================
-
 export async function getInventory(userId: string): Promise<InventoryItem[]> {
     const colRef = collection(db, "users", userId, "inventory");
     const q = query(colRef, orderBy("createdAt", "desc"));

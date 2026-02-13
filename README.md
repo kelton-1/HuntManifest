@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HuntManifest
+
+A mobile-first hunting management app built with Next.js, Firebase, and AI. Track your gear inventory, plan hunts with weather-aware context, log completed hunts, and get AI-powered insights.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router, static export) |
+| UI | React 19, Tailwind CSS, Framer Motion |
+| Backend | Firebase Auth + Firestore |
+| AI | Firebase AI Logic (Gemini 2.5 Flash Lite) |
+| Icons | Lucide React |
+| Hosting | Firebase Hosting |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install dependencies
+npm install
+
+# Start development server
+npx next dev -p 3000
+
+# Build for production (static export → out/)
+npm run build
+
+# Deploy to Firebase Hosting
+npm run deploy
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> **Note:** The default port in `package.json` is 5000, which conflicts with macOS AirPlay. Use port 3000 instead.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/                  # Next.js App Router pages & components
+├── inventory/        # Gear inventory management
+├── plan/             # Hunt planning
+├── log/              # Hunt log / journal
+├── insights/         # Analytics
+├── profile/          # User settings
+├── login/            # Authentication
+└── components/       # Shared UI components
 
-## Learn More
+lib/                  # Core business logic
+├── types.ts          # TypeScript types & enums
+├── storage.ts        # Data hooks (Firestore + localStorage fallback)
+├── firestore.ts      # Firestore CRUD layer
+├── auth.tsx          # Auth context
+├── weatherApi.ts     # Open-Meteo weather integration
+├── gemini.ts         # AI features (Gemini)
+└── ...               # Geolocation, brands, formatting, etc.
 
-To learn more about Next.js, take a look at the following resources:
+Tasks/                # Product planning documents
+ARCHITECTURE.md       # Architecture Decision Records
+sprintlist.md         # Sprint plan & progress
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Firebase Collections
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+users/{uid}/profile/data     — User profile
+users/{uid}/inventory/{id}   — Gear items
+users/{uid}/huntLogs/{id}    — Hunt logs
+users/{uid}/huntPlans/{id}   — Hunt plans
+feedback/{id}                — User feedback
+```
 
-## Deploy on Vercel
+## Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` | Google Places location autocomplete |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## AI Agent Documentation
+
+This project includes instructions for multiple AI coding platforms:
+
+- **`CLAUDE.md`** — Claude Code project context
+- **`AGENTS.md`** — OpenAI Codex project context
+- **`.agent/workflows/dev.md`** — Antigravity dev workflow
+
+All three files share the same core information about the project's conventions, architecture, and development workflow.
+
+## Architecture Decisions
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for documented ADRs covering:
+- ADR-001: Single inventory system
+- ADR-002: Icon system (Lucide only)
+- ADR-003: localStorage key registry

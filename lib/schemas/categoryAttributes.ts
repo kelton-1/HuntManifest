@@ -189,6 +189,12 @@ export const CATEGORY_SCHEMAS: Record<InventoryCategory, AttributeSchema> = {
         optionalFields: ['itemType'],
         extractionPatterns: {},
     },
+    Dog: {
+        category: 'Dog',
+        requiredFields: ['name'],
+        optionalFields: ['itemType'],
+        extractionPatterns: {},
+    },
     Vehicle: {
         category: 'Vehicle',
         requiredFields: ['name'],

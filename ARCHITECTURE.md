@@ -20,14 +20,15 @@ This document captures important architectural decisions to prevent accidental r
 **Categories (Authoritative List):**
 1. Firearm
 2. Ammo
-3. Decoy
-4. Call
-5. Clothing
-6. Blind
-7. Safety
-8. Dog
-9. Vehicle
-10. Other
+3. Waders
+4. Decoy
+5. Call
+6. Clothing
+7. Blind
+8. Safety
+9. Dog
+10. Vehicle
+11. Other
 
 **When adding new inventory features:**
 - Use `InventoryCategory` from `lib/types.ts`
