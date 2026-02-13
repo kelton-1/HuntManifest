@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 
+import { formatLocationName } from "@/lib/geolocation";
+
 interface PlaceResult {
     formatted_address?: string;
     name?: string;
@@ -71,7 +73,9 @@ export function LocationAutocomplete({
         autocompleteRef.current.addListener("place_changed", () => {
             const place = autocompleteRef.current?.getPlace();
             if (place) {
-                const name = place.formatted_address || place.name || "";
+                // Format to "City, ST" instead of full Google address
+                const rawName = place.formatted_address || place.name || "";
+                const name = formatLocationName(rawName);
                 onChange(name);
                 if (onPlaceSelect) {
                     onPlaceSelect({
@@ -107,7 +111,7 @@ export function LocationAutocomplete({
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
         script.async = true;
         script.defer = true;
-        
+
         script.onload = () => {
             googleScriptLoaded = true;
             googleScriptLoading = false;
@@ -138,7 +142,7 @@ export function LocationAutocomplete({
         setShowSaved(false);
     };
 
-    const filteredSaved = savedLocations.filter(loc => 
+    const filteredSaved = savedLocations.filter(loc =>
         loc.toLowerCase().includes(value.toLowerCase()) || value === ""
     ).slice(0, 5);
 
@@ -159,7 +163,7 @@ export function LocationAutocomplete({
                 className={`w-full pl-10 pr-4 py-3 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${className}`}
                 autoComplete="off"
             />
-            
+
             {showSaved && filteredSaved.length > 0 && !scriptReady && (
                 <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden">
                     <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border">

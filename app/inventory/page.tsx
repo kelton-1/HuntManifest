@@ -229,18 +229,18 @@ export default function InventoryPage() {
                     {displayItems.map((item) => (
                         <div
                             key={item.id}
-                            className="relative bg-card border border-border rounded-xl p-3 shadow-sm group"
+                            className="relative glass-card rounded-2xl p-3.5 group hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                         >
                             {/* Category Icon Badge */}
-                            <div className="absolute -top-2 -left-2 p-1.5 bg-mallard-yellow/20 rounded-lg border border-mallard-yellow/30">
-                                <CategoryIcon category={item.category} className="h-3.5 w-3.5 text-mallard-yellow" />
+                            <div className="absolute -top-2.5 -left-2 flex items-center justify-center h-8 w-8 bg-primary/15 dark:bg-primary/20 rounded-xl border border-primary/20 shadow-sm">
+                                <CategoryIcon category={item.category} className="h-4 w-4 text-primary" />
                             </div>
 
                             {/* Quick Actions (shown on hover/tap) */}
                             <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Link
                                     href={`/inventory/edit/${item.id}`}
-                                    className="p-1.5 bg-secondary rounded-lg hover:bg-primary hover:text-white transition-colors"
+                                    className="p-1.5 bg-secondary/80 backdrop-blur-sm rounded-lg hover:bg-primary hover:text-white transition-colors"
                                 >
                                     <Edit2 className="h-3 w-3" />
                                 </Link>
@@ -248,7 +248,7 @@ export default function InventoryPage() {
                                     onClick={() => handleDelete(item.id)}
                                     className={`p-1.5 rounded-lg transition-colors ${deleteConfirmId === item.id
                                         ? "bg-red-500 text-white"
-                                        : "bg-secondary hover:bg-red-100 hover:text-red-600"
+                                        : "bg-secondary/80 backdrop-blur-sm hover:bg-red-500/20 hover:text-red-400"
                                         }`}
                                 >
                                     <Trash2 className="h-3 w-3" />
@@ -256,18 +256,18 @@ export default function InventoryPage() {
                             </div>
 
                             {/* Content */}
-                            <div className="pt-2">
-                                <p className="font-semibold text-sm leading-tight line-clamp-2 mb-1">
+                            <div className="pt-3">
+                                <p className="font-bold text-sm leading-tight line-clamp-2 mb-0.5">
                                     {item.name}
                                 </p>
                                 {item.specs?.brand && (
-                                    <p className="text-[10px] text-muted-foreground mb-2">{item.specs.brand}</p>
+                                    <p className="text-[11px] text-muted-foreground/80 mb-2.5">{item.specs.brand}</p>
                                 )}
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between mt-auto">
                                     <span className="text-xs text-muted-foreground">
-                                        Qty: <span className="font-bold text-foreground">{item.quantity}</span>
+                                        Qty: <span className="font-bold text-foreground tabular-nums">{item.quantity}</span>
                                     </span>
-                                    <span className="text-[9px] px-1.5 py-0.5 bg-secondary rounded text-muted-foreground uppercase">
+                                    <span className="text-[9px] px-2 py-0.5 bg-primary/10 dark:bg-primary/8 rounded-full text-primary font-semibold uppercase tracking-wider">
                                         {item.category}
                                     </span>
                                 </div>
@@ -278,10 +278,12 @@ export default function InventoryPage() {
                     {/* Add New Card */}
                     <Link
                         href={activeCategory !== "all" ? `/inventory/add?category=${activeCategory}` : "/inventory/add"}
-                        className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border rounded-xl text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-all min-h-[120px]"
+                        className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border/60 rounded-2xl text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/8 transition-all min-h-[120px]"
                     >
-                        <Plus className="h-6 w-6" />
-                        <span className="text-xs font-medium">Add Item</span>
+                        <div className="p-2 rounded-xl bg-primary/10 dark:bg-primary/8">
+                            <Plus className="h-5 w-5" />
+                        </div>
+                        <span className="text-xs font-semibold">Add Item</span>
                     </Link>
                 </div>
             )}

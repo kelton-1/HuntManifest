@@ -64,79 +64,81 @@ export default function HuntLogPage() {
                             <Link
                                 href={`/log/${log.id}`}
                                 key={log.id}
-                                className="block group bg-card rounded-2xl border border-border shadow-sm overflow-hidden card-hover animate-slide-up"
+                                className="block group glass-card rounded-2xl overflow-hidden card-hover animate-slide-up"
                                 style={{ animationDelay: `${index * 75}ms` }}
                             >
+                                {/* Weather Strip — Glass Effect */}
+                                <div className="glass-weather px-4 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 dark:bg-white/5 rounded-lg text-xs text-foreground/80 flex-shrink-0">
+                                        <CloudSun className="h-3 w-3 text-sky-400" />
+                                        {formatTemperature(log.weather.temperature, profile.temperatureUnit)}
+                                    </div>
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 dark:bg-white/5 rounded-lg text-xs text-foreground/80 flex-shrink-0">
+                                        <Wind className="h-3 w-3 text-emerald-400" />
+                                        {log.weather.windDirection} {formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}
+                                    </div>
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 dark:bg-white/5 rounded-lg text-xs text-foreground/80 flex-shrink-0">
+                                        {log.weather.skyCondition}
+                                    </div>
+                                    {log.weather.humidity != null && (
+                                        <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/10 dark:bg-white/5 rounded-lg text-xs text-foreground/80 flex-shrink-0">
+                                            <Droplets className="h-3 w-3 text-blue-400" />
+                                            {log.weather.humidity}%
+                                        </div>
+                                    )}
+                                    {log.weather.barometricPressure != null && (
+                                        <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/10 dark:bg-white/5 rounded-lg text-xs text-foreground/80 flex-shrink-0">
+                                            <Gauge className="h-3 w-3 text-orange-400" />
+                                            {log.weather.barometricPressure}&quot;
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Main Content */}
                                 <div className="p-4">
-                                    {/* Date & Actions */}
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Calendar className="h-3.5 w-3.5" />
-                                            <time className="font-medium">
-                                                {new Date(log.date).toLocaleDateString(undefined, {
-                                                    weekday: 'short',
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    year: 'numeric'
-                                                })}
-                                            </time>
-                                        </div>
+                                    {/* Date */}
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                                        <Calendar className="h-3 w-3" />
+                                        <time className="font-medium">
+                                            {new Date(log.date).toLocaleDateString(undefined, {
+                                                weekday: 'short',
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}
+                                        </time>
                                     </div>
 
                                     {/* Location */}
                                     <div className="flex items-start gap-2 mb-2">
                                         <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                                        <h3 className="font-semibold text-lg leading-tight">
+                                        <h3 className="font-bold text-lg leading-tight">
                                             {log.location?.name || "Unknown Location"}
                                         </h3>
                                     </div>
 
-                                    {/* Weather Badges */}
-                                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
-                                            <CloudSun className="h-3 w-3" />
-                                            {formatTemperature(log.weather.temperature, profile.temperatureUnit)}
-                                        </div>
-                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
-                                            <Wind className="h-3 w-3" />
-                                            {log.weather.windDirection} {formatWindSpeed(log.weather.windSpeed, profile.windSpeedUnit)}
-                                        </div>
-                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
-                                            {log.weather.skyCondition}
-                                        </div>
-                                        {log.weather.humidity != null && (
-                                            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
-                                                <Droplets className="h-3 w-3" />
-                                                {log.weather.humidity}%
-                                            </div>
-                                        )}
-                                        {log.weather.barometricPressure != null && (
-                                            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-secondary rounded-lg text-xs text-secondary-foreground">
-                                                <Gauge className="h-3 w-3" />
-                                                {log.weather.barometricPressure}&quot;
-                                            </div>
-                                        )}
-                                    </div>
-
                                     {/* Species if any */}
                                     {speciesList && (
-                                        <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
+                                        <p className="text-xs text-muted-foreground mb-1 line-clamp-1 pl-6">
                                             {speciesList}
                                         </p>
                                     )}
                                 </div>
 
-                                {/* Footer Stats */}
-                                <div className="flex items-center justify-between px-4 py-3 bg-secondary/50 border-t border-border">
-                                    <div className="flex items-center gap-2">
-                                        <Bird className="h-4 w-4 text-mallard-yellow" />
-                                        <span className="font-mono text-xl font-bold text-mallard-yellow">
-                                            {bagCount}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            {bagCount === 1 ? 'harvested' : 'harvested'}
-                                        </span>
+                                {/* Footer Stats — harvest badge */}
+                                <div className="flex items-center justify-between px-4 py-3 border-t border-border/30">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/15 dark:bg-primary/10">
+                                            <Bird className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <div>
+                                            <span className="font-mono text-xl font-bold text-primary tabular-nums">
+                                                {bagCount}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground ml-1.5">
+                                                harvested
+                                            </span>
+                                        </div>
                                     </div>
                                     <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                                 </div>

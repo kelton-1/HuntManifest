@@ -63,7 +63,7 @@ export default function ProfilePage() {
 
     const handleSubmitFeedback = async () => {
         if (!feedbackText.trim() || !user) return;
-        
+
         setFeedbackStatus("sending");
         try {
             await submitFeedback(user.uid, user.email, feedbackText.trim());
@@ -83,8 +83,11 @@ export default function ProfilePage() {
         <div className="pb-8 animate-fade-in">
             {/* Header */}
             <header className="mb-6 text-center">
-                <div className="mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-mallard-green to-mallard-green-light flex items-center justify-center shadow-lg mb-4">
-                    <User className="h-12 w-12 text-white" />
+                <div className="relative mx-auto w-24 h-24 mb-4">
+                    <div className="absolute -inset-1.5 rounded-full bg-primary/20 blur-md" />
+                    <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-mallard-green to-mallard-green-light flex items-center justify-center shadow-lg">
+                        <User className="h-12 w-12 text-white" />
+                    </div>
                 </div>
 
                 {/* Editable Name */}
@@ -138,7 +141,7 @@ export default function ProfilePage() {
             </header>
 
             {/* Stats Bar */}
-            <div className="flex justify-center gap-6 mb-6 p-4 bg-card rounded-xl border border-border">
+            <div className="flex justify-center gap-6 mb-6 p-4 glass-card rounded-2xl">
                 <div className="text-center">
                     <p className="text-2xl font-bold text-primary">{inventory.length}</p>
                     <p className="text-xs text-muted-foreground">Gear Items</p>
@@ -181,9 +184,9 @@ export default function ProfilePage() {
                     </h2>
                     <div className="space-y-2">
                         {/* Home Location */}
-                        <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                        <div className="flex items-center justify-between p-4 glass-card rounded-2xl">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                     <MapPin className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <div>
@@ -228,9 +231,9 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Temperature Unit */}
-                        <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                        <div className="flex items-center justify-between p-4 glass-card rounded-2xl">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                     <Thermometer className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <span className="font-medium">Temperature Unit</span>
@@ -252,9 +255,9 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Notifications */}
-                        <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                        <div className="flex items-center justify-between p-4 glass-card rounded-2xl">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                     <Bell className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <span className="font-medium">Notifications</span>
@@ -268,9 +271,9 @@ export default function ProfilePage() {
                         </div>
 
                         {/* Dark Mode */}
-                        <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                        <div className="flex items-center justify-between p-4 glass-card rounded-2xl">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                     <Moon className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <span className="font-medium">Dark Mode</span>
@@ -294,10 +297,10 @@ export default function ProfilePage() {
                     <div className="space-y-2">
                         <button
                             onClick={handleExportData}
-                            className="w-full flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-secondary/50 transition-colors"
+                            className="w-full flex items-center justify-between p-4 glass-card rounded-2xl hover:bg-secondary/30 transition-colors"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                     <Download className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <div className="text-left">
@@ -310,10 +313,10 @@ export default function ProfilePage() {
 
                         <button
                             onClick={handleClearAllData}
-                            className="w-full flex items-center justify-between p-4 bg-card rounded-xl border border-destructive/30 hover:bg-destructive/10 transition-colors"
+                            className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-destructive/30 hover:bg-destructive/10 transition-colors"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-destructive/10 rounded-lg">
+                                <div className="p-2 bg-destructive/10 rounded-xl">
                                     <Trash2 className="h-5 w-5 text-destructive" />
                                 </div>
                                 <div className="text-left">
@@ -333,9 +336,9 @@ export default function ProfilePage() {
                         About
                     </h2>
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                        <div className="flex items-center justify-between p-4 glass-card rounded-2xl">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-secondary rounded-lg">
+                                <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                     <HelpCircle className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <span className="font-medium">Help & Support</span>
@@ -351,7 +354,7 @@ export default function ProfilePage() {
                         <MessageSquare className="h-4 w-4" />
                         Feedback & Suggestions
                     </h2>
-                    <div className="p-4 bg-card rounded-xl border border-border space-y-3">
+                    <div className="p-4 glass-card rounded-2xl space-y-3">
                         <p className="text-sm text-muted-foreground">
                             Have ideas or feedback? We&apos;d love to hear from you!
                         </p>
@@ -399,8 +402,8 @@ export default function ProfilePage() {
                                 <p className="text-sm text-muted-foreground mb-3">
                                     Sign in to share your feedback with us.
                                 </p>
-                                <Link 
-                                    href="/login" 
+                                <Link
+                                    href="/login"
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
                                 >
                                     <LogIn className="h-4 w-4" />
@@ -419,9 +422,9 @@ export default function ProfilePage() {
                             Account
                         </h2>
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
+                            <div className="flex items-center justify-between p-4 glass-card rounded-2xl">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-secondary rounded-lg">
+                                    <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                         <Mail className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                     <div>
@@ -432,10 +435,10 @@ export default function ProfilePage() {
                             </div>
                             <button
                                 onClick={handleSignOut}
-                                className="w-full flex items-center justify-between p-4 bg-card rounded-xl border border-border hover:bg-secondary/50 transition-colors"
+                                className="w-full flex items-center justify-between p-4 glass-card rounded-2xl hover:bg-secondary/30 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-secondary rounded-lg">
+                                    <div className="p-2 bg-primary/10 dark:bg-primary/8 rounded-xl">
                                         <LogOut className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                     <span className="font-medium">Sign Out</span>

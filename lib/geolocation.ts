@@ -105,11 +105,80 @@ export function useGeolocation() {
 }
 
 /**
- * Reverse geocode coordinates to a location name using Nominatim (free, no API key)
+ * US state name → 2-letter abbreviation
+ */
+const US_STATE_ABBREVS: Record<string, string> = {
+    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR',
+    'California': 'CA', 'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE',
+    'Florida': 'FL', 'Georgia': 'GA', 'Hawaii': 'HI', 'Idaho': 'ID',
+    'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA', 'Kansas': 'KS',
+    'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+    'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS',
+    'Missouri': 'MO', 'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV',
+    'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM', 'New York': 'NY',
+    'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH', 'Oklahoma': 'OK',
+    'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+    'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT',
+    'Vermont': 'VT', 'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV',
+    'Wisconsin': 'WI', 'Wyoming': 'WY', 'District of Columbia': 'DC',
+};
+
+/** Abbreviate a US state name — returns the input unchanged if not found */
+function abbreviateState(state: string): string {
+    return US_STATE_ABBREVS[state] || state;
+}
+
+/**
+ * Format a Google formatted_address or raw string into "City, ST" style.
+ * Exported so LocationAutocomplete can reuse it.
+ *
+ * Handles patterns like:
+ *   "Saint Charles, MO 63301, USA"  → "Saint Charles, MO"
+ *   "Saint Charles, Missouri, USA"  → "Saint Charles, MO"
+ *   "123 Main St, Saint Charles, MO 63301, USA" → "Saint Charles, MO"
+ */
+export function formatLocationName(raw: string): string {
+    if (!raw) return raw;
+    // Split by comma, trim
+    const parts = raw.split(',').map(p => p.trim());
+
+    // For US addresses Google typically returns:
+    //   [street, city, "ST ZIP", "USA"]   or   [city, "ST ZIP", "USA"]
+    // Nominatim may return:  [place, county, state, country]
+
+    // Walk backwards to find a 2-char state code or full state name
+    for (let i = parts.length - 1; i >= 1; i--) {
+        // Strip ZIP codes from parts like "MO 63301"
+        const cleaned = parts[i].replace(/\d{5}(-\d{4})?/, '').trim();
+        if (!cleaned) continue;
+
+        // Already a 2-char abbreviation?
+        if (/^[A-Z]{2}$/.test(cleaned)) {
+            // City is the part before this
+            const city = parts[i - 1];
+            return `${city}, ${cleaned}`;
+        }
+        // Full state name?
+        if (US_STATE_ABBREVS[cleaned]) {
+            const city = parts[i - 1];
+            return `${city}, ${US_STATE_ABBREVS[cleaned]}`;
+        }
+    }
+
+    // Fallback: return first two parts (e.g. international or unrecognized)
+    if (parts.length >= 2) {
+        return `${parts[0]}, ${parts[1]}`;
+    }
+    return raw;
+}
+
+/**
+ * Reverse geocode coordinates to a location name using Nominatim (free, no API key).
+ * Returns "City, ST" format for US locations.
  */
 export async function reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
     try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14`;
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`;
 
         const response = await fetch(url, {
             headers: {
@@ -129,20 +198,19 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
         const address = data.address;
         if (!address) return null;
 
-        // Prefer: hamlet/village/town/city, county/state
+        // Prefer: hamlet/village/town/city, state (abbreviated)
         const place = address.hamlet || address.village || address.town || address.city || address.municipality;
-        const area = address.county || address.state;
+        const stateRaw = address.state;
+        const stateAbbrev = stateRaw ? abbreviateState(stateRaw) : null;
 
-        if (place && area) {
-            return `${place}, ${area}`;
+        if (place && stateAbbrev) {
+            return `${place}, ${stateAbbrev}`;
         } else if (place) {
             return place;
-        } else if (area) {
-            return area;
+        } else if (stateAbbrev) {
+            return stateAbbrev;
         } else if (data.display_name) {
-            // Fallback to first two parts of display name
-            const parts = data.display_name.split(', ');
-            return parts.slice(0, 2).join(', ');
+            return formatLocationName(data.display_name);
         }
 
         return null;
