@@ -8,14 +8,14 @@ import { HunterProfileScreen, HunterProfileData } from "./HunterProfileScreen";
 import { LocationPermissionScreen } from "./LocationPermissionScreen";
 import { BrandSelectionScreen } from "./BrandSelectionScreen";
 import { useOnboarding } from "@/lib/onboarding";
-import { useInventory } from "@/lib/storage";
+import { useUserProfile } from "@/lib/useUserProfile";
 
 type OnboardingStep = "welcome" | "auth" | "profile" | "location" | "brands";
 
 export function OnboardingFlow() {
     const router = useRouter();
     const { state, isLoaded, setHunterProfile, setBrandAffinities, completeOnboarding } = useOnboarding();
-    const { addItem } = useInventory(); // Removed inventory from destructuring as it wasn't used
+    const { updateProfile } = useUserProfile();
     const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
 
     // If not loaded yet, show nothing
@@ -36,17 +36,11 @@ export function OnboardingFlow() {
         setCurrentStep("profile");
     };
 
-    const handleProfileComplete = (data: HunterProfileData) => {
+    const handleProfileComplete = async (data: HunterProfileData) => {
         setHunterProfile(data);
 
-        // Also sync name to preferences so it shows in profile page
-        if (typeof window !== "undefined") {
-            const prefsKey = "talkin_timber_preferences";
-            const existing = localStorage.getItem(prefsKey);
-            const prefs = existing ? JSON.parse(existing) : {};
-            prefs.hunterName = data.name;
-            localStorage.setItem(prefsKey, JSON.stringify(prefs));
-        }
+        // Persist profile data via canonical profile storage (timber_user_profile + Firestore).
+        await updateProfile({ hunterName: data.name });
 
         setCurrentStep("location");
     };

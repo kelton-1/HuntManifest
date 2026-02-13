@@ -83,7 +83,7 @@ This document captures important architectural decisions to prevent accidental r
 | `timber_onboarding` | Onboarding flow state & checklist | `lib/onboarding.ts` |
 | `timber_checklist_shown_at` | Getting-started checklist auto-dismiss timestamp | `app/components/GettingStartedChecklist.tsx` |
 | `timber_weather_cache` | Weather API response cache (5-min TTL) | `lib/weatherApi.ts` |
-| `talkin_timber_preferences` | Legacy (migrated) | `lib/useUserProfile.ts` |
+| `talkin_timber_preferences` | Legacy read-only migration source (never written) | `lib/useUserProfile.ts` |
 
 **Do NOT create new storage keys without documenting here.**
 
