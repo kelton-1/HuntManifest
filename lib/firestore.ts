@@ -67,6 +67,9 @@ export async function createUserProfile(userId: string, data: Partial<UserProfil
     });
 }
 
+// NOTE: Firestore updateDoc rejects fields with `undefined` values.
+// Keep this API as `Partial<UserProfile>`, but callers must pass a pre-cleaned payload
+// that only includes keys they intend to update and excludes any `undefined` values.
 export async function updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<void> {
     const docRef = doc(db, "users", userId, "profile", "data");
     const docSnap = await getDoc(docRef);
