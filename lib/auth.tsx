@@ -3,7 +3,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import {
     User,
+    getRedirectResult,
     signInWithPopup,
+    signInWithRedirect,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
@@ -16,7 +18,10 @@ import { auth } from "./firebase";
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    signInWithGoogle: () => Promise<void>;
+    signInWithGooglePopup: () => Promise<void>;
+    signInWithGoogleRedirect: () => Promise<void>;
+    signInWithGoogle: () => Promise<"popup" | "redirect">;
+    completeGoogleRedirectSignIn: () => Promise<User | null>;
     signInWithEmail: (email: string, password: string) => Promise<void>;
     signUpWithEmail: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
@@ -26,6 +31,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const googleProvider = new GoogleAuthProvider();
+
+const shouldUseGoogleRedirectFlow = () => {
+    if (typeof window === "undefined") {
+        return false;
+    }
+
+    const userAgent = window.navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+    const isAndroidWebView = /; wv\)|Version\/\d+\.\d+.*Chrome/.test(userAgent);
+    const isIOSWebView = isIOS && !/Safari/.test(userAgent);
+    const isStandalonePwa = window.matchMedia?.("(display-mode: standalone)")?.matches ?? false;
+
+    return isIOS || isAndroidWebView || isIOSWebView || isStandalonePwa;
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -40,8 +59,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    const signInWithGoogle = async () => {
+    const signInWithGooglePopup = async () => {
         await signInWithPopup(auth, googleProvider);
+    };
+
+    const signInWithGoogleRedirect = async () => {
+        await signInWithRedirect(auth, googleProvider);
+    };
+
+    const signInWithGoogle = async (): Promise<"popup" | "redirect"> => {
+        if (shouldUseGoogleRedirectFlow()) {
+            await signInWithGoogleRedirect();
+            return "redirect";
+        }
+
+        await signInWithGooglePopup();
+        return "popup";
+    };
+
+    const completeGoogleRedirectSignIn = async () => {
+        const result = await getRedirectResult(auth);
+        return result?.user ?? null;
     };
 
     const signInWithEmail = async (email: string, password: string) => {
@@ -65,7 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             value={{
                 user,
                 loading,
+                signInWithGooglePopup,
+                signInWithGoogleRedirect,
                 signInWithGoogle,
+                completeGoogleRedirectSignIn,
                 signInWithEmail,
                 signUpWithEmail,
                 signOut,

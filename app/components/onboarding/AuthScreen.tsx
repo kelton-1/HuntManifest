@@ -26,12 +26,14 @@ export function AuthScreen({ onComplete, onSkip, currentStep, totalSteps }: Auth
         setLoading(true);
         setError("");
         try {
-            await signInWithGoogle();
-            onComplete();
+            const authMethod = await signInWithGoogle();
+            if (authMethod === "popup") {
+                onComplete();
+                return;
+            }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Failed to sign in with Google";
             setError(message);
-        } finally {
             setLoading(false);
         }
     };
