@@ -199,7 +199,9 @@ function loadLocalProfile(): UnifiedUserProfile | null {
             return { ...DEFAULT_PROFILE, ...JSON.parse(unified) };
         }
 
-        // Migrate from old keys if they exist
+        // Migrate from old keys if they exist.
+        // NOTE: talkin_timber_preferences is legacy read-only migration input;
+        // new writes must only use timber_user_profile via updateProfile().
         const oldPrefs = localStorage.getItem("talkin_timber_preferences");
         const oldOnboarding = localStorage.getItem("timber_onboarding");
 
