@@ -6,7 +6,7 @@ import { Plus, Search, ChevronDown, Trash2, Edit2, Package, Filter } from "lucid
 import { useInventory } from "@/lib/storage";
 import { InventoryItem, InventoryCategory, INVENTORY_CATEGORIES } from "@/lib/types";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
-import { StaggerContainer, StaggerItem } from "@/app/components/StaggerAnimation";
+import { ScrollRevealItem } from "@/app/components/StaggerAnimation";
 
 
 // Sample items to show when user wants to see what a full inventory looks like
@@ -226,9 +226,9 @@ export default function InventoryPage() {
 
             {/* Inventory Grid */}
             {(inventory.length > 0 || showSamplePreview) && (
-                <StaggerContainer className="p-4 grid grid-cols-2 gap-3">
-                    {displayItems.map((item) => (
-                        <StaggerItem key={item.id}>
+                <div className="p-4 grid grid-cols-2 gap-3">
+                    {displayItems.map((item, index) => (
+                        <ScrollRevealItem key={item.id} index={index}>
                             <div
                                 className="relative glass-card rounded-2xl p-3.5 group hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                             >
@@ -274,11 +274,11 @@ export default function InventoryPage() {
                                     </div>
                                 </div>
                             </div>
-                        </StaggerItem>
+                        </ScrollRevealItem>
                     ))}
 
                     {/* Add New Card */}
-                    <StaggerItem>
+                    <ScrollRevealItem index={displayItems.length}>
                         <Link
                             href={activeCategory !== "all" ? `/inventory/add?category=${activeCategory}` : "/inventory/add"}
                             className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border/60 rounded-2xl text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/8 transition-all min-h-[120px]"
@@ -288,8 +288,8 @@ export default function InventoryPage() {
                             </div>
                             <span className="text-xs font-semibold">Add Item</span>
                         </Link>
-                    </StaggerItem>
-                </StaggerContainer>
+                    </ScrollRevealItem>
+                </div>
             )}
 
         </div>

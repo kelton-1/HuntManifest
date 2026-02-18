@@ -618,6 +618,151 @@ h6 {
   }
 }
 
+/* ── Aurora Background ── */
+.aurora-bg {
+  position: fixed;
+  inset: -15%;
+  width: 130%;
+  height: 130%;
+  overflow: hidden;
+  z-index: 0;
+  background: var(--background);
+  pointer-events: none;
+  perspective: 1200px;
+}
+
+.dark .aurora-bg {
+  background: #0B0E14;
+}
+
+.aurora-layer {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  filter: blur(80px);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.aurora-band-slow {
+  animation: aurora-wave-slow 20s infinite alternate ease-in-out;
+  z-index: 1;
+}
+
+.aurora-band-mid {
+  animation: aurora-wave-mid 12s infinite alternate-reverse ease-in-out;
+  z-index: 2;
+}
+
+.aurora-band-fast {
+  animation: aurora-wave-fast 8s infinite alternate ease-in-out;
+  z-index: 3;
+}
+
+@keyframes aurora-wave-slow {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  100% { transform: translate3d(-5%, 8%, -50px) rotate(8deg) scale(1.1); }
+}
+
+@keyframes aurora-wave-mid {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1.1); }
+  100% { transform: translate3d(6%, -10%, -20px) rotate(-12deg) scale(0.9); }
+}
+
+@keyframes aurora-wave-fast {
+  0% { transform: translate3d(-8%, -8%, 20px) scale(1) rotate(0deg); }
+  100% { transform: translate3d(12%, 12%, 50px) scale(1.2) rotate(20deg); }
+}
+
+/* ── Interactive Glow Card (mouse-tracking) ── */
+.glow-card-interactive {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-card-interactive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--glow-color, rgba(22, 102, 83, 0.25)) 0%,
+    transparent 40%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glow-card-interactive:hover::before {
+  opacity: 1;
+}
+
+.glow-card-interactive > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Light Beam FAB ── */
+.fab-beam-wrapper {
+  position: relative;
+}
+
+.fab-beam-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    transparent 20%,
+    #F5B800 50%,
+    transparent 80%
+  );
+  animation: border-rotate 3s linear infinite;
+  z-index: -1;
+  opacity: 0.9;
+}
+
+.fab-beam-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    transparent 30%,
+    rgba(245, 184, 0, 0.3) 50%,
+    transparent 70%
+  );
+  animation: border-rotate 3s linear infinite;
+  filter: blur(8px);
+  z-index: -2;
+  opacity: 0.6;
+}
+
+/* ── Radiant Input ── */
+.radiant-input-wrapper {
+  position: relative;
+  padding: 2px;
+  border-radius: 1rem;
+  background: conic-gradient(
+    from var(--border-angle, 0deg),
+    #F5B800,
+    transparent,
+    #0B3D2E,
+    transparent,
+    #F5B800
+  );
+  animation: border-rotate 4s linear infinite;
+}
+
+.radiant-input-inner {
+  border-radius: calc(1rem - 2px);
+  background: var(--card);
+}
+
 /* Focus visible styles for accessibility */
 :focus-visible {
   outline: 2px solid var(--primary);

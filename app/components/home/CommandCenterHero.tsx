@@ -5,6 +5,7 @@ import { MapPin, Calendar, ArrowRight } from "lucide-react";
 import { WeatherConditions, HuntLog, HuntPlan } from "@/lib/types";
 import { getHuntingSuitability } from "@/lib/huntingSuitability";
 import { UnifiedUserProfile } from "@/lib/useUserProfile";
+import { GlowCard } from "@/app/components/GlowCard";
 
 interface CommandCenterHeroProps {
     weather?: WeatherConditions | null;
@@ -82,50 +83,52 @@ export function CommandCenterHero({ weather, logs, plans, profile }: CommandCent
     const hero = getHeroContent(profile.hunterName, totalHunts, plans, weather);
 
     return (
-        <section className="glass-card rounded-2xl p-5">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
-                {hero.greeting}
-            </p>
-            <h1 className="text-2xl font-bold font-heading">{hero.name}</h1>
-            <p className="text-sm text-primary font-medium mt-1">{hero.subtitle}</p>
+        <GlowCard className="glass-card rounded-2xl">
+            <section className="p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+                    {hero.greeting}
+                </p>
+                <h1 className="text-2xl font-bold font-heading">{hero.name}</h1>
+                <p className="text-sm text-primary font-medium mt-1">{hero.subtitle}</p>
 
-            {hero.mode === "upcoming" && (
-                <div className="mt-4 bg-background/40 backdrop-blur-sm rounded-xl p-3 border border-border/30 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                            <Calendar className="h-5 w-5" />
+                {hero.mode === "upcoming" && (
+                    <div className="mt-4 bg-background/40 backdrop-blur-sm rounded-xl p-3 border border-border/30 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                <Calendar className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <div className="font-semibold text-sm">{hero.planTitle}</div>
+                                {hero.planLocation && (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                        <MapPin className="h-3 w-3" />
+                                        <span>{hero.planLocation}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div>
-                            <div className="font-semibold text-sm">{hero.planTitle}</div>
-                            {hero.planLocation && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>{hero.planLocation}</span>
-                                </div>
-                            )}
-                        </div>
+                        <Link
+                            href={hero.cta!.href}
+                            className="bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1"
+                        >
+                            {hero.cta!.label}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
                     </div>
-                    <Link
-                        href={hero.cta!.href}
-                        className="bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-1"
-                    >
-                        {hero.cta!.label}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                </div>
-            )}
+                )}
 
-            {hero.mode === "favorable" && hero.cta && (
-                <div className="mt-4">
-                    <Link
-                        href={hero.cta.href}
-                        className="inline-flex items-center gap-1 bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-semibold"
-                    >
-                        {hero.cta.label}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                </div>
-            )}
-        </section>
+                {hero.mode === "favorable" && hero.cta && (
+                    <div className="mt-4">
+                        <Link
+                            href={hero.cta.href}
+                            className="inline-flex items-center gap-1 bg-primary/10 text-primary rounded-xl px-4 py-2 text-sm font-semibold"
+                        >
+                            {hero.cta.label}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                    </div>
+                )}
+            </section>
+        </GlowCard>
     );
 }

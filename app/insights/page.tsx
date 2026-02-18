@@ -149,15 +149,15 @@ export default function InsightsPage() {
                     </InsightCard>
                 ) : null}
 
-                {/* AI Coach — unlocks at 5 hunts */}
+                {/* AI Guide — unlocks at 5 hunts */}
                 {isFull ? (
                     <AICoach summary={aiSummary} logCount={logs.length} />
                 ) : (
                     <InsightCard
-                        title="AI Coach"
+                        title="AI Guide"
                         icon={Sparkles}
                         locked
-                        lockMessage={`Log ${huntsNeededForFull} more hunt${huntsNeededForFull !== 1 ? 's' : ''} to unlock AI-powered coaching.`}
+                        lockMessage={`Log ${huntsNeededForFull} more hunt${huntsNeededForFull !== 1 ? 's' : ''} to unlock AI-powered guidance.`}
                     >
                         <div />
                     </InsightCard>

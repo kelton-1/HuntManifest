@@ -165,7 +165,7 @@ export function BottomNav() {
                             )}
                         </AnimatePresence>
 
-                        {/* Main FAB Trigger */}
+                        {/* Main FAB Trigger — Light Beam Effect */}
                         <div className="relative">
                             <AnimatePresence>
                                 {!isFabOpen && (
@@ -173,7 +173,7 @@ export function BottomNav() {
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.8 }}
-                                        className="absolute inset-0 -z-10 rounded-full bg-primary/20 dark:bg-primary/15 blur-md animate-glow-pulse"
+                                        className="absolute inset-0 -z-10 fab-beam-wrapper rounded-full"
                                     />
                                 )}
                             </AnimatePresence>

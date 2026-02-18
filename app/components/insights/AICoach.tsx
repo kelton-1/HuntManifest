@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Sparkles, RotateCcw, Loader2, AlertCircle } from "lucide-react";
+import { Sparkles, RotateCcw, Loader2, AlertCircle, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { snappy } from "@/lib/motion";
 import { hapticLight } from "@/lib/haptics";
@@ -46,6 +46,7 @@ export function AICoach({ summary, logCount }: AICoachProps) {
     const [response, setResponse] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [inputFocused, setInputFocused] = useState(false);
 
     const fetchAnalysis = useCallback(async (force = false) => {
         if (!force) {
@@ -64,7 +65,7 @@ export function AICoach({ summary, logCount }: AICoachProps) {
             setCache(text, logCount);
         } catch (err) {
             if (err instanceof Error && err.message === 'RATE_LIMIT') {
-                setError("AI Coach is thinking... Try again in a moment.");
+                setError("AI Guide is thinking... Try again in a moment.");
             } else {
                 setError("Unable to generate analysis right now.");
             }
@@ -78,7 +79,7 @@ export function AICoach({ summary, logCount }: AICoachProps) {
     }, [fetchAnalysis]);
 
     return (
-        <InsightCard title="AI Coach" icon={Sparkles}>
+        <InsightCard title="AI Guide" icon={Sparkles}>
             {/* Powered by badge */}
             <div className="flex items-center justify-between">
                 <span className="text-[10px] text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
@@ -129,6 +130,32 @@ export function AICoach({ summary, logCount }: AICoachProps) {
                     {response}
                 </div>
             )}
+
+            {/* Radiant Prompt Input */}
+            <div className={`radiant-input-wrapper mt-2 ${inputFocused ? 'opacity-100' : 'opacity-70'} transition-opacity`}>
+                <div className="radiant-input-inner flex items-center gap-2 px-4 py-3">
+                    <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                    <input
+                        type="text"
+                        placeholder="Ask about your season..."
+                        className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
+                        onFocus={() => setInputFocused(true)}
+                        onBlur={() => setInputFocused(false)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                hapticLight();
+                                fetchAnalysis(true);
+                            }
+                        }}
+                    />
+                    <button
+                        onClick={() => { hapticLight(); fetchAnalysis(true); }}
+                        className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                    >
+                        <Send className="h-3.5 w-3.5 text-primary" />
+                    </button>
+                </div>
+            </div>
         </InsightCard>
     );
 }

@@ -5,6 +5,7 @@ import { Thermometer, Droplets, CloudSun } from "lucide-react";
 import { WindRose } from "./WindRose";
 import { WeatherConditions, SkyCondition } from "@/lib/types";
 import { getHuntingSuitability } from "@/lib/huntingSuitability";
+import { GlowCard } from "@/app/components/GlowCard";
 
 interface AtmosphericCardProps {
     weather: WeatherConditions | null;
@@ -167,54 +168,62 @@ export function AtmosphericCard({
             <div className="relative z-10 grid grid-cols-2 gap-3">
 
                 {/* 1. Wind Rose (Full Width) */}
-                <div className="col-span-2 glass-card rounded-xl p-4 flex items-center justify-between relative overflow-hidden">
-                    <div className="relative z-10">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Wind Direction</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold tabular-nums text-foreground">{weather.windDirection}</span>
-                            <span className="text-sm font-medium text-muted-foreground">{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
+                <GlowCard className="col-span-2 glass-card rounded-xl" glowColor="rgba(22, 102, 83, 0.3)">
+                    <div className="p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Wind Direction</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-2xl font-bold tabular-nums text-foreground">{weather.windDirection}</span>
+                                <span className="text-sm font-medium text-muted-foreground">{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
+                            </div>
+                        </div>
+                        <div className="w-20 h-20 -my-2">
+                            <WindRose
+                                direction={weather.windDirection}
+                                speed={weather.windSpeed}
+                                className="w-full h-full opacity-90"
+                            />
                         </div>
                     </div>
-                    <div className="w-20 h-20 -my-2">
-                        <WindRose
-                            direction={weather.windDirection}
-                            speed={weather.windSpeed}
-                            className="w-full h-full opacity-90"
-                        />
-                    </div>
-                </div>
+                </GlowCard>
 
                 {/* 2. Temperature Tile */}
-                <div className="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group/tile">
-                    <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
-                        <Thermometer className="h-6 w-6 text-mallard-yellow" />
+                <GlowCard className="glass-card rounded-xl" glowColor="rgba(245, 184, 0, 0.25)">
+                    <div className="p-3 flex flex-col justify-between group/tile">
+                        <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
+                            <Thermometer className="h-6 w-6 text-mallard-yellow" />
+                        </div>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Temp</span>
+                        <span className="text-2xl font-bold tabular-nums text-foreground mt-1">
+                            {formatTemperature(weather.temperature, temperatureUnit)}
+                        </span>
                     </div>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Temp</span>
-                    <span className="text-2xl font-bold tabular-nums text-foreground mt-1">
-                        {formatTemperature(weather.temperature, temperatureUnit)}
-                    </span>
-                </div>
+                </GlowCard>
 
                 {/* 3. Sky Condition Tile */}
-                <div className="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden group/tile">
-                    <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
-                        <CloudSun className="h-6 w-6 text-sky-500" />
-                    </div>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sky</span>
-                    <span className="text-sm font-bold leading-tight mt-2 line-clamp-2">
-                        {weather.skyCondition}
-                    </span>
-                </div>
-
-                {/* 4. Humidity (Full Width or Split if we have more data) */}
-                {weather.humidity && (
-                    <div className="col-span-2 glass-card rounded-xl p-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Droplets className="h-5 w-5 text-blue-400" />
-                            <span className="text-sm font-medium">Humidity</span>
+                <GlowCard className="glass-card rounded-xl" glowColor="rgba(14, 165, 233, 0.25)">
+                    <div className="p-3 flex flex-col justify-between group/tile">
+                        <div className="absolute top-0 right-0 p-2 opacity-50 group-hover/tile:opacity-100 transition-opacity">
+                            <CloudSun className="h-6 w-6 text-sky-500" />
                         </div>
-                        <span className="font-bold tabular-nums">{weather.humidity}%</span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sky</span>
+                        <span className="text-sm font-bold leading-tight mt-2 line-clamp-2">
+                            {weather.skyCondition}
+                        </span>
                     </div>
+                </GlowCard>
+
+                {/* 4. Humidity */}
+                {weather.humidity && (
+                    <GlowCard className="col-span-2 glass-card rounded-xl" glowColor="rgba(96, 165, 250, 0.25)">
+                        <div className="p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Droplets className="h-5 w-5 text-blue-400" />
+                                <span className="text-sm font-medium">Humidity</span>
+                            </div>
+                            <span className="font-bold tabular-nums">{weather.humidity}%</span>
+                        </div>
+                    </GlowCard>
                 )}
             </div>
         </div>

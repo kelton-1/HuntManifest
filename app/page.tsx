@@ -8,12 +8,12 @@ import { WeatherConditions } from "@/lib/types";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
 
-// Premium Components
 import { AtmosphericCard } from "./components/home/AtmosphericCard";
 import { HuntMemoryCarousel } from "./components/home/HuntMemoryCarousel";
 import { CommandCenterHero } from "./components/home/CommandCenterHero";
 import { WeatherForecastWidget } from "./components/home/WeatherForecastWidget";
 import { QuickActions } from "./components/home/QuickActions";
+import { AuroraBackground } from "./components/home/AuroraBackground";
 
 export default function Home() {
   const { logs } = useHuntLogs();
@@ -46,6 +46,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-4 pb-4 animate-fade-in">
+      <AuroraBackground skyCondition={weather?.skyCondition} />
 
       {/* 1. Command Center Hero */}
       <CommandCenterHero weather={weather} logs={logs} plans={plans} profile={profile} />

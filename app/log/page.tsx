@@ -5,7 +5,7 @@ import { Plus, MapPin, Calendar, Bird, ChevronRight, CloudSun, Wind, Droplets, G
 import { useHuntLogs } from "@/lib/storage";
 import { useUserProfile } from "@/lib/useUserProfile";
 import { formatTemperature, formatWindSpeed } from "@/lib/formatting";
-import { StaggerContainer, StaggerItem } from "@/app/components/StaggerAnimation";
+import { ScrollRevealItem } from "@/app/components/StaggerAnimation";
 import { SpeciesIcon } from "@/app/components/log/SpeciesIcon";
 
 export default function HuntLogPage() {
@@ -39,7 +39,7 @@ export default function HuntLogPage() {
             </header>
 
             {/* Hunt List */}
-            <StaggerContainer className="space-y-4">
+            <div className="space-y-4">
                 {logs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <div className="inline-flex p-5 bg-primary/10 rounded-2xl mb-4">
@@ -58,12 +58,12 @@ export default function HuntLogPage() {
                         </Link>
                     </div>
                 ) : (
-                    logs.map((log) => {
+                    logs.map((log, index) => {
                         const bagCount = log.harvests.reduce((sum, h) => sum + h.count, 0);
                         const speciesList = log.harvests.map(h => h.species).join(', ');
 
                         return (
-                            <StaggerItem key={log.id}>
+                            <ScrollRevealItem key={log.id} index={index}>
                                 <Link
                                     href={`/log/${log.id}`}
                                     className="block group glass-card rounded-2xl overflow-hidden card-hover"
@@ -144,11 +144,11 @@ export default function HuntLogPage() {
                                         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                                     </div>
                                 </Link>
-                            </StaggerItem>
+                            </ScrollRevealItem>
                         );
                     })
                 )}
-            </StaggerContainer>
+            </div>
         </div>
     );
 }

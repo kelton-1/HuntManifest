@@ -3,11 +3,6 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 
-/**
- * Staggered entrance container — wraps children with Framer Motion
- * stagger animation. Each direct child gets a slide-up + fade-in.
- */
-
 const containerVariants = {
     hidden: {},
     visible: {
@@ -59,6 +54,37 @@ export function StaggerItem({
 }) {
     return (
         <motion.div className={className} variants={itemVariants}>
+            {children}
+        </motion.div>
+    );
+}
+
+/**
+ * Scroll-triggered animated list item. Slides up + fades in
+ * when it enters the viewport, with a stagger-like delay via index.
+ */
+export function ScrollRevealItem({
+    children,
+    className,
+    index = 0,
+}: {
+    children: ReactNode;
+    className?: string;
+    index?: number;
+}) {
+    return (
+        <motion.div
+            className={className}
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 24,
+                delay: Math.min(index * 0.05, 0.3),
+            }}
+        >
             {children}
         </motion.div>
     );
