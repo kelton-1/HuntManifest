@@ -117,7 +117,7 @@ export default function InventorySearchPage() {
                                 return (
                                     <ScrollRevealItem key={item.id} index={index}>
                                         <Link
-                                            href={`/inventory/${item.id}`}
+                                            href={`/inventory/detail?id=${item.id}`}
                                             className={`block rounded-xl p-4 flex items-start gap-3 transition-all active:scale-[0.98] ${
                                                 isBest
                                                     ? "glass-card border-primary/25 bg-gradient-to-r from-primary/[0.08] to-transparent"

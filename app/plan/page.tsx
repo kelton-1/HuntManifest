@@ -23,7 +23,7 @@ function StatusBadge({ status }: { status: PlanStatus }) {
 function PlanCard({ plan }: { plan: HuntPlan }) {
     return (
         <div className="bg-card border border-border rounded-xl p-4 shadow-sm hover:bg-secondary/50 transition-colors active:scale-[0.99]">
-            <Link href={`/plan/${plan.id}`} className="block">
+            <Link href={`/plan/detail?id=${plan.id}`} className="block">
                 <div className="flex items-start justify-between mb-2">
                     <h3 className="font-bold text-lg">{plan.title}</h3>
                     <StatusBadge status={plan.status} />
@@ -60,7 +60,7 @@ function PlanCard({ plan }: { plan: HuntPlan }) {
                         <NotebookPen className="h-3.5 w-3.5" />
                         Log from this plan
                     </Link>
-                    <Link href={`/plan/${plan.id}`}>
+                    <Link href={`/plan/detail?id=${plan.id}`}>
                         <ChevronRight className="h-4 w-4 opacity-30" />
                     </Link>
                 </div>

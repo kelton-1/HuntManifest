@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Minus, Plus, Trash2, Check } from "lucide-react";
 import { useInventory } from "@/lib/storage";
 import { InventoryCategory, ItemCondition, INVENTORY_CATEGORIES } from "@/lib/types";
@@ -12,12 +12,12 @@ import { motion } from "framer-motion";
 const CONDITIONS: ItemCondition[] = ["New", "Excellent", "Good", "Fair", "Poor"];
 
 export default function EditItemClient() {
-    const params = useParams();
     const router = useRouter();
-    const { inventory, updateItem, deleteItem } = useInventory();
+    const searchParams = useSearchParams();
+    const { inventory, loading, updateItem, deleteItem } = useInventory();
 
-    const id = params.id as string;
-    const item = inventory.find((i) => i.id === id);
+    const id = searchParams.get("id") || "";
+    const item = id ? inventory.find((i) => i.id === id) : undefined;
 
     const [name, setName] = useState("");
     const [brand, setBrand] = useState("");
@@ -44,6 +44,14 @@ export default function EditItemClient() {
         const cost = parseFloat(unitCost) || 0;
         return (cost * quantity).toFixed(2);
     }, [unitCost, quantity]);
+
+    if (loading || !id) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            </div>
+        );
+    }
 
     if (!item) {
         return (
@@ -74,7 +82,7 @@ export default function EditItemClient() {
         };
 
         await updateItem(updated);
-        router.push(`/inventory/${id}`);
+        router.push(`/inventory/detail?id=${id}`);
     };
 
     const handleDelete = () => {

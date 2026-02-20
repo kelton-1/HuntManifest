@@ -276,7 +276,7 @@ export default function InventoryPage() {
                         return (
                             <ScrollRevealItem key={item.id} index={index}>
                                 <Link
-                                    href={`/inventory/${item.id}`}
+                                    href={`/inventory/detail?id=${item.id}`}
                                     className="glass-card rounded-xl p-3 flex items-center gap-3 active:scale-[0.98] transition-all"
                                 >
                                     <div className="relative w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -348,7 +348,7 @@ export default function InventoryPage() {
                                         return (
                                             <Link
                                                 key={item.id}
-                                                href={`/inventory/${item.id}`}
+                                                href={`/inventory/detail?id=${item.id}`}
                                                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.03] transition-colors border-b border-white/[0.03] last:border-b-0"
                                             >
                                                 <div className={`w-1.5 h-1.5 rounded-full ${status.color} shrink-0`} />

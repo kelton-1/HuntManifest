@@ -45,7 +45,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 // ============================================
 
 export function useInventory() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -64,8 +64,10 @@ export function useInventory() {
         initialLocalState
     );
 
-    // Load inventory based on auth state
+    // Load inventory based on auth state — wait for auth to resolve first
     useEffect(() => {
+        if (authLoading) return;
+
         const loadInventory = async () => {
             if (user) {
                 try {
@@ -82,7 +84,7 @@ export function useInventory() {
         };
         loadInventory();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, authLoading]);
 
     const addItem = useCallback(async (item: InventoryItem) => {
         if (user) {
@@ -249,13 +251,15 @@ export function useInventory() {
 // ============================================
 
 export function useHuntLogs() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [logs, setLogs] = useState<HuntLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [localLogs, setLocalLogs] = useLocalStorage<HuntLog[]>("timber_hunt_logs", []);
 
-    // Load logs based on auth state
+    // Load logs based on auth state — wait for auth to resolve first
     useEffect(() => {
+        if (authLoading) return;
+
         const loadLogs = async () => {
             if (user) {
                 try {
@@ -272,7 +276,7 @@ export function useHuntLogs() {
         };
         loadLogs();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, authLoading]);
 
     const addLog = useCallback(async (log: HuntLog) => {
         if (user) {
@@ -329,13 +333,15 @@ export function useHuntLogs() {
 import { HuntPlan } from "./types";
 
 export function useHuntPlans() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const [plans, setPlans] = useState<HuntPlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [localPlans, setLocalPlans] = useLocalStorage<HuntPlan[]>("timber_hunt_plans", []);
 
-    // Load plans based on auth state
+    // Load plans based on auth state — wait for auth to resolve first
     useEffect(() => {
+        if (authLoading) return;
+
         const loadPlans = async () => {
             if (user) {
                 try {
@@ -352,7 +358,7 @@ export function useHuntPlans() {
         };
         loadPlans();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, authLoading]);
 
     const addPlan = useCallback(async (plan: HuntPlan) => {
         if (user) {

@@ -134,7 +134,7 @@ export function HuntMemoryCarousel({ logs, formatTemperature, temperatureUnit }:
                             onDragEnd={handleDragEnd}
                             className="absolute inset-0 cursor-grab active:cursor-grabbing"
                         >
-                            <Link href={`/log/${log.id}`} className="block h-full" draggable={false}>
+                            <Link href={`/log/detail?id=${log.id}`} className="block h-full" draggable={false}>
                                 <div
                                     className={`relative h-full rounded-2xl overflow-hidden glass-card shadow-lg bg-gradient-to-br ${getCardGradient(harvestCount, currentIndex)}`}
                                 >

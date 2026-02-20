@@ -65,7 +65,7 @@ export default function HuntLogPage() {
                         return (
                             <ScrollRevealItem key={log.id} index={index}>
                                 <Link
-                                    href={`/log/${log.id}`}
+                                    href={`/log/detail?id=${log.id}`}
                                     className="block group glass-card rounded-2xl overflow-hidden card-hover"
                                 >
                                     {/* Weather Strip — Glass Effect */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useHuntLogs, useHuntPlans } from "@/lib/storage";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin, CloudSun, Bird, Trash2, Share2, Check, Sparkles, Wind, Droplets, Gauge, Sunrise, Sunset, Thermometer, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserProfile } from "@/lib/useUserProfile";
@@ -12,14 +12,14 @@ import { staggerContainer, staggerChild, snappy } from "@/lib/motion";
 import { SpeciesIcon } from "@/app/components/log/SpeciesIcon";
 
 export default function HuntDetailClient() {
-    const params = useParams();
     const router = useRouter();
-    const { logs, deleteLog } = useHuntLogs();
+    const searchParams = useSearchParams();
+    const { logs, loading, deleteLog } = useHuntLogs();
     const { plans } = useHuntPlans();
     const { profile } = useUserProfile();
 
-    const id = params.id as string;
-    const log = logs.find(l => l.id === id);
+    const id = searchParams.get("id") || "";
+    const log = id ? logs.find(l => l.id === id) : undefined;
 
     // AI Analysis state
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
@@ -27,6 +27,14 @@ export default function HuntDetailClient() {
 
     // Find linked plan if any
     const linkedPlan = log?.planId ? plans.find(p => p.id === log.planId) : null;
+
+    if (loading || !id) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            </div>
+        );
+    }
 
     if (!log) {
         return (
@@ -78,7 +86,7 @@ export default function HuntDetailClient() {
                 {linkedPlan && (
                     <motion.div
                         variants={staggerChild}
-                        onClick={() => router.push(`/plan/${linkedPlan.id}`)}
+                        onClick={() => router.push(`/plan/detail?id=${linkedPlan.id}`)}
                         className="bg-background/95 backdrop-blur border border-mallard-yellow/50 rounded-xl p-3 flex items-center justify-between shadow-lg cursor-pointer hover:bg-background/100 transition-all"
                     >
                         <div className="flex items-center gap-3">

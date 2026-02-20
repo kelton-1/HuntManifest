@@ -47,7 +47,7 @@ function getHeroContent(
             greeting: "Upcoming Hunt",
             name,
             subtitle: daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `In ${daysAway} days`,
-            cta: { label: "View Plan", href: `/plan/${upcomingPlan.id}` },
+            cta: { label: "View Plan", href: `/plan/detail?id=${upcomingPlan.id}` },
             planTitle: upcomingPlan.title,
             planLocation: upcomingPlan.location?.name,
             daysAway,

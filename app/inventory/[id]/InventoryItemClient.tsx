@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Minus, Plus, Copy, Trash2, Check, ChevronDown, X } from "lucide-react";
 import { useInventory } from "@/lib/storage";
 import { InventoryCategory, ItemCondition, ItemStatus, INVENTORY_CATEGORIES } from "@/lib/types";
@@ -19,12 +19,12 @@ const STATUSES: { value: ItemStatus; label: string; color: string; bg: string }[
 type EditingField = "name" | "brand" | "category" | "quantity" | "cost" | "condition" | "status" | "notes" | null;
 
 export default function InventoryItemDetailClient() {
-    const params = useParams();
     const router = useRouter();
-    const { inventory, updateItem, deleteItem, addItem } = useInventory();
+    const searchParams = useSearchParams();
+    const { inventory, loading, updateItem, deleteItem, addItem } = useInventory();
 
-    const id = params.id as string;
-    const item = inventory.find((i) => i.id === id);
+    const id = searchParams.get("id") || "";
+    const item = id ? inventory.find((i) => i.id === id) : undefined;
 
     const [editingField, setEditingField] = useState<EditingField>(null);
     const [editValue, setEditValue] = useState<string>("");
@@ -98,7 +98,7 @@ export default function InventoryItemDetailClient() {
             updatedAt: new Date(),
         };
         await addItem(dup);
-        router.push(`/inventory/${dup.id}`);
+        router.push(`/inventory/detail?id=${dup.id}`);
     }, [item, addItem, router]);
 
     const handleDelete = useCallback(() => {
@@ -107,6 +107,14 @@ export default function InventoryItemDetailClient() {
         deleteItem(item.id);
         router.replace("/inventory");
     }, [item, deleteItem, router]);
+
+    if (loading || !id) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            </div>
+        );
+    }
 
     if (!item) {
         return (
