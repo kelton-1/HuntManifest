@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Calendar, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, ArrowRight, User } from "lucide-react";
 import { WeatherConditions, HuntLog, HuntPlan } from "@/lib/types";
 import { getHuntingSuitability } from "@/lib/huntingSuitability";
 import { UnifiedUserProfile } from "@/lib/useUserProfile";
@@ -85,11 +85,22 @@ export function CommandCenterHero({ weather, logs, plans, profile }: CommandCent
     return (
         <GlowCard className="glass-card rounded-2xl">
             <section className="p-5">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
-                    {hero.greeting}
-                </p>
-                <h1 className="text-2xl font-bold font-heading">{hero.name}</h1>
-                <p className="text-sm text-primary font-medium mt-1">{hero.subtitle}</p>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+                            {hero.greeting}
+                        </p>
+                        <h1 className="text-2xl font-bold font-heading">{hero.name}</h1>
+                        <p className="text-sm text-primary font-medium mt-1">{hero.subtitle}</p>
+                    </div>
+                    <Link
+                        href="/profile"
+                        className="w-10 h-10 rounded-xl bg-secondary/80 flex items-center justify-center hover:bg-secondary transition-colors shrink-0"
+                        aria-label="Profile & Settings"
+                    >
+                        <User className="h-5 w-5 text-muted-foreground" />
+                    </Link>
+                </div>
 
                 {hero.mode === "upcoming" && (
                     <div className="mt-4 bg-background/40 backdrop-blur-sm rounded-xl p-3 border border-border/30 flex items-center justify-between">

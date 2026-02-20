@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, NotebookPen, User, Plus, Calendar } from "lucide-react";
+import { Home, Package, NotebookPen, Plus, Calendar, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { hapticMedium, hapticLight } from "@/lib/haptics";
@@ -36,17 +36,17 @@ export function BottomNav() {
 
     const leftItems = [
         { href: "/", icon: Home, label: "Home", matchExact: true },
-        { href: "/log", icon: NotebookPen, label: "Journal", matchExact: false },
+        { href: "/insights", icon: Sparkles, label: "Insights", matchExact: false },
     ];
 
     const rightItems = [
+        { href: "/log", icon: NotebookPen, label: "Journal", matchExact: false },
         { href: "/inventory", icon: Package, label: "Gear", matchExact: false },
-        { href: "/profile", icon: User, label: "Profile", matchExact: false },
     ];
 
     const isActive = (href: string, matchExact: boolean) => {
         if (matchExact) {
-            return pathname === href || (href === "/" && pathname === "/insights");
+            return pathname === href;
         }
         return pathname.startsWith(href);
     };

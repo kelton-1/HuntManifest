@@ -1,7 +1,7 @@
 import { InventoryCategory } from "@/lib/types";
 import {
     Crosshair, Flame, Bird, Volume2, Shirt, EyeOff, LifeBuoy, Box,
-    Truck, Package
+    Truck, Package, Waves, Dog
 } from "lucide-react";
 
 /**
@@ -25,6 +25,8 @@ export function CategoryIcon({ category, className = "h-6 w-6" }: { category: In
         case "Clothing": return <Shirt className={className} />;
         case "Blind": return <EyeOff className={className} />;
         case "Safety": return <LifeBuoy className={className} />;
+        case "Waders": return <Waves className={className} />;
+        case "Dog": return <Dog className={className} />;
         case "Vehicle": return <Truck className={className} />;
         case "Other": return <Box className={className} />;
         default: return <Package className={className} />;

@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Minus, Plus, Pencil, Copy, Trash2, Check } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Copy, Trash2, Check, ChevronDown, X } from "lucide-react";
 import { useInventory } from "@/lib/storage";
+import { InventoryCategory, ItemCondition, ItemStatus, INVENTORY_CATEGORIES } from "@/lib/types";
 import { CategoryIcon } from "@/app/components/CategoryIcon";
 import { hapticLight, hapticMedium } from "@/lib/haptics";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+
+const CONDITIONS: ItemCondition[] = ["New", "Excellent", "Good", "Fair", "Poor"];
+const STATUSES: { value: ItemStatus; label: string; color: string; bg: string }[] = [
+    { value: "READY", label: "Ready", color: "text-emerald-500", bg: "bg-emerald-500" },
+    { value: "PACKED", label: "Packed", color: "text-amber-500", bg: "bg-amber-500" },
+    { value: "MISSING", label: "Missing", color: "text-red-500", bg: "bg-red-500" },
+];
+
+type EditingField = "name" | "brand" | "category" | "quantity" | "cost" | "condition" | "status" | "notes" | null;
 
 export default function InventoryItemDetailClient() {
     const params = useParams();
@@ -17,20 +26,66 @@ export default function InventoryItemDetailClient() {
     const id = params.id as string;
     const item = inventory.find((i) => i.id === id);
 
-    const [quantity, setQuantity] = useState<number | null>(null);
-    const [saving, setSaving] = useState(false);
+    const [editingField, setEditingField] = useState<EditingField>(null);
+    const [editValue, setEditValue] = useState<string>("");
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const editInputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
-    const currentQty = quantity ?? item?.quantity ?? 0;
-    const hasQtyChanged = quantity !== null && item && quantity !== item.quantity;
+    // Focus input when editing starts
+    useEffect(() => {
+        if (editingField && editInputRef.current) {
+            editInputRef.current.focus();
+        }
+    }, [editingField]);
 
-    const handleSaveQuantity = useCallback(async () => {
-        if (!item || quantity === null) return;
-        setSaving(true);
-        hapticMedium();
-        await updateItem({ ...item, quantity, updatedAt: new Date() });
-        setQuantity(null);
-        setSaving(false);
-    }, [item, quantity, updateItem]);
+    const startEditing = useCallback((field: EditingField, currentValue: string) => {
+        hapticLight();
+        setEditingField(field);
+        setEditValue(currentValue);
+    }, []);
+
+    const saveField = useCallback(async (field: EditingField, value: string) => {
+        if (!item || !field) return;
+        hapticLight();
+
+        const updates: Record<string, unknown> = { updatedAt: new Date() };
+
+        switch (field) {
+            case "name":
+                if (!value.trim()) return;
+                updates.name = value.trim();
+                break;
+            case "brand":
+                updates.specs = { ...item.specs, brand: value.trim() || undefined };
+                break;
+            case "category":
+                updates.category = value as InventoryCategory;
+                break;
+            case "quantity":
+                updates.quantity = Math.max(0, parseInt(value) || 0);
+                break;
+            case "cost":
+                updates.purchasePrice = parseFloat(value) || undefined;
+                break;
+            case "condition":
+                updates.condition = value as ItemCondition;
+                break;
+            case "status":
+                updates.status = value as ItemStatus;
+                break;
+            case "notes":
+                updates.notes = value.trim() || undefined;
+                break;
+        }
+
+        await updateItem({ ...item, ...updates });
+        setEditingField(null);
+    }, [item, updateItem]);
+
+    const cancelEditing = useCallback(() => {
+        setEditingField(null);
+        setEditValue("");
+    }, []);
 
     const handleDuplicate = useCallback(async () => {
         if (!item) return;
@@ -48,11 +103,9 @@ export default function InventoryItemDetailClient() {
 
     const handleDelete = useCallback(() => {
         if (!item) return;
-        if (confirm(`Permanently delete ${item.name}? This cannot be undone.`)) {
-            hapticMedium();
-            deleteItem(item.id);
-            router.replace("/inventory");
-        }
+        hapticMedium();
+        deleteItem(item.id);
+        router.replace("/inventory");
     }, [item, deleteItem, router]);
 
     if (!item) {
@@ -66,13 +119,10 @@ export default function InventoryItemDetailClient() {
         );
     }
 
-    const totalValue = (item.purchasePrice || 0) * currentQty;
-    const costPerUnit = item.purchasePrice || 0;
+    const totalValue = (item.purchasePrice || 0) * item.quantity;
+    const statusConfig = STATUSES.find((s) => s.value === item.status) || STATUSES[0];
     const createdDate = item.createdAt
         ? new Date(item.createdAt instanceof Date ? item.createdAt : item.createdAt.toDate()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-        : null;
-    const updatedDate = item.updatedAt
-        ? new Date(item.updatedAt instanceof Date ? item.updatedAt : item.updatedAt.toDate()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
         : null;
 
     return (
@@ -91,8 +141,35 @@ export default function InventoryItemDetailClient() {
                         <ArrowLeft className="h-5 w-5" />
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h1 className="font-bold text-lg truncate">{item.name}</h1>
-                        <p className="text-xs text-muted-foreground">{item.specs?.brand || item.category}</p>
+                        {editingField === "name" ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    ref={editInputRef as React.RefObject<HTMLInputElement>}
+                                    type="text"
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") saveField("name", editValue);
+                                        if (e.key === "Escape") cancelEditing();
+                                    }}
+                                    className="flex-1 bg-transparent text-lg font-bold outline-none border-b-2 border-primary py-0.5"
+                                />
+                                <button onClick={() => saveField("name", editValue)} className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <Check className="h-4 w-4 text-primary" />
+                                </button>
+                                <button onClick={cancelEditing} className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
+                                    <X className="h-4 w-4 text-muted-foreground" />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => startEditing("name", item.name)}
+                                className="text-left w-full group"
+                            >
+                                <h1 className="font-bold text-lg truncate group-hover:text-primary transition-colors">{item.name}</h1>
+                                <p className="text-xs text-muted-foreground">{item.specs?.brand || item.category} &middot; Tap to edit</p>
+                            </button>
+                        )}
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                         <CategoryIcon category={item.category} className="h-5 w-5 text-primary" />
@@ -100,24 +177,38 @@ export default function InventoryItemDetailClient() {
                 </motion.div>
             </header>
 
-            <main className="px-5 pb-8 space-y-6">
-                {/* Info Grid */}
+            <main className="px-5 pb-8 space-y-5">
+                {/* Status + Category Row */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
                     className="grid grid-cols-2 gap-3"
                 >
+                    {/* Status Selector */}
                     <div className="glass-card rounded-xl p-4">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1.5">Category</p>
-                        <div className="flex items-center gap-2">
-                            <CategoryIcon category={item.category} className="h-4 w-4 text-primary" />
-                            <p className="font-bold text-sm">{item.category}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-2">Status</p>
+                        <div className="flex gap-1.5">
+                            {STATUSES.map((s) => (
+                                <button
+                                    key={s.value}
+                                    onClick={() => { hapticLight(); saveField("status", s.value); }}
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                                        item.status === s.value
+                                            ? `${s.bg}/15 ${s.color} ring-1 ring-current`
+                                            : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                                    }`}
+                                >
+                                    {s.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
+
+                    {/* Total Value */}
                     <div className="glass-card rounded-xl p-4">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1.5">Total Value</p>
-                        <p className="font-bold font-mono text-sm text-primary">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-2">Total Value</p>
+                        <p className="font-bold font-mono text-lg text-primary">
                             {totalValue > 0 ? `$${totalValue.toFixed(2)}` : "—"}
                         </p>
                     </div>
@@ -134,136 +225,306 @@ export default function InventoryItemDetailClient() {
                     <div className="glass-card rounded-2xl p-5">
                         <div className="flex items-center justify-between gap-4">
                             <button
-                                onClick={() => { hapticLight(); setQuantity(Math.max(0, currentQty - 1)); }}
+                                onClick={() => { hapticLight(); saveField("quantity", String(Math.max(0, item.quantity - 1))); }}
                                 className="w-[52px] h-[52px] rounded-[0.875rem] bg-primary/12 text-primary flex items-center justify-center font-bold active:scale-92 transition-transform"
                             >
                                 <Minus className="h-5 w-5" />
                             </button>
                             <div className="flex-1 text-center">
-                                <input
-                                    type="number"
-                                    value={currentQty}
-                                    onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                                    min={0}
-                                    className="w-full bg-transparent text-center text-4xl font-bold font-mono outline-none"
-                                />
+                                <p className="text-4xl font-bold font-mono">{item.quantity}</p>
                                 <p className="text-xs text-muted-foreground mt-1">units</p>
                             </div>
                             <button
-                                onClick={() => { hapticLight(); setQuantity(currentQty + 1); }}
+                                onClick={() => { hapticLight(); saveField("quantity", String(item.quantity + 1)); }}
                                 className="w-[52px] h-[52px] rounded-[0.875rem] bg-primary/12 text-primary flex items-center justify-center font-bold active:scale-92 transition-transform"
                             >
                                 <Plus className="h-5 w-5" />
                             </button>
                         </div>
-                        <p className="text-[10px] text-muted-foreground text-center mt-4 pt-4 border-t border-white/5">
-                            Tap +/− or type to update quantity
-                        </p>
                     </div>
                 </motion.div>
 
-                {/* Item Details */}
+                {/* Editable Details */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
                     className="space-y-3"
                 >
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Item Details</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Details</p>
                     <div className="glass-card rounded-2xl divide-y divide-white/5">
-                        {item.specs?.brand && (
-                            <div className="p-4 flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Brand</span>
-                                <span className="text-sm font-medium">{item.specs.brand}</span>
+                        {/* Brand */}
+                        <EditableRow
+                            label="Brand"
+                            value={item.specs?.brand || ""}
+                            placeholder="Add brand"
+                            isEditing={editingField === "brand"}
+                            editValue={editValue}
+                            onStartEdit={() => startEditing("brand", item.specs?.brand || "")}
+                            onSave={(v) => saveField("brand", v)}
+                            onCancel={cancelEditing}
+                            onChange={setEditValue}
+                            inputRef={editInputRef}
+                        />
+
+                        {/* Category */}
+                        {editingField === "category" ? (
+                            <div className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">Category</span>
+                                    <button onClick={cancelEditing} className="text-xs text-primary font-bold">Done</button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                    {INVENTORY_CATEGORIES.map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => saveField("category", cat)}
+                                            className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-[11px] font-semibold transition-all ${
+                                                item.category === cat
+                                                    ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                                                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                                            }`}
+                                        >
+                                            <CategoryIcon category={cat} className="h-3.5 w-3.5" />
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
+                        ) : (
+                            <button
+                                onClick={() => startEditing("category", item.category)}
+                                className="w-full p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                            >
+                                <span className="text-sm text-muted-foreground">Category</span>
+                                <div className="flex items-center gap-2">
+                                    <CategoryIcon category={item.category} className="h-3.5 w-3.5 text-primary" />
+                                    <span className="text-sm font-medium">{item.category}</span>
+                                </div>
+                            </button>
                         )}
-                        {costPerUnit > 0 && (
-                            <div className="p-4 flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Cost per unit</span>
-                                <span className="text-sm font-medium font-mono">${costPerUnit.toFixed(2)}</span>
+
+                        {/* Unit Cost */}
+                        <EditableRow
+                            label="Unit Cost"
+                            value={item.purchasePrice ? `$${item.purchasePrice.toFixed(2)}` : ""}
+                            rawValue={item.purchasePrice ? String(item.purchasePrice) : ""}
+                            placeholder="Add cost"
+                            isEditing={editingField === "cost"}
+                            editValue={editValue}
+                            onStartEdit={() => startEditing("cost", item.purchasePrice ? String(item.purchasePrice) : "")}
+                            onSave={(v) => saveField("cost", v)}
+                            onCancel={cancelEditing}
+                            onChange={setEditValue}
+                            inputRef={editInputRef}
+                            inputType="number"
+                            prefix="$"
+                        />
+
+                        {/* Condition */}
+                        {editingField === "condition" ? (
+                            <div className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">Condition</span>
+                                    <button onClick={cancelEditing} className="text-xs text-primary font-bold">Done</button>
+                                </div>
+                                <div className="flex gap-1.5">
+                                    {CONDITIONS.map((c) => (
+                                        <button
+                                            key={c}
+                                            onClick={() => saveField("condition", c)}
+                                            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                                item.condition === c
+                                                    ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                                                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                                            }`}
+                                        >
+                                            {c}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        )}
-                        {item.condition && (
-                            <div className="p-4 flex items-center justify-between">
+                        ) : (
+                            <button
+                                onClick={() => startEditing("condition", item.condition || "Good")}
+                                className="w-full p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+                            >
                                 <span className="text-sm text-muted-foreground">Condition</span>
-                                <span className="text-sm font-medium">{item.condition}</span>
-                            </div>
+                                <span className="text-sm font-medium">{item.condition || "—"}</span>
+                            </button>
                         )}
+
+                        {/* Date Added */}
                         {createdDate && (
                             <div className="p-4 flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground">Date added</span>
                                 <span className="text-sm font-medium">{createdDate}</span>
                             </div>
                         )}
-                        {updatedDate && (
-                            <div className="p-4 flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Last updated</span>
-                                <span className="text-sm font-medium">{updatedDate}</span>
-                            </div>
-                        )}
-                        {item.notes && (
-                            <div className="p-4">
-                                <span className="text-sm text-muted-foreground block mb-1">Notes</span>
-                                <p className="text-sm leading-relaxed">{item.notes}</p>
-                            </div>
-                        )}
                     </div>
                 </motion.div>
 
-                {/* Quick Actions */}
+                {/* Notes */}
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     className="space-y-3"
                 >
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</p>
-                    <div className="grid grid-cols-2 gap-3">
-                        <Link
-                            href={`/inventory/edit/${item.id}`}
-                            className="py-3.5 rounded-xl bg-secondary text-foreground font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-                        >
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                        </Link>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Notes</p>
+                    {editingField === "notes" ? (
+                        <div className="glass-card rounded-2xl p-4 space-y-3">
+                            <textarea
+                                ref={editInputRef as React.RefObject<HTMLTextAreaElement>}
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                rows={4}
+                                className="w-full bg-transparent text-sm outline-none resize-none"
+                                placeholder="Add notes..."
+                            />
+                            <div className="flex gap-2 justify-end">
+                                <button onClick={cancelEditing} className="px-3 py-1.5 rounded-lg bg-secondary text-xs font-bold">
+                                    Cancel
+                                </button>
+                                <button onClick={() => saveField("notes", editValue)} className="px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-xs font-bold">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
                         <button
-                            onClick={handleDuplicate}
-                            className="py-3.5 rounded-xl bg-secondary text-foreground font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                            onClick={() => startEditing("notes", item.notes || "")}
+                            className="w-full glass-card rounded-2xl p-4 text-left hover:bg-white/[0.02] transition-colors"
                         >
-                            <Copy className="h-4 w-4" />
-                            Duplicate
+                            {item.notes ? (
+                                <p className="text-sm leading-relaxed">{item.notes}</p>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Tap to add notes...</p>
+                            )}
                         </button>
-                    </div>
+                    )}
+                </motion.div>
+
+                {/* Quick Actions */}
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className="space-y-3"
+                >
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Actions</p>
                     <button
-                        onClick={handleDelete}
-                        className="w-full py-3.5 rounded-xl bg-red-500/10 text-red-400 font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                        onClick={handleDuplicate}
+                        className="w-full py-3.5 rounded-xl bg-secondary text-foreground font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                     >
-                        <Trash2 className="h-4 w-4" />
-                        Delete Item
+                        <Copy className="h-4 w-4" />
+                        Duplicate Item
                     </button>
+
+                    {/* Delete */}
+                    {showDeleteConfirm ? (
+                        <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+                            <p className="text-sm font-bold text-red-400 mb-3">Delete "{item.name}"? This can't be undone.</p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 py-2.5 rounded-lg bg-secondary text-foreground font-bold text-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold text-sm active:scale-[0.98] transition-transform"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="w-full py-3.5 rounded-xl bg-red-500/10 text-red-400 font-bold text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Delete Item
+                        </button>
+                    )}
                 </motion.div>
             </main>
-
-            {/* Fixed Bottom Save Button */}
-            {hasQtyChanged && (
-                <motion.div
-                    initial={{ y: 80, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 80, opacity: 0 }}
-                    className="fixed bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-xl border-t border-border/40 pb-safe"
-                >
-                    <div className="px-5 py-4 max-w-md mx-auto">
-                        <button
-                            onClick={handleSaveQuantity}
-                            disabled={saving}
-                            className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-bold text-base shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            <Check className="h-5 w-5" />
-                            Save Changes
-                        </button>
-                    </div>
-                </motion.div>
-            )}
         </div>
+    );
+}
+
+/* ─── Reusable Inline-Editable Row ─── */
+function EditableRow({
+    label,
+    value,
+    rawValue,
+    placeholder,
+    isEditing,
+    editValue,
+    onStartEdit,
+    onSave,
+    onCancel,
+    onChange,
+    inputRef,
+    inputType = "text",
+    prefix,
+}: {
+    label: string;
+    value: string;
+    rawValue?: string;
+    placeholder: string;
+    isEditing: boolean;
+    editValue: string;
+    onStartEdit: () => void;
+    onSave: (value: string) => void;
+    onCancel: () => void;
+    onChange: (value: string) => void;
+    inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
+    inputType?: string;
+    prefix?: string;
+}) {
+    if (isEditing) {
+        return (
+            <div className="p-4 flex items-center gap-3">
+                <span className="text-sm text-muted-foreground shrink-0">{label}</span>
+                <div className="flex-1 flex items-center gap-2">
+                    {prefix && <span className="text-primary font-bold text-sm">{prefix}</span>}
+                    <input
+                        ref={inputRef as React.RefObject<HTMLInputElement>}
+                        type={inputType}
+                        value={editValue}
+                        onChange={(e) => onChange(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") onSave(editValue);
+                            if (e.key === "Escape") onCancel();
+                        }}
+                        className="flex-1 bg-transparent text-sm font-medium outline-none border-b border-primary"
+                        placeholder={placeholder}
+                        step={inputType === "number" ? "0.01" : undefined}
+                        min={inputType === "number" ? "0" : undefined}
+                    />
+                </div>
+                <button onClick={() => onSave(editValue)} className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                </button>
+                <button onClick={onCancel} className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center">
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <button
+            onClick={onStartEdit}
+            className="w-full p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+        >
+            <span className="text-sm text-muted-foreground">{label}</span>
+            <span className={`text-sm ${value ? "font-medium" : "text-muted-foreground/50"}`}>
+                {value || placeholder}
+            </span>
+        </button>
     );
 }
