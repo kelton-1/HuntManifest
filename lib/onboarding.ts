@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Timestamp } from "firebase/firestore";
 import { useAuth } from "./auth";
 import * as firestoreService from "./firestore";
 
@@ -43,6 +44,42 @@ const DEFAULT_ONBOARDING_STATE: OnboardingState = {
 
 const ONBOARDING_KEY = "timber_onboarding";
 
+function timestampToIsoString(timestamp: firestoreService.UserProfile["onboardingCompletedAt"]): string | null {
+  if (!timestamp) {
+    return null;
+  }
+
+  return timestamp.toDate().toISOString();
+}
+
+function normalizeOnboardingCompletedAtForUpdate(completedAt?: string | null): Timestamp | undefined {
+  if (!completedAt) {
+    return undefined;
+  }
+
+  const parsedDate = new Date(completedAt);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return undefined;
+  }
+
+  return Timestamp.fromDate(parsedDate);
+}
+
+function buildProfileUpdatePayload(state: OnboardingState): Partial<firestoreService.UserProfile> {
+  const onboardingCompletedAt = normalizeOnboardingCompletedAtForUpdate(state.completedAt);
+
+  return {
+    hunterName: state.hunterName,
+    dob: state.hunterDob,
+    homeLocation: state.hunterHomeLocation,
+    huntingStyle: state.hunterStyle,
+    experience: state.hunterExperience,
+    brandAffinities: state.hunterBrandAffinities,
+    onboardingCompleted: state.completed,
+    ...(onboardingCompletedAt && { onboardingCompletedAt }),
+  };
+}
+
 export function useOnboarding() {
   const { user } = useAuth();
   const [state, setState] = useState<OnboardingState>(DEFAULT_ONBOARDING_STATE);
@@ -56,7 +93,7 @@ export function useOnboarding() {
           if (profile) {
             setState({
               completed: profile.onboardingCompleted,
-              completedAt: profile.onboardingCompletedAt?.toDate?.()?.toISOString() || null,
+              completedAt: timestampToIsoString(profile.onboardingCompletedAt),
               hunterName: profile.hunterName,
               hunterDob: profile.dob,
               hunterHomeLocation: profile.homeLocation,
@@ -113,18 +150,7 @@ export function useOnboarding() {
     await AsyncStorage.setItem(ONBOARDING_KEY, JSON.stringify(newState));
     if (user) {
       try {
-        await firestoreService.updateUserProfile(user.uid, {
-          hunterName: newState.hunterName,
-          dob: newState.hunterDob,
-          homeLocation: newState.hunterHomeLocation,
-          huntingStyle: newState.hunterStyle,
-          experience: newState.hunterExperience,
-          brandAffinities: newState.hunterBrandAffinities,
-          onboardingCompleted: newState.completed,
-          ...(newState.completedAt && {
-            onboardingCompletedAt: new Date(newState.completedAt) as unknown as import("firebase/firestore").Timestamp,
-          }),
-        });
+        await firestoreService.updateUserProfile(user.uid, buildProfileUpdatePayload(newState));
       } catch (error) {
         console.error("Error syncing onboarding to Firestore:", error);
       }
