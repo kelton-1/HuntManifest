@@ -73,7 +73,7 @@ This document captures important architectural decisions to prevent accidental r
 **Date:** 2024-12-05  
 **Status:** Decided  
 
-**localStorage Keys:**
+**Storage Keys (AsyncStorage/localStorage abstraction):**
 | Key | Purpose | Location |
 |-----|---------|----------|
 | `timber_inventory_v2` | Gear/inventory items | `lib/storage.ts` |
@@ -85,7 +85,9 @@ This document captures important architectural decisions to prevent accidental r
 | `timber_weather_cache` | Weather API response cache (5-min TTL) | `lib/weatherApi.ts` |
 | `talkin_timber_preferences` | Legacy read-only migration source (never written) | `lib/useUserProfile.ts` |
 
-**Do NOT create new storage keys without documenting here.**
+**Do NOT create new storage keys without documenting here.
+
+Note: client persistence is handled through AsyncStorage APIs in hooks (web-backed by localStorage where supported).**
 
 ---
 

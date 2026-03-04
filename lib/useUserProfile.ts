@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "./auth";
 import * as firestoreService from "./firestore";
 
@@ -44,7 +45,7 @@ function compactUndefined<T extends Record<string, unknown>>(obj: T): Partial<T>
 /**
  * Unified hook for user profile data.
  * - Syncs with Firestore when authenticated
- * - Falls back to localStorage when offline/unauthenticated
+ * - Falls back to AsyncStorage when offline/unauthenticated
  * - Single source of truth for all user preferences
  */
 export function useUserProfile() {
@@ -55,12 +56,14 @@ export function useUserProfile() {
 
     // Load profile on mount and auth change
     useEffect(() => {
+        let isMounted = true;
+
         const loadProfile = async () => {
+            if (!isMounted) return;
             setLoading(true);
 
-            // First, load from localStorage for instant display
-            const localData = loadLocalProfile();
-            if (localData) {
+            const localData = await loadLocalProfile();
+            if (localData && isMounted) {
                 setProfile(localData);
             }
 
@@ -82,8 +85,10 @@ export function useUserProfile() {
                             hunterStyle: firestoreData.huntingStyle || DEFAULT_PROFILE.hunterStyle,
                             brandAffinities: firestoreData.brandAffinities || DEFAULT_PROFILE.brandAffinities,
                         };
-                        setProfile(merged);
-                        saveLocalProfile(merged); // Keep local in sync
+                        if (isMounted) {
+                            setProfile(merged);
+                        }
+                        await saveLocalProfile(merged); // Keep local in sync
                     } else {
                         // No Firestore profile, create one from local/defaults
                         const toCreate = localData || DEFAULT_PROFILE;
@@ -97,7 +102,10 @@ export function useUserProfile() {
                             huntingStyle: toCreate.hunterStyle,
                             brandAffinities: toCreate.brandAffinities,
                         });
-                        setProfile(toCreate);
+                        if (isMounted) {
+                            setProfile(toCreate);
+                        }
+                        await saveLocalProfile(toCreate);
                     }
                 } catch (error) {
                     console.error("Error loading profile from Firestore:", error);
@@ -105,20 +113,26 @@ export function useUserProfile() {
                 }
             }
 
-            setLoading(false);
-            setInitialized(true);
+            if (isMounted) {
+                setLoading(false);
+                setInitialized(true);
+            }
         };
 
         if (!authLoading) {
             loadProfile();
         }
+
+        return () => {
+            isMounted = false;
+        };
     }, [user, authLoading]);
 
     // Update profile
     const updateProfile = useCallback(async (updates: Partial<UnifiedUserProfile>) => {
         const newProfile = { ...profile, ...updates };
         setProfile(newProfile);
-        saveLocalProfile(newProfile);
+        await saveLocalProfile(newProfile);
 
         // Sync to Firestore if authenticated
         if (user) {
@@ -189,12 +203,10 @@ export function useUserProfile() {
 // LOCAL STORAGE HELPERS
 // ============================================
 
-function loadLocalProfile(): UnifiedUserProfile | null {
-    if (typeof window === "undefined") return null;
-
+async function loadLocalProfile(): Promise<UnifiedUserProfile | null> {
     try {
         // Try new unified key first
-        const unified = localStorage.getItem(PROFILE_KEY);
+        const unified = await AsyncStorage.getItem(PROFILE_KEY);
         if (unified) {
             return { ...DEFAULT_PROFILE, ...JSON.parse(unified) };
         }
@@ -202,13 +214,15 @@ function loadLocalProfile(): UnifiedUserProfile | null {
         // Migrate from old keys if they exist.
         // NOTE: talkin_timber_preferences is legacy read-only migration input;
         // new writes must only use timber_user_profile via updateProfile().
-        const oldPrefs = localStorage.getItem("talkin_timber_preferences");
-        const oldOnboarding = localStorage.getItem("timber_onboarding");
+        const [oldPrefs, oldOnboarding] = await AsyncStorage.multiGet([
+            "talkin_timber_preferences",
+            "timber_onboarding",
+        ]);
 
         let migrated: Partial<UnifiedUserProfile> = {};
 
-        if (oldPrefs) {
-            const prefs = JSON.parse(oldPrefs);
+        if (oldPrefs[1]) {
+            const prefs = JSON.parse(oldPrefs[1]);
             migrated = {
                 hunterName: prefs.hunterName,
                 homeLocation: prefs.homeLocation,
@@ -218,8 +232,8 @@ function loadLocalProfile(): UnifiedUserProfile | null {
             };
         }
 
-        if (oldOnboarding) {
-            const onboarding = JSON.parse(oldOnboarding);
+        if (oldOnboarding[1]) {
+            const onboarding = JSON.parse(oldOnboarding[1]);
             migrated = {
                 ...migrated,
                 hunterName: onboarding.hunterName || migrated.hunterName,
@@ -231,7 +245,7 @@ function loadLocalProfile(): UnifiedUserProfile | null {
 
         if (Object.keys(migrated).length > 0) {
             const mergedProfile = { ...DEFAULT_PROFILE, ...migrated };
-            saveLocalProfile(mergedProfile);
+            await saveLocalProfile(mergedProfile);
             return mergedProfile;
         }
 
@@ -242,11 +256,10 @@ function loadLocalProfile(): UnifiedUserProfile | null {
     }
 }
 
-function saveLocalProfile(profile: UnifiedUserProfile): void {
-    if (typeof window === "undefined") return;
+async function saveLocalProfile(profile: UnifiedUserProfile): Promise<void> {
     try {
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+        await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     } catch (error) {
-        console.warn("Error saving local profile:", error);
+        console.warn(`Error saving AsyncStorage key "${PROFILE_KEY}":`, error);
     }
 }
