@@ -9,51 +9,44 @@ HuntManifest is a mobile-first hunting management app. Users track gear inventor
 
 ## Tech Stack
 
-- **Framework:** Next.js 16.0.7 (App Router, static export)
-- **UI:** React 19.2.0, Tailwind CSS 3.x, Framer Motion
+- **Framework:** Expo SDK 54 + Expo Router
+- **UI:** React Native, React Native Web, NativeWind, Framer Motion (where applicable)
 - **Backend:** Firebase Auth + Firestore
 - **AI:** Firebase AI Logic (Gemini 2.5 Flash Lite)
-- **Icons:** Lucide React (no custom SVGs)
+- **Icons:** Lucide React Native (no custom SVGs)
 
 ## Project Structure
 
 ```
-app/                     # Next.js App Router
-├── page.tsx             # Home dashboard (weather, stats, hunt carousel)
-├── layout.tsx           # Root layout with auth/theme providers
-├── globals.css          # Tailwind + custom CSS
-├── inventory/           # Gear inventory CRUD
-├── log/                 # Hunt log CRUD
-├── plan/                # Hunt plan CRUD
-├── insights/            # Analytics (stub)
-├── profile/             # User profile + settings
-├── login/               # Auth screen
-└── components/          # Shared components
-    ├── BottomNav.tsx     # 4-tab bottom navigation
-    ├── TopNav.tsx        # Top bar with profile link
-    ├── CategoryIcon.tsx  # Lucide icon mapper for categories
-    ├── LocationAutocomplete.tsx
-    ├── home/             # Dashboard widgets
-    ├── inventory/        # Inventory-specific components
-    ├── log/              # Hunt log components
-    └── onboarding/       # Onboarding flow (5 steps)
+app/                     # Expo Router routes
+├── _layout.tsx          # Root layout with auth/theme providers
+├── login.tsx            # Auth screen
+├── profile.tsx          # User profile + settings
+└── (tabs)/              # Bottom tab route group
+    ├── _layout.tsx      # Tab navigator definition
+    ├── index.tsx        # Home dashboard (weather, stats, hunt carousel)
+    ├── inventory/       # Gear inventory CRUD routes
+    ├── log/             # Hunt log CRUD routes
+    ├── plan/            # Hunt plan CRUD routes
+    └── insights/        # Analytics (stub)
 
+components/              # Shared components
 lib/                     # Core business logic
 ├── types.ts             # All TypeScript types & enums
 ├── storage.ts           # React hooks (useInventory, useHuntLogs, useHuntPlans)
 ├── firestore.ts         # Firestore CRUD functions
-├── firebase.ts          # Firebase app init
+├── firebase.ts          # Firebase app init + RN auth persistence
 ├── auth.tsx             # Auth context provider
-├── useUserProfile.ts    # Profile hook (Firestore + localStorage fallback)
+├── useUserProfile.ts    # Profile hook (Firestore + web localStorage compatibility path)
 ├── weatherApi.ts        # Open-Meteo weather API
-├── geolocation.ts       # Browser geolocation + reverse geocoding
+├── geolocation.ts       # Geolocation + reverse geocoding
 ├── gemini.ts            # Firebase AI (Gemini) integration
 ├── onboarding.ts        # Onboarding state machine
 ├── brands.ts            # Brand/model data by category
 ├── inventory-data.ts    # Master inventory seed data
 ├── formatting.ts        # Unit formatting (temp, wind)
-├── haptics.ts           # Vibration feedback
-├── motion.ts            # Framer Motion presets
+├── haptics.ts           # Haptics feedback
+├── motion.ts            # Motion presets
 ├── schemas/categoryAttributes.ts  # Per-category attribute schemas
 └── services/ProductIntelligenceEngine.ts  # Smart product detection
 ```
@@ -64,13 +57,17 @@ lib/                     # Core business logic
 `Firearm | Ammo | Waders | Decoy | Call | Clothing | Blind | Safety | Dog | Vehicle | Other`
 
 ### 2. Storage Pattern
-All hooks use **Firestore-first with localStorage fallback** for logged-out users.
+All hooks use **Firestore-first with client storage fallback/cache**.
+- Primary native client storage: **AsyncStorage**
+- Web compatibility paths may use **localStorage** where implemented.
+
+Core hooks:
 - `useInventory()` — gear items
 - `useHuntLogs()` — completed hunts
 - `useHuntPlans()` — planned hunts
 - `useUserProfile()` — user preferences
 
-### 3. localStorage Keys (documented in ARCHITECTURE.md ADR-003)
+### 3. Client Storage Keys (documented in ARCHITECTURE.md ADR-003)
 | Key | Purpose |
 |-----|---------|
 | `timber_inventory_v2` | Gear items |
@@ -82,7 +79,7 @@ All hooks use **Firestore-first with localStorage fallback** for logged-out user
 | `timber_weather_cache` | Weather cache (5-min TTL) |
 
 ### 4. Icons
-ALL icons use **Lucide React**. No custom SVGs. See `CategoryIcon.tsx` for the mapping.
+ALL icons use **Lucide**. No custom SVGs. See `CategoryIcon.tsx` for the mapping.
 
 ### 5. Firestore Collections
 ```
@@ -96,23 +93,26 @@ feedback/{id}                — User feedback (authenticated)
 ## Development Commands
 
 ```bash
-npm run dev          # Dev server (default: 0.0.0.0:5000, use -p 3000 if port conflict)
-npm run build        # Static export to out/
-npm run deploy       # Build + Firebase hosting deploy
-npm run lint         # ESLint
+npm run dev          # Expo dev server (web)
+npm run ios          # Expo iOS simulator target
+npm run android      # Expo Android emulator/device target
+npm run build        # Expo web export
+npx eas build --platform ios --profile production
+npx eas submit --platform ios --profile production
 ```
 
 ## Active Sprint Status
 
 See `sprintlist.md` for the full 3-sprint plan. Summary:
 - **Sprint 1** (Security): Firestore rules hardening — in progress
-- **Sprint 2** (Architecture): Unify data models, resolve lib/firebase vs lib/firestore — not started
-- **Sprint 3** (UX): Polish + deployment hygiene — partially done
+- **Sprint 2** (Architecture): Unify data models, resolve `lib/firebase` vs `lib/firestore` — not started
+- **Sprint 3** (UX + Release): Polish + mobile release hygiene — partially done
 
 ## Important Notes
 
-- The app uses `output: 'export'` for static hosting on Firebase
-- Do NOT create new localStorage keys without adding them to `ARCHITECTURE.md` ADR-003
-- Do NOT use custom SVG icons — use Lucide only
-- The `Tasks/` folder contains product planning docs (not executable tasks)
-- Environment variable: `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` for location autocomplete
+- Runtime app architecture is Expo Router mobile-first.
+- Any Next.js/Firebase Hosting references in repo docs should be treated as historical archive context only.
+- Do NOT create new storage keys without adding them to `ARCHITECTURE.md` ADR-003.
+- Do NOT use custom SVG icons — use Lucide only.
+- The `Tasks/` folder contains product planning docs (not executable tasks).
+- Environment variable: `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY` for location autocomplete.
