@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "web-archive",
+    "node_modules"
+  ]
+}
