@@ -73,23 +73,21 @@ This document captures important architectural decisions to prevent accidental r
 **Date:** 2024-12-05  
 **Status:** Decided  
 
-HuntManifest uses **Firestore-first persistence** with a client-side fallback/cache layer.
+**Storage Keys (AsyncStorage/localStorage abstraction):**
+| Key | Purpose | Location |
+|-----|---------|----------|
+| `timber_inventory_v2` | Gear/inventory items | `lib/storage.ts` |
+| `timber_hunt_logs` | Hunt log entries | `lib/storage.ts` |
+| `timber_hunt_plans` | Hunt plan entries | `lib/storage.ts` |
+| `timber_user_profile` | User preferences (unified) | `lib/useUserProfile.ts` |
+| `timber_onboarding` | Onboarding flow state & checklist | `lib/onboarding.ts` |
+| `timber_checklist_shown_at` | Getting-started checklist auto-dismiss timestamp | `app/components/GettingStartedChecklist.tsx` |
+| `timber_weather_cache` | Weather API response cache (5-min TTL) | `lib/weatherApi.ts` |
+| `talkin_timber_preferences` | Legacy read-only migration source (never written) | `lib/useUserProfile.ts` |
 
-- **Native runtime (iOS/Android):** `AsyncStorage`
-- **Web compatibility paths (where implemented):** `localStorage`
+**Do NOT create new storage keys without documenting here.
 
-| Key | Purpose | Primary Location | Runtime Backend |
-|-----|---------|------------------|-----------------|
-| `timber_inventory_v2` | Gear/inventory items | `lib/storage.ts` | AsyncStorage |
-| `timber_hunt_logs` | Hunt log entries | `lib/storage.ts` | AsyncStorage |
-| `timber_hunt_plans` | Hunt plan entries | `lib/storage.ts` | AsyncStorage |
-| `timber_user_profile` | User preferences (unified) | `lib/useUserProfile.ts` | localStorage (web compatibility path) |
-| `timber_onboarding` | Onboarding flow state & checklist | `lib/onboarding.ts` | AsyncStorage |
-| `timber_checklist_shown_at` | Getting-started checklist auto-dismiss timestamp | onboarding/checklist UI code | AsyncStorage |
-| `timber_weather_cache` | Weather API response cache (5-min TTL) | `lib/weatherApi.ts` | AsyncStorage |
-| `talkin_timber_preferences` | Legacy read-only migration source (never written) | `lib/useUserProfile.ts` | localStorage (migration-only) |
-
-**Do NOT create new storage keys without documenting here.**
+Note: client persistence is handled through AsyncStorage APIs in hooks (web-backed by localStorage where supported).**
 
 ---
 
