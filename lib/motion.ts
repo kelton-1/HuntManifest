@@ -1,29 +1,11 @@
-/** Shared Framer Motion spring presets from the creative direction spec. */
+import { withSpring, WithSpringConfig } from 'react-native-reanimated';
 
-// Button presses, counter increments (~150ms settle)
-export const snappy = { type: "spring" as const, stiffness: 400, damping: 30 };
+export const snappyConfig: WithSpringConfig = { stiffness: 400, damping: 30 };
+export const smoothConfig: WithSpringConfig = { stiffness: 300, damping: 26 };
+export const gentleConfig: WithSpringConfig = { stiffness: 200, damping: 20 };
 
-// Card entries, section reveals (~250ms settle)
-export const smooth = { type: "spring" as const, stiffness: 300, damping: 28 };
+export const STAGGER_DELAY = 80;
 
-// Weather card, backgrounds (~400ms settle)
-export const gentle = { type: "spring" as const, stiffness: 200, damping: 25 };
-
-/** Stagger children variant for section cards. */
-export const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-};
-
-export const staggerChild = {
-  hidden: { opacity: 0, y: 24 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: smooth,
-  },
-};
+export function springValue(toValue: number, config: WithSpringConfig = smoothConfig) {
+  return withSpring(toValue, config);
+}

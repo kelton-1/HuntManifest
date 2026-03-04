@@ -1,20 +1,17 @@
-/** Haptic feedback utility using the Vibration API.
- *  Falls back silently on unsupported browsers (iOS Safari). */
+import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 export function hapticLight() {
-  if (typeof navigator !== "undefined" && navigator.vibrate) {
-    navigator.vibrate(10);
-  }
+  if (Platform.OS === 'web') return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 }
 
 export function hapticMedium() {
-  if (typeof navigator !== "undefined" && navigator.vibrate) {
-    navigator.vibrate(25);
-  }
+  if (Platform.OS === 'web') return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 }
 
 export function hapticHeavy() {
-  if (typeof navigator !== "undefined" && navigator.vibrate) {
-    navigator.vibrate([30, 20, 30]);
-  }
+  if (Platform.OS === 'web') return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 }

@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "HuntManifest",
+    "slug": "hunt-manifest",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "huntmanifest",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0E14"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.huntmanifest.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "HuntManifest needs your location to show local weather conditions and auto-fill hunt locations.",
+        "NSLocationAlwaysUsageDescription": "HuntManifest uses your location to provide hunting condition updates."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B0E14"
+      },
+      "package": "com.huntmanifest.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "HuntManifest needs your location to show local weather and auto-fill hunt locations."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,18 @@
+export const Colors = {
+  mallardGreen: '#0B3D2E',
+  mallardGreenLight: '#166653',
+  mallardYellow: '#F5B800',
+  mallardYellowLight: '#FFD54F',
+  skyDawn: '#1e3a5f',
+  skyMorning: '#3b82f6',
+  waterBlue: '#0ea5e9',
+  darkBg: '#0B0E14',
+  darkCard: '#141922',
+  darkCardBorder: '#1E2633',
+  darkText: '#F8FAFC',
+  darkTextMuted: '#94A3B8',
+  darkTextSecondary: '#64748B',
+  white: '#FFFFFF',
+  error: '#EF4444',
+  success: '#22C55E',
+};

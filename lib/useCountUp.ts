@@ -1,38 +1,38 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Animates a number counting up from 0 to the target value.
- */
-export function useCountUp(target: number, duration: number = 1200) {
-    const [value, setValue] = useState(0);
-    const frameRef = useRef<number>(0);
-    const startRef = useRef<number>(0);
+export function useCountUp(target: number, duration: number = 1000): number {
+  const [value, setValue] = useState(0);
+  const startTime = useRef<number | null>(null);
+  const animFrameId = useRef<number | null>(null);
 
-    useEffect(() => {
-        if (target === 0) {
-            setValue(0);
-            return;
-        }
+  useEffect(() => {
+    if (target === 0) {
+      setValue(0);
+      return;
+    }
 
-        startRef.current = performance.now();
+    startTime.current = Date.now();
 
-        const animate = (now: number) => {
-            const elapsed = now - startRef.current;
-            const progress = Math.min(elapsed / duration, 1);
-            // ease-out cubic
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setValue(Math.round(eased * target));
+    const animate = () => {
+      const now = Date.now();
+      const elapsed = now - (startTime.current || now);
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
 
-            if (progress < 1) {
-                frameRef.current = requestAnimationFrame(animate);
-            }
-        };
+      if (progress < 1) {
+        animFrameId.current = requestAnimationFrame(animate);
+      }
+    };
 
-        frameRef.current = requestAnimationFrame(animate);
-        return () => cancelAnimationFrame(frameRef.current);
-    }, [target, duration]);
+    animFrameId.current = requestAnimationFrame(animate);
 
-    return value;
+    return () => {
+      if (animFrameId.current) {
+        cancelAnimationFrame(animFrameId.current);
+      }
+    };
+  }, [target, duration]);
+
+  return value;
 }
