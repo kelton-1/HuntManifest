@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { Colors } from '@/constants/Colors';
-import '../global.css';
 
 function RootLayoutInner() {
   const { loading } = useAuth();
