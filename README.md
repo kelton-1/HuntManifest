@@ -1,17 +1,17 @@
 # HuntManifest
 
-A mobile-first hunting management app built with Next.js, Firebase, and AI. Track your gear inventory, plan hunts with weather-aware context, log completed hunts, and get AI-powered insights.
+A mobile-first hunting management app built with Expo, Firebase, and AI. Track your gear inventory, plan hunts with weather-aware context, log completed hunts, and get AI-powered insights.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 (App Router, static export) |
-| UI | React 19, Tailwind CSS, Framer Motion |
+| Framework | Expo SDK 54 + Expo Router |
+| UI | React Native, React Native Web, NativeWind |
 | Backend | Firebase Auth + Firestore |
 | AI | Firebase AI Logic (Gemini 2.5 Flash Lite) |
-| Icons | Lucide React |
-| Hosting | Firebase Hosting |
+| Icons | Lucide React Native |
+| Mobile Delivery | EAS Build + EAS Submit |
 
 ## Getting Started
 
@@ -19,38 +19,47 @@ A mobile-first hunting management app built with Next.js, Firebase, and AI. Trac
 # Install dependencies
 npm install
 
-# Start development server
-npx next dev -p 3000
+# Start Expo dev server (web)
+npm run dev
 
-# Build for production (static export → out/)
+# Start Expo dev server for native targets
+npm run ios
+npm run android
+
+# Export web bundle (if needed)
 npm run build
 
-# Deploy to Firebase Hosting
-npm run deploy
+# Build and submit mobile binaries with EAS
+npx eas build --platform ios --profile production
+npx eas submit --platform ios --profile production
 ```
 
-> **Note:** The default port in `package.json` is 5000, which conflicts with macOS AirPlay. Use port 3000 instead.
+> **Note:** `npm run dev` starts Expo Web on port `5000` by default. Override with `npx expo start --web --port <port>` if needed.
 
 ## Project Structure
 
 ```
-app/                  # Next.js App Router pages & components
-├── inventory/        # Gear inventory management
-├── plan/             # Hunt planning
-├── log/              # Hunt log / journal
-├── insights/         # Analytics
-├── profile/          # User settings
-├── login/            # Authentication
-└── components/       # Shared UI components
+app/                    # Expo Router routes
+├── _layout.tsx         # Root providers + stack wiring
+├── login.tsx           # Authentication screen
+├── profile.tsx         # Profile/settings screen
+└── (tabs)/             # Bottom tab shell
+    ├── _layout.tsx     # Tab navigator configuration
+    ├── index.tsx       # Home dashboard
+    ├── inventory/      # Gear inventory routes (index/add/[id])
+    ├── plan/           # Hunt planning routes (index/new/[id])
+    ├── log/            # Hunt log routes (index/new/[id])
+    └── insights/       # Analytics routes
 
-lib/                  # Core business logic
-├── types.ts          # TypeScript types & enums
-├── storage.ts        # Data hooks (Firestore + localStorage fallback)
-├── firestore.ts      # Firestore CRUD layer
-├── auth.tsx          # Auth context
-├── weatherApi.ts     # Open-Meteo weather integration
-├── gemini.ts         # AI features (Gemini)
-└── ...               # Geolocation, brands, formatting, etc.
+components/             # Shared React Native components
+lib/                    # Core business logic
+├── types.ts            # TypeScript types & enums
+├── storage.ts          # Data hooks (Firestore + AsyncStorage fallback)
+├── firestore.ts        # Firestore CRUD layer
+├── auth.tsx            # Auth context
+├── weatherApi.ts       # Open-Meteo weather integration
+├── gemini.ts           # AI features (Gemini)
+└── ...                 # Geolocation, brands, formatting, etc.
 
 Tasks/                # Product planning documents
 ARCHITECTURE.md       # Architecture Decision Records
@@ -71,7 +80,31 @@ feedback/{id}                — User feedback
 
 | Variable | Purpose |
 |----------|---------|
-| `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` | Google Places location autocomplete |
+| `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY` | Google Places location autocomplete |
+
+## Mobile Release Workflow (iOS)
+
+1. Ensure Apple Developer provisioning is configured for the EAS project.
+2. Build a production iOS binary:
+
+   ```bash
+   npx eas build --platform ios --profile production
+   ```
+
+3. Submit the build to App Store Connect/TestFlight:
+
+   ```bash
+   npx eas submit --platform ios --profile production
+   ```
+
+4. In App Store Connect, assign the build to internal/external TestFlight testers.
+5. Promote to App Store release after QA sign-off.
+
+For Android, use the equivalent EAS build/submit commands with `--platform android`.
+
+## Historical Web Archive (Non-Runtime)
+
+Some repository docs and notes still mention the previous Next.js/Firebase Hosting implementation. Treat those references as historical migration context only—they are not part of the active Expo runtime architecture.
 
 ## AI Agent Documentation
 
@@ -88,4 +121,4 @@ All three files share the same core information about the project's conventions,
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for documented ADRs covering:
 - ADR-001: Single inventory system
 - ADR-002: Icon system (Lucide only)
-- ADR-003: localStorage key registry
+- ADR-003: client storage key registry (AsyncStorage + web localStorage compatibility)

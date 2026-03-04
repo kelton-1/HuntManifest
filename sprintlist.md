@@ -1,4 +1,5 @@
 Sprint Plan (3 Sprints)
+
 Sprint 1 — Security & Data Integrity (Critical Fixes)
 Goal: Lock down Firestore and eliminate schema drift risks before further feature work.
 
@@ -8,78 +9,66 @@ Replace permissive subtree access with explicit collection rules and validation 
 
 Keep shared collections read-only.
 
-Files: firestore.rules and any redundant rules files under attached_assets.
-
-References: current rules and duplicate draft for comparison.
+Files: `firestore.rules` and any redundant rules files under attached assets/docs.
 
 Consolidate rules into single authoritative source
 
-Remove any rule drafts or duplicates that could drift from firestore.rules.
-
-Reference file: attached_assets/Pasted-rules-version-2-service-cloud-firestore-match-databases_1768536168332.txt.
+Remove any rule drafts or duplicates that could drift from `firestore.rules`.
 
 Audit existing Firestore write paths against the new rules
 
 Ensure shape, required fields, and types match rule constraints.
 
-Write paths: lib/firestore.ts, lib/storage.ts, lib/useUserProfile.ts.
-
-References: Firestore access layer and hooks.
+Write paths: `lib/firestore.ts`, `lib/storage.ts`, `lib/useUserProfile.ts`.
 
 Sprint 2 — Architecture Unification & Drift Removal
 Goal: Eliminate split-brain data models and conflicting Firestore access layers.
 
 Choose the canonical domain model
 
-Decide between lib/types.ts (TitleCase enums, current UI) and lib/firebase/models.ts (lowercase enums, unused).
+Decide between `lib/types.ts` (TitleCase enums, current UI) and `lib/firebase/models.ts` (lowercase enums, potentially legacy).
 
 Document decision and remove/merge the unused model.
 
-References: both schema definitions.
-
 Unify Firestore access
 
-Either migrate all callers to lib/firebase/* or remove those modules and keep lib/firestore.ts as the single CRUD layer.
+Either migrate all callers to `lib/firebase/*` or remove those modules and keep `lib/firestore.ts` as the single CRUD layer.
 
-References: active hooks and alternate Firestore modules.
+~~Resolve client storage key drift and update ADRs~~ DONE
 
-~~Resolve localStorage key drift and update ADRs~~ DONE
+Storage key registry is now maintained in ADR-003 for AsyncStorage-first client persistence, with explicit web localStorage compatibility notes where still applicable.
 
-Added 3 missing keys to ADR-003: `timber_onboarding`, `timber_checklist_shown_at`, `timber_weather_cache`.
+Sprint 3 — UX Consistency + Mobile Release Hygiene
+Goal: Reduce UX friction, finish architectural alignment, and prevent mobile release surprises.
 
-References: storage hook and profile hook keys + ADR doc.
+~~Resolve static export mismatch~~ HISTORICAL/NON-RUNTIME
 
-Sprint 3 — UX Consistency + Deployment Hygiene
-Goal: Reduce UX friction, finish architectural alignment, and prevent deploy surprises.
-
-~~Resolve static export mismatch~~ N/A
-
-No mismatch found: next.config.ts, replit.md, and firebase.json are all aligned on static export to `out/`.
-
-References: Next config + Firebase hosting + docs.
+Next.js/Firebase Hosting static-export concerns are retained only as archive context and are no longer part of active Expo runtime delivery.
 
 ~~Remove or wire up orphan onboarding screens~~ DONE
 
-GearSetupScreen and AhaMomentScreen were fully removed in commit f9ecd30. Onboarding flow is clean with 5 active steps.
+Onboarding flow has five active steps and removed orphan screens remain excluded.
 
-References: Onboarding flow + unused screens.
+~~Replace mock weather data in conditions flows~~ DONE
 
-~~Replace mock weather data in Conditions~~ DONE
-
-Hourly forecast now uses the real Open-Meteo API via `fetchHourlyForecast` in `lib/weatherApi.ts`.
-
-Reference: app/conditions/page.tsx.
+Hourly forecast uses the real Open-Meteo API via `fetchHourlyForecast` in `lib/weatherApi.ts`.
 
 Assess client-side reverse geocoding
 
 Evaluate moving Nominatim calls server-side or providing a provider-compliant alternative.
 
-References: lib/geolocation.ts.
+References: `lib/geolocation.ts`.
+
+Add release pipeline hardening tasks
+
+- Verify EAS production profile defaults and credential ownership.
+- Document App Store Connect/TestFlight handoff checklist.
+- Add regression checks before `eas submit`.
 
 Notes on Scope & Sequencing
+
 Sprint 1 must precede 2 & 3, because Firestore rules and data integrity affect every write path.
 
 Sprint 2 reduces architectural risk and enables faster, more reliable feature development.
 
-Sprint 3 closes UX and deployment gaps and removes confusing or misleading user experiences.
-
+Sprint 3 closes UX and release gaps and removes confusing historical deployment assumptions.
